@@ -16,19 +16,26 @@
     bajanteNombre: string;
     exteriorMm: number;
     interiorMm: number;
-    rect?: { nombre: string; anchoMm: number; altoFrenteMm: number; altoPosteriorMm: number } | null;
+    rect?: { nombre: string; anchoMm: number; altoBajoMm: number; altoAltoMm: number; perfil: 'recto' | 'colonial' } | null;
   } = $props();
 
   // Canal rectangular (opción 2): escala fija para que quepa en el marco.
   const RX0 = 64;
   const RY = 186; // fondo del canal
   const escalaR = $derived(
-    rect ? Math.min(170 / Math.max(1, rect.anchoMm), 150 / Math.max(1, rect.altoPosteriorMm, rect.altoFrenteMm)) : 1,
+    rect ? Math.min(170 / Math.max(1, rect.anchoMm), 150 / Math.max(1, rect.altoAltoMm, rect.altoBajoMm)) : 1,
   );
   const rw = $derived(rect ? rect.anchoMm * escalaR : 0);
-  const hf = $derived(rect ? rect.altoFrenteMm * escalaR : 0);
-  const hp = $derived(rect ? rect.altoPosteriorMm * escalaR : 0);
+  const hf = $derived(rect ? rect.altoBajoMm * escalaR : 0);
+  const hp = $derived(rect ? rect.altoAltoMm * escalaR : 0);
   const ha = $derived(0.75 * hf);
+  // Saliente de la curva decorativa del canal colonial
+  const sal = $derived(rect?.perfil === 'colonial' ? 20 : 0);
+  const ladoAlto = $derived(
+    sal
+      ? `V${RY - hp * 0.3}C${RX0 + rw} ${RY - hp * 0.55} ${RX0 + rw + sal} ${RY - hp * 0.45} ${RX0 + rw + sal} ${RY - hp * 0.7}V${RY - hp}`
+      : `V${RY - hp}`,
+  );
 
   const fmt = (v: number, d = 1) =>
     v.toLocaleString('es-GT', { minimumFractionDigits: 0, maximumFractionDigits: d });
@@ -71,24 +78,24 @@
 
   {#if rect}
     <figure>
-      <figcaption><strong>Opción 2: canal rectangular</strong><span>{rect.nombre}, corte transversal</span></figcaption>
+      <figcaption><strong>Opción 2: {rect.nombre}</strong><span>corte transversal (fondo y alturas de la ficha)</span></figcaption>
       <svg viewBox="0 0 300 236" role="img"
-        aria-label="Corte de canal rectangular de {fmt(rect.anchoMm)} milímetros de fondo, {fmt(rect.altoFrenteMm)} de alto al frente y {fmt(rect.altoPosteriorMm)} a la pared">
+        aria-label="Corte de {rect.nombre}: fondo de {fmt(rect.anchoMm)} milímetros, lado bajo de {fmt(rect.altoBajoMm)} y lado alto de {fmt(rect.altoAltoMm)}">
         <!-- agua hasta 3/4 del lado bajo -->
         <rect x={RX0} y={RY - ha} width={rw} height={ha} class="agua" />
-        <!-- perfil: frente bajo (izquierda) y pared alta (derecha), con pestañas -->
-        <path d="M{RX0 + 8} {RY - hf + 8}V{RY - hf}H{RX0}V{RY}H{RX0 + rw}V{RY - hp}H{RX0 + rw - 8}V{RY - hp + 8}" class="pared" />
-        <text x={RX0 + rw / 2} y={RY - hf + (hf - ha) / 2 + 5} text-anchor="middle" class="nota-svg">borde libre 25 %</text>
-        <text x={RX0 + rw / 2} y={RY - ha / 2 + 5} text-anchor="middle" class="etiqueta-agua">agua: 3/4 del frente</text>
+        <!-- perfil: lado bajo (izquierda) y lado alto (derecha), con pestañas -->
+        <path d="M{RX0 + 8} {RY - hf + 8}V{RY - hf}H{RX0}V{RY}H{RX0 + rw}{ladoAlto}H{RX0 + rw + sal - 8}V{RY - hp + 8}" class="pared" />
+        <text x={RX0 + rw / 2} y={RY - hf + (hf - ha) / 2 + 5} text-anchor="middle" class="nota-svg">{rw < 150 ? 'libre 25 %' : 'borde libre 25 %'}</text>
+        <text x={RX0 + rw / 2} y={RY - ha / 2 + 5} text-anchor="middle" class="etiqueta-agua">{rw < 150 ? 'agua: 3/4' : 'agua: 3/4 del lado bajo'}</text>
         <!-- cotas -->
         <path d="M{RX0 - 20} {RY - hf}h10M{RX0 - 15} {RY - hf}V{RY}M{RX0 - 20} {RY}h10" class="cota" />
-        <text x={RX0 - 22} y={RY - hf / 2} text-anchor="middle" class="medida" transform="rotate(-90 {RX0 - 22} {RY - hf / 2})">{fmt(rect.altoFrenteMm)} mm</text>
-        <path d="M{RX0 + rw + 10} {RY - hp}h10M{RX0 + rw + 15} {RY - hp}V{RY}M{RX0 + rw + 10} {RY}h10" class="cota" />
-        <text x={RX0 + rw + 34} y={RY - hp / 2} text-anchor="middle" class="medida" transform="rotate(-90 {RX0 + rw + 34} {RY - hp / 2})">{fmt(rect.altoPosteriorMm)} mm</text>
+        <text x={RX0 - 22} y={RY - hf / 2} text-anchor="middle" class="medida" transform="rotate(-90 {RX0 - 22} {RY - hf / 2})">{fmt(rect.altoBajoMm)} mm</text>
+        <path d="M{RX0 + rw + sal + 10} {RY - hp}h10M{RX0 + rw + sal + 15} {RY - hp}V{RY}M{RX0 + rw + sal + 10} {RY}h10" class="cota" />
+        <text x={RX0 + rw + sal + 34} y={RY - hp / 2} text-anchor="middle" class="medida" transform="rotate(-90 {RX0 + rw + sal + 34} {RY - hp / 2})">{fmt(rect.altoAltoMm)} mm</text>
         <path d="M{RX0} {RY + 10}v10M{RX0} {RY + 15}H{RX0 + rw}M{RX0 + rw} {RY + 10}v10" class="cota" />
         <text x={RX0 + rw / 2} y={RY + 36} text-anchor="middle" class="medida">{fmt(rect.anchoMm)} mm</text>
-        <text x={RX0 - 8} y="28" class="nota-svg">frente</text>
-        <text x={RX0 + rw + 8} y="28" text-anchor="end" class="nota-svg">pared o fascia</text>
+        <text x={RX0 - 8} y="28" class="nota-svg">lado bajo</text>
+        <text x={RX0 + rw + sal + 8} y="28" text-anchor="end" class="nota-svg">lado alto</text>
       </svg>
     </figure>
   {/if}

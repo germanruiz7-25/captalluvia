@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CANAL_ALTO_CAUDAL_WAVIN,
+  CANAL_COLONIAL_WAVIN,
   capacidadCanalRectangularLs,
   evaluarCanalRectangular,
   areaParaCaudalM2,
@@ -123,5 +124,23 @@ describe('canal rectangular (opción 2)', () => {
     expect(ok.tiranteMm).toBeCloseTo(68.04, 2);
     expect(ok.areaPorTramoM2).toBeCloseTo((ok.capacidadLs * 3600) / (0.9 * 150), 9);
     expect(evaluarCanalRectangular(CANAL_ALTO_CAUDAL_WAVIN, 20, 0.5, 'pvc', 0.9, 150).cumple).toBe(false);
+  });
+
+  it('Canal Colonial: 100 × 90 mm lleva unos 4.1 L/s con PVC al 0.5 %', () => {
+    const e = evaluarCanalRectangular(CANAL_COLONIAL_WAVIN, 1, 0.5, 'pvc', 0.9, 150);
+    expect(e.tiranteMm).toBeCloseTo(67.5, 9);
+    expect(e.capacidadLs).toBeCloseTo(4.07, 1);
+  });
+
+  it('la sugerencia comercial usa la capacidad real del canal', () => {
+    const base = { c: 0.9, intensidadMmH: 150, pendientePct: 0.5, material: 'pvc' as const };
+    const chico = disenarDrenaje({ ...base, areaM2: 96, largoM: 12, aguas: 2 });
+    expect(chico.tipoCanal).toBe('colonial');
+    expect(chico.seccionComercial.nombre).toBe(CANAL_COLONIAL_WAVIN.nombre);
+    expect(chico.capacidadComercialLs).toBeGreaterThanOrEqual(chico.caudalPorTramoLs);
+    // pendiente muy baja: el colonial ya no alcanza con 2 bajantes de 3"
+    const plano = disenarDrenaje({ ...base, pendientePct: 0.05, areaM2: 220, largoM: 20, aguas: 2 });
+    expect(plano.tipoCanal).toBe('alto');
+    expect(plano.capacidadComercialLs).toBeGreaterThanOrEqual(plano.caudalPorTramoLs - 1e-9);
   });
 });

@@ -2,10 +2,9 @@
   import DibujosDrenaje from './DibujosDrenaje.svelte';
   import {
     BAJANTE_MINIMA_PRACTICA,
-    CANAL_ALTO_CAUDAL_WAVIN,
     CANALES_MERCADO,
+    SECCIONES_COMERCIALES,
     evaluarCanalRectangular,
-    EQUIVALENTE_MAX_COLONIAL_MM,
     MATERIALES_CANALETA,
     NOMBRES_TIPO_CANAL,
     disenarDrenaje,
@@ -26,16 +25,11 @@
   let intensidad = $state(150);
   let pendientePct = $state(0.5);
   let material: MaterialCanaleta = $state('pvc');
-  // Opción 2: canal rectangular (por defecto, el Canal Alto Caudal de Amanco Wavin)
-  let anchoRect = $state(CANAL_ALTO_CAUDAL_WAVIN.anchoMm);
-  let altoFrente = $state(CANAL_ALTO_CAUDAL_WAVIN.altoFrenteMm);
-  let altoPosterior = $state(CANAL_ALTO_CAUDAL_WAVIN.altoPosteriorMm);
-  const esWavin = $derived(
-    Number(anchoRect) === CANAL_ALTO_CAUDAL_WAVIN.anchoMm &&
-      Number(altoFrente) === CANAL_ALTO_CAUDAL_WAVIN.altoFrenteMm &&
-      Number(altoPosterior) === CANAL_ALTO_CAUDAL_WAVIN.altoPosteriorMm,
-  );
-  const nombreRect = $derived(esWavin ? CANAL_ALTO_CAUDAL_WAVIN.nombre : 'Medidas propias');
+  // Opción 2: canal comercial (colonial o alto caudal) o medidas propias
+  let canalElegido: 'sugerido' | 'colonial' | 'alto' | 'propio' = $state('sugerido');
+  let anchoPropio2: number | null = $state(null);
+  let altoBajoPropio: number | null = $state(null);
+  let altoAltoPropio: number | null = $state(null);
 
   const techo = $derived.by(() => {
     if (techoElegido === 'propio') {
@@ -63,16 +57,22 @@
   );
   const b = $derived(r ? r.bajantes[r.bajanteSugerida] : null);
   const c = $derived(r && r.canaletaSugerida >= 0 ? r.canaletas[r.canaletaSugerida] : null);
+  const seccion = $derived.by(() => {
+    if (!r) return null;
+    if (canalElegido === 'propio') {
+      return {
+        nombre: 'Medidas propias',
+        anchoMm: Number(anchoPropio2) || 0,
+        altoBajoMm: Number(altoBajoPropio) || 0,
+        altoAltoMm: Math.max(Number(altoAltoPropio) || 0, Number(altoBajoPropio) || 0),
+        perfil: 'recto' as const,
+      };
+    }
+    return SECCIONES_COMERCIALES[canalElegido === 'sugerido' ? r.tipoCanal : canalElegido];
+  });
   const rect = $derived(
-    r
-      ? evaluarCanalRectangular(
-          { anchoMm: Number(anchoRect) || 0, altoFrenteMm: Number(altoFrente) || 0 },
-          r.caudalPorTramoLs,
-          Number(pendientePct) || 0,
-          material,
-          ce,
-          Number(intensidad) || 0,
-        )
+    r && seccion
+      ? evaluarCanalRectangular(seccion, r.caudalPorTramoLs, Number(pendientePct) || 0, material, ce, Number(intensidad) || 0)
       : null,
   );
 
@@ -149,12 +149,10 @@
           <strong>Sugerencia mínima: {NOMBRES_TIPO_CANAL[r.tipoCanal].toLowerCase()}</strong>
           ({r.lineasSugeridas.map((l) => `${l.modelo} de ${l.marca}`).join(' o ')}), con {b.porCanaleta}
           bajante{b.porCanaleta > 1 ? 's' : ''} de {b.nombre} por canaleta ({b.total} en total); cada bajante atiende
-          un tramo de {n1(r.tramoM)} m.
+          un tramo de {n1(r.tramoM)} m con {n2(r.caudalPorTramoLs)} L/s. El {r.seccionComercial.nombre} lleva
+          {n2(r.capacidadComercialLs)} L/s con pendiente de {n1(Number(pendientePct))} %.
           {#if c}
-            La sección útil del canal no debe ser menor que una canaleta semicircular de {c.nombre} con pendiente de
-            {n1(Number(pendientePct))} %.
-          {:else}
-            Ni la canaleta semicircular más grande de la lista alcanza: agrega más bajantes o aumenta la pendiente.
+            Equivale como mínimo a una canaleta semicircular de {c.nombre}.
           {/if}
         </span>
       </div>
@@ -167,7 +165,7 @@
         <DibujosDrenaje
           canaletaNombre={c.nombre}
           canaletaMm={c.diametroMm}
-          rect={{ nombre: nombreRect, anchoMm: Number(anchoRect) || 0, altoFrenteMm: Number(altoFrente) || 0, altoPosteriorMm: Number(altoPosterior) || 0 }}
+          rect={seccion && seccion.anchoMm > 0 && seccion.altoBajoMm > 0 ? seccion : null}
           pendientePct={Number(pendientePct)}
           bajanteNombre={b.nombre}
           exteriorMm={b.exteriorMm}
@@ -194,9 +192,10 @@
         </table>
       </div>
       <p class="nota">
-        Criterio: se sugiere canal tipo colonial cuando bastan 1 o 2 bajantes de 3" por canaleta y la sección
-        equivalente no pasa de 5" ({EQUIVALENTE_MAX_COLONIAL_MM / 10} cm); si no, canal de
-        alto caudal con bajantes de 4". Los fabricantes indican soportes cada 40 a 50 cm y una pendiente mínima de 0.2 %.
+        Criterio: se sugiere canal tipo colonial cuando bastan 1 o 2 bajantes de 3" por canaleta y la sección del Canal
+        Colonial (100 × 90 mm útiles) lleva el caudal de cada tramo; si no, canal de alto caudal con bajantes de 4"
+        (se agregan bajantes si hace falta). Se usan las medidas de Amanco Wavin; si eliges Durman, verifica que su
+        sección sea igual o mayor. Los fabricantes indican soportes cada 40 a 50 cm y una pendiente mínima de 0.2 %.
       </p>
 
       <h3>Bajantes: m² de techo que evacua cada diámetro</h3>
@@ -249,32 +248,45 @@
         Reparte las bajantes a lo largo de la canaleta para que cada una reciba un tramo igual.
       </p>
 
-      <h3>Opción 2 · canal rectangular: {nombreRect}</h3>
+      <h3>Opción 2 · canal comercial: {seccion?.nombre}</h3>
       <div class="campos no-imprimir">
-        <label>Fondo o ancho (mm)
-          <input type="number" min="50" max="400" step="0.1" bind:value={anchoRect} />
+        <label>Canal a revisar
+          <select bind:value={canalElegido}>
+            <option value="sugerido">Sugerido: {SECCIONES_COMERCIALES[r.tipoCanal].nombre}</option>
+            <option value="colonial">{SECCIONES_COMERCIALES.colonial.nombre}</option>
+            <option value="alto">{SECCIONES_COMERCIALES.alto.nombre}</option>
+            <option value="propio">Medidas propias</option>
+          </select>
         </label>
-        <label>Alto del frente, lado bajo (mm)
-          <input type="number" min="30" max="300" step="0.1" bind:value={altoFrente} />
-        </label>
-        <label>Alto del lado de la pared (mm)
-          <input type="number" min="30" max="300" step="0.1" bind:value={altoPosterior} />
-        </label>
+        {#if canalElegido === 'propio'}
+          <label>Fondo del canal (mm)
+            <input type="number" min="50" max="400" step="0.1" bind:value={anchoPropio2} />
+          </label>
+          <label>Alto del lado más bajo (mm)
+            <input type="number" min="30" max="300" step="0.1" bind:value={altoBajoPropio} />
+          </label>
+          <label>Alto del lado más alto (mm)
+            <input type="number" min="30" max="300" step="0.1" bind:value={altoAltoPropio} />
+          </label>
+        {/if}
       </div>
-      {#if rect}
+      {#if rect && seccion && seccion.anchoMm > 0 && seccion.altoBajoMm > 0}
         <table class="cascada">
           <tbody>
-            <tr><td>Sección</td><td>{n1(Number(anchoRect))} × {n1(Number(altoFrente))} mm (pared {n1(Number(altoPosterior))} mm)</td></tr>
-            <tr><td>Tirante de diseño (3/4 del frente)</td><td>{n1(rect.tiranteMm)} mm</td></tr>
+            <tr><td>Sección: fondo × lado bajo (lado alto)</td><td>{n1(seccion.anchoMm)} × {n1(seccion.altoBajoMm)} mm ({n1(seccion.altoAltoMm)} mm)</td></tr>
+            <tr><td>Tirante de diseño (3/4 del lado bajo)</td><td>{n1(rect.tiranteMm)} mm</td></tr>
             <tr><td>Capacidad (Manning, {MATERIALES_CANALETA[material].nombre}, {n1(Number(pendientePct))} %)</td><td>{n2(rect.capacidadLs)} L/s</td></tr>
             <tr><td>m² de techo que sirve cada tramo</td><td>{n0(rect.areaPorTramoM2)} m²</td></tr>
             <tr class="total"><td>Caudal del tramo: {n2(r.caudalPorTramoLs)} L/s</td><td>{rect.cumple ? 'Cumple' : 'No cumple'}</td></tr>
           </tbody>
         </table>
         <p class="nota">
-          Medidas por defecto del Canal Alto Caudal de Amanco Wavin (ficha técnica). Puedes escribir las de otro canal
-          rectangular. El agua se limita a 3/4 del frente, que es el lado más bajo (25 % de borde libre).
+          Medidas de las fichas técnicas de Amanco Wavin. El canal se calcula como un rectángulo y el agua se limita a
+          3/4 del lado más bajo (25 % de borde libre). En el canal colonial, la curva decorativa da un poco más de área,
+          así que el resultado queda del lado seguro.
         </p>
+      {:else if canalElegido === 'propio'}
+        <p class="nota">Escribe el fondo y las alturas del canal.</p>
       {/if}
     {/if}
   {/if}

@@ -46,7 +46,7 @@ export function capacidadCanaletaLs(diametroM: number, pendiente: number, n: num
 
 /**
  * Capacidad (L/s) de un canal de sección rectangular (Manning). `anchoM` es el fondo y
- * `altoM` la altura del lado más bajo (el frente, por donde rebalsaría); el tirante es
+ * `altoM` la altura del lado más bajo (por donde rebalsaría); el tirante es
  * `llenado` × altoM (por defecto 0.75: 25 % de borde libre).
  */
 export function capacidadCanalRectangularLs(anchoM: number, altoM: number, pendiente: number, n: number, llenado = 0.75): number {
@@ -57,22 +57,35 @@ export function capacidadCanalRectangularLs(anchoM: number, altoM: number, pendi
   return (1 / n) * area * Math.pow(radioHidraulico, 2 / 3) * Math.sqrt(pendiente) * 1000;
 }
 
-/** Sección rectangular de un canal comercial (mm). */
+/** Sección de un canal comercial (mm), tratada como rectángulo para el cálculo. */
 export interface SeccionRectangular {
   nombre: string;
+  /** Fondo del canal. */
   anchoMm: number;
-  /** Altura del frente (lado bajo, por donde rebalsa). */
-  altoFrenteMm: number;
-  /** Altura del lado de la pared o fascia. */
-  altoPosteriorMm: number;
+  /** Altura del lado más bajo (por donde rebalsa). */
+  altoBajoMm: number;
+  /** Altura del lado más alto. */
+  altoAltoMm: number;
+  /** Forma del lado alto, solo para el dibujo. */
+  perfil: 'recto' | 'colonial';
 }
+
+/** Canal Colonial de Amanco Wavin, según su ficha técnica (fondo 100, lados 90 y 130 mm). */
+export const CANAL_COLONIAL_WAVIN: SeccionRectangular = {
+  nombre: 'Canal Colonial (Amanco Wavin)',
+  anchoMm: 100,
+  altoBajoMm: 90,
+  altoAltoMm: 130,
+  perfil: 'colonial',
+};
 
 /** Canal Alto Caudal de Amanco Wavin, según su ficha técnica. */
 export const CANAL_ALTO_CAUDAL_WAVIN: SeccionRectangular = {
   nombre: 'Canal Alto Caudal (Amanco Wavin)',
   anchoMm: 151.2,
-  altoFrenteMm: 90.72,
-  altoPosteriorMm: 136.08,
+  altoBajoMm: 90.72,
+  altoAltoMm: 136.08,
+  perfil: 'recto',
 };
 
 export interface EvaluacionRectangular {
@@ -85,7 +98,7 @@ export interface EvaluacionRectangular {
 
 /** Revisa un canal rectangular contra el caudal de cada tramo. */
 export function evaluarCanalRectangular(
-  seccion: Pick<SeccionRectangular, 'anchoMm' | 'altoFrenteMm'>,
+  seccion: Pick<SeccionRectangular, 'anchoMm' | 'altoBajoMm'>,
   caudalTramoLs: number,
   pendientePct: number,
   material: MaterialCanaleta,
@@ -94,13 +107,13 @@ export function evaluarCanalRectangular(
 ): EvaluacionRectangular {
   const capacidadLs = capacidadCanalRectangularLs(
     seccion.anchoMm / 1000,
-    seccion.altoFrenteMm / 1000,
+    seccion.altoBajoMm / 1000,
     Math.max(0, pendientePct) / 100,
     MATERIALES_CANALETA[material].n,
   );
   return {
     capacidadLs,
-    tiranteMm: 0.75 * seccion.altoFrenteMm,
+    tiranteMm: 0.75 * seccion.altoBajoMm,
     areaPorTramoM2: areaParaCaudalM2(capacidadLs, c, intensidadMmH),
     cumple: capacidadLs > 0 && capacidadLs >= caudalTramoLs,
   };
@@ -155,9 +168,9 @@ export interface LineaCanal {
 
 /** Canales de PVC que se venden en Guatemala (verificar existencias con el distribuidor). */
 export const CANALES_MERCADO: LineaCanal[] = [
-  { tipo: 'colonial', marca: 'Amanco Wavin', modelo: 'Canal Colonial', largosM: [3, 4, 6], bajantes: 'Redonda 50, 75 o 100 mm; rectangular 60 × 100 mm' },
+  { tipo: 'colonial', marca: 'Amanco Wavin', modelo: 'Canal Colonial (fondo 100 mm, lados de 90 y 130 mm)', largosM: [3, 4, 6], bajantes: 'Redonda 50, 75 o 100 mm; rectangular 60 × 100 mm' },
   { tipo: 'colonial', marca: 'Durman', modelo: 'Estilo Clásico / Estilo Tradicional', largosM: [2, 3, 6], bajantes: 'Redonda 2" o 3"; rectangular 3½ × 2"' },
-  { tipo: 'alto', marca: 'Amanco Wavin', modelo: 'Canal Alto Caudal (rectangular: fondo 151.2 mm, alto 90.7 mm al frente y 136.1 mm a la pared)', largosM: [3, 4, 6], bajantes: 'Redonda 50, 75 o 100 mm; rectangular 60 × 100 mm' },
+  { tipo: 'alto', marca: 'Amanco Wavin', modelo: 'Canal Alto Caudal (fondo 151.2 mm, lados de 90.7 y 136.1 mm)', largosM: [3, 4, 6], bajantes: 'Redonda 50, 75 o 100 mm; rectangular 60 × 100 mm' },
   { tipo: 'alto', marca: 'Durman', modelo: 'MaxiCanal (máximo caudal)', largosM: [3, 4, 6], bajantes: 'Redonda 3" o 4"' },
 ];
 
@@ -167,11 +180,14 @@ export const NOMBRES_TIPO_CANAL: Record<TipoCanal, string> = {
 };
 
 /**
- * Criterio de la app: un canal tipo colonial se acepta si basta con bajantes de 3"
- * (1 o 2 por canaleta) y la sección semicircular equivalente no pasa de 5" (125 mm).
- * Si no, se sugiere un canal de alto caudal con bajantes de 4".
+ * Criterio de la app: se sugiere el canal tipo colonial si bastan bajantes de 3" (1 o 2 por
+ * canaleta) y su sección (Canal Colonial de Amanco Wavin) lleva el caudal de cada tramo.
+ * Si no, canal de alto caudal con bajantes de 4", agregando bajantes si el canal no alcanza.
  */
-export const EQUIVALENTE_MAX_COLONIAL_MM = 125;
+export const SECCIONES_COMERCIALES: Record<TipoCanal, SeccionRectangular> = {
+  colonial: CANAL_COLONIAL_WAVIN,
+  alto: CANAL_ALTO_CAUDAL_WAVIN,
+};
 
 /** Diámetro de bajante más pequeño que se sugiere en la práctica (menos riesgo de taparse). */
 export const BAJANTE_MINIMA_PRACTICA = '3"';
@@ -250,6 +266,9 @@ export interface ResultadoDrenaje {
   tipoCanal: TipoCanal;
   /** Productos del mercado que corresponden al tipo sugerido. */
   lineasSugeridas: LineaCanal[];
+  /** Sección comercial de referencia del tipo sugerido y su capacidad por tramo. */
+  seccionComercial: SeccionRectangular;
+  capacidadComercialLs: number;
 }
 
 export function disenarDrenaje(e: EntradaDrenaje): ResultadoDrenaje {
@@ -281,14 +300,29 @@ export function disenarDrenaje(e: EntradaDrenaje): ResultadoDrenaje {
   const capacidades = CANALETAS.map((d) => capacidadCanaletaLs(d.interiorMm / 1000, pendiente, n));
   const canaletaMinima = (caudalTramoLs: number) => capacidades.findIndex((q) => q >= caudalTramoLs);
 
-  // 1) Canal tipo colonial: bajantes de 3" (1 o 2 por canaleta) y sección equivalente ≤ 5".
-  // 2) Si no alcanza: canal de alto caudal con bajantes de 4".
+  const capacidadDe = (t: TipoCanal) =>
+    capacidadCanalRectangularLs(
+      SECCIONES_COMERCIALES[t].anchoMm / 1000,
+      SECCIONES_COMERCIALES[t].altoBajoMm / 1000,
+      pendiente,
+      n,
+    );
+
+  // 1) Canal tipo colonial: bajantes de 3" (1 o 2 por canaleta) y la sección colonial alcanza.
+  // 2) Si no: canal de alto caudal con bajantes de 4"; se agregan bajantes si el canal no alcanza.
   const i3 = bajantes.findIndex((b) => b.nombre === '3"');
   const i4 = bajantes.findIndex((b) => b.nombre === '4"');
-  const c3 = canaletaMinima(caudalPorCanaletaLs / bajantes[i3].porCanaleta);
   const colonial =
-    bajantes[i3].porCanaleta <= 2 && c3 >= 0 && CANALETAS[c3].interiorMm <= EQUIVALENTE_MAX_COLONIAL_MM;
+    bajantes[i3].porCanaleta <= 2 && capacidadDe('colonial') >= caudalPorCanaletaLs / bajantes[i3].porCanaleta - 1e-9;
   const tipoCanal: TipoCanal = colonial ? 'colonial' : 'alto';
+  if (!colonial) {
+    const capAlto = capacidadDe('alto');
+    const minimo = capAlto > 0 ? Math.ceil(caudalPorCanaletaLs / capAlto - 1e-9) : 1;
+    if (minimo > bajantes[i4].porCanaleta) {
+      bajantes[i4].porCanaleta = minimo;
+      bajantes[i4].total = minimo * numeroCanaletas;
+    }
+  }
   const bajanteSugerida = colonial ? i3 : i4;
   const elegida = bajantes[bajanteSugerida];
 
@@ -317,5 +351,7 @@ export function disenarDrenaje(e: EntradaDrenaje): ResultadoDrenaje {
     longitudTotalCanaletaM: e.largoM * numeroCanaletas,
     tipoCanal,
     lineasSugeridas: CANALES_MERCADO.filter((l) => l.tipo === tipoCanal),
+    seccionComercial: SECCIONES_COMERCIALES[tipoCanal],
+    capacidadComercialLs: capacidadDe(tipoCanal),
   };
 }
