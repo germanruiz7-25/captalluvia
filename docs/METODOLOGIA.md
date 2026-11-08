@@ -27,12 +27,20 @@ El área es la **proyección horizontal** del techo (vista en planta), no la sup
 
 Para cada proporción largo:ancho de 1, 1.5 y 2 se calcula el ancho = √(A / proporción), se redondea hacia arriba a 0.5 m, y luego el largo = A / ancho, también redondeado hacia arriba a 0.5 m. Así cada opción cubre al menos el área mínima. La canaleta va en el lado largo.
 
+## 5. Techo de una o dos aguas
+
+- **Un agua:** una sola pendiente; toda el área drena a una canaleta en un lado largo.
+- **Dos aguas:** la cumbrera corre por el centro, paralela al lado largo. El área en planta se divide en dos segmentos iguales (A/2 cada uno), cada segmento mide ancho/2 de la canaleta a la cumbrera y drena a su propia canaleta del mismo largo. Las dos bajantes llegan al mismo tanque.
+
+El área total en planta es la misma en ambos casos; lo que cambia es cuántas canaletas y bajantes se necesitan y el caudal que recibe cada una (fase 2).
+
 ## Ejemplo de verificación
 
 5 personas × 50 L/día = 91.25 m³/año. Lluvia de 1,200 mm con 110 días de lluvia, lámina metálica, descarte de 1 mm:
 P_aprovechable = 1,200 × 0.90 − 110 = 970 mm → A_min = 91,250 / 970 = 94.07 m² → **95 m²**.
 Formas: 9.5 × 10.0 m (95.0 m²), 8.0 × 12.0 m (96.0 m²), 7.0 × 14.0 m (98.0 m²).
 Con 20 L/persona/día: **38 m²**.
+En dos aguas, el techo de 9.5 × 10.0 m queda en dos segmentos de 4.75 × 10.0 m (47.5 m² cada uno).
 
 ## Pendiente (fase 1)
 

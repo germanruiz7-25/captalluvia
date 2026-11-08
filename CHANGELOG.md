@@ -2,6 +2,16 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.0.2] — 2026-11-07
+
+### Agregado
+- Opción de **techo de dos aguas** (cumbrera al centro): el área se divide en dos segmentos iguales, cada uno con su canaleta, bajante y cota. Es la opción predeterminada por ser la más común a nivel comunitario.
+- La calculadora acepta hasta 5,000 personas (viviendas o escuelas) y muestra el área con separador de miles.
+
+### Corregido
+- Las letras y cotas de los dibujos mantienen siempre el mismo tamaño, sin importar el área del techo (antes se volvían diminutas con áreas grandes, por ejemplo en escuelas).
+- La leyenda ya no separa cada símbolo de su texto en el teléfono.
+
 ## [0.0.1] — 2026-11-07 — Fase 0: preparación
 
 ### Agregado

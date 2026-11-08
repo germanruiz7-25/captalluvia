@@ -3,6 +3,7 @@
     calcularTecho,
     COEFICIENTES_ESCORRENTIA,
     NOMBRES_TECHO,
+    type NumeroAguas,
     type TipoTecho,
   } from '../core/techo';
   import DibujoTecho from './DibujoTecho.svelte';
@@ -12,6 +13,7 @@
   let lluviaAnual = $state(1200);
   let diasLluvia = $state(110);
   let tipoTecho: TipoTecho = $state('lamina_metalica');
+  let aguas: NumeroAguas = $state(2);
 
   const r = $derived(
     calcularTecho({
@@ -28,15 +30,15 @@
 </script>
 
 <section class="tarjeta">
-  <h2>¿Cuánto techo necesita la familia?</h2>
+  <h2>¿Cuánto techo se necesita?</h2>
   <p class="nota">
     Prototipo de la fase 0. Por ahora la lluvia se escribe a mano; en la fase 1 se obtendrá sola
-    con la ubicación de la vivienda.
+    con la ubicación de la vivienda o la escuela.
   </p>
 
   <div class="campos">
-    <label>Personas en la vivienda
-      <input type="number" min="1" max="50" bind:value={personas} />
+    <label>Personas (habitantes o alumnos)
+      <input type="number" min="1" max="5000" bind:value={personas} />
     </label>
     <label>Litros por persona al día
       <select bind:value={litros}>
@@ -58,20 +60,32 @@
         {/each}
       </select>
     </label>
+    <label>Forma del techo
+      <select bind:value={aguas}>
+        <option value={2}>Dos aguas (cumbrera al centro)</option>
+        <option value={1}>Un agua (una sola pendiente)</option>
+      </select>
+    </label>
   </div>
 
   {#if r.areaMinimaM2 === null}
     <p class="alerta">Con estos datos no queda lluvia aprovechable. Revisa la lluvia anual o los días con lluvia.</p>
   {:else}
     <div class="resultado">
-      <p class="cifra">{r.areaMinimaM2} m²</p>
+      <p class="cifra">{r.areaMinimaM2.toLocaleString('es-GT')} m²</p>
       <p>
         Área mínima de techo, medida en planta (vista desde arriba). Cálculo exacto:
         {n1(r.areaMinimaExactaM2 ?? 0)} m² para {n1(r.demandaM3)} m³ al año con
         {n1(r.lluviaAprovechableMm)} mm de lluvia aprovechable.
       </p>
     </div>
-    <DibujoTecho opciones={r.opciones} />
+    <DibujoTecho opciones={r.opciones} {aguas} />
+    {#if aguas === 2}
+      <p class="nota">
+        En un techo de dos aguas el área total se reparte en dos segmentos iguales, cada uno con su
+        propia canaleta y bajante. Las dos bajantes llegan al mismo tanque.
+      </p>
+    {/if}
     <p class="nota">
       El área recomendada, que asegura agua también en la época seca con el tanque elegido, se
       calculará con la simulación diaria en la fase 1.

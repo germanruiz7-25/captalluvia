@@ -107,6 +107,35 @@ export function opcionesDeTecho(areaM2: number): OpcionTecho[] {
   });
 }
 
+/** 1 = techo de un agua (una sola pendiente); 2 = techo de dos aguas (cumbrera al centro). */
+export type NumeroAguas = 1 | 2;
+
+export interface SegmentoTecho {
+  nombre: string;
+  /** Ancho del segmento en planta, de la canaleta a la cumbrera (m). */
+  ancho: number;
+  /** Largo del segmento, igual al largo de su canaleta (m). */
+  largo: number;
+  /** Área en planta del segmento (m²). */
+  area: number;
+}
+
+/**
+ * Divide el techo en los segmentos que drenan a cada canaleta.
+ * En un techo de dos aguas la cumbrera corre a lo largo del lado largo,
+ * así cada agua tiene su propia canaleta del mismo largo y la mitad del área.
+ */
+export function segmentosDelTecho(op: OpcionTecho, aguas: NumeroAguas): SegmentoTecho[] {
+  if (aguas === 1) {
+    return [{ nombre: 'Agua única', ancho: op.ancho, largo: op.largo, area: op.area }];
+  }
+  const area = Math.round((op.area / 2) * 100) / 100;
+  return [
+    { nombre: 'Agua 1', ancho: op.ancho / 2, largo: op.largo, area },
+    { nombre: 'Agua 2', ancho: op.ancho / 2, largo: op.largo, area },
+  ];
+}
+
 export interface EntradaTecho {
   personas: number;
   litrosPorPersonaDia: number;
