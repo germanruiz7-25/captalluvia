@@ -6,7 +6,29 @@ import {
   lluviaAprovechableMm,
   opcionesDeTecho,
   redondearArriba,
+  segmentosDelTecho,
 } from '../../src/core/techo';
+
+describe('techo de una o dos aguas', () => {
+  const [casiCuadrado] = opcionesDeTecho(95);
+  it('un agua: un solo segmento con toda el área', () => {
+    const s = segmentosDelTecho(casiCuadrado, 1);
+    expect(s).toHaveLength(1);
+    expect(s[0].area).toBe(95);
+  });
+  it('dos aguas: dos segmentos de la mitad, con el mismo largo de canaleta', () => {
+    const s = segmentosDelTecho(casiCuadrado, 2);
+    expect(s.map((x) => x.area)).toEqual([47.5, 47.5]);
+    expect(s.map((x) => x.ancho)).toEqual([4.75, 4.75]);
+    expect(s.every((x) => x.largo === casiCuadrado.largo)).toBe(true);
+  });
+  it('la suma de los segmentos es el área total', () => {
+    for (const op of opcionesDeTecho(333)) {
+      const suma = segmentosDelTecho(op, 2).reduce((t, x) => t + x.area, 0);
+      expect(suma).toBeCloseTo(op.area, 2);
+    }
+  });
+});
 
 describe('demanda anual', () => {
   it('5 personas × 50 L/día = 91.25 m³/año', () => {
