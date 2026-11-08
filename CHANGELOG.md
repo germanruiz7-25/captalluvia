@@ -8,9 +8,12 @@ Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado 
 - **Paso 5 · Canaletas y bajantes:** caudal de diseño por el **método racional** (Q = C·i·A/3600), con intensidad de diseño, pendiente y material de la canaleta editables.
 - **Bajantes:** capacidad de cada diámetro (2", 3", 4", 6") con la ecuación de Wyly y Eaton, **m² de techo que evacua cada bajante** y número de bajantes por canaleta. Sugerencia mínima: el diámetro más pequeño desde 3" que resuelve con 1 o 2 bajantes por canaleta.
 - **Canaletas semicirculares** (4", 5", 6", 8"): capacidad con Manning y 25 % de borde libre, comparada con el caudal de cada tramo entre bajantes; se sugiere la menor que cumple.
+- **Canales del mercado de Guatemala:** tabla con los canales de PVC tipo colonial (Amanco Wavin Canal Colonial; Durman Estilo Clásico y Estilo Tradicional) y de alto caudal (Amanco Wavin Canal Alto Caudal; Durman MaxiCanal), con largos y bajantes compatibles. La app sugiere cuál usar.
+- El número de bajantes se compara con las tablas de los fabricantes (2" = 20 m², 3" = 60 m², 4" = 120 m² por bajante) y se usa el valor más exigente.
+- **Dibujos** del corte de la canaleta (agua a 3/4 del radio, borde libre, pendiente) y del tubo PVC de la bajante (Ø exterior, Ø interior, agua pegada a la pared).
 - Se puede elegir una de las tres formas de techo sugeridas o escribir medidas propias.
 - Fuentes y metodología: método racional, Chow (1959), Wyly y Eaton (1961).
-- 11 pruebas nuevas (51 en total).
+- 13 pruebas nuevas (53 en total).
 
 ### Cambiado
 - El flujo pasa a 5 pasos; el botón del informe PDF queda al final, después de canaletas y bajantes.

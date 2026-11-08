@@ -65,12 +65,35 @@ describe('diseño de canaletas y bajantes', () => {
     if (r.canaletaSugerida > 0) expect(r.canaletas[r.canaletaSugerida - 1].cumple).toBe(false);
   });
 
-  it('un techo grande pide más bajantes o mayor diámetro', () => {
+  it('un techo pequeño usa canal tipo colonial con bajante de 3"', () => {
+    const r = disenarDrenaje({ ...base, aguas: 2 });
+    expect(r.tipoCanal).toBe('colonial');
+    expect(r.lineasSugeridas.every((l) => l.tipo === 'colonial')).toBe(true);
+    expect(r.lineasSugeridas.map((l) => l.marca)).toEqual(['Amanco Wavin', 'Durman']);
+  });
+
+  it('un techo grande pide canal de alto caudal con bajantes de 4"', () => {
     const r = disenarDrenaje({ ...base, areaM2: 1200, largoM: 40, aguas: 2 });
     const b = r.bajantes[r.bajanteSugerida];
+    expect(r.tipoCanal).toBe('alto');
+    expect(b.nombre).toBe('4"');
+    // 600 m² por canaleta / 120 m² por bajante de 4" (fabricante) = 5
+    expect(b.porCanaleta).toBe(5);
     expect(b.porCanaleta * b.capacidadLs).toBeGreaterThanOrEqual(r.caudalPorCanaletaLs);
-    expect(b.porCanaleta).toBeLessThanOrEqual(2);
-    expect(r.tramoM).toBeCloseTo(40 / b.porCanaleta, 9);
+    expect(r.tramoM).toBeCloseTo(40 / 5, 9);
+  });
+
+  it('usa el valor más exigente entre el cálculo y la tabla del fabricante', () => {
+    // 100 m² por canaleta: el cálculo pide 1 bajante de 3", el fabricante 2 (60 m² c/u)
+    const r = disenarDrenaje({ ...base, areaM2: 100, largoM: 10, aguas: 1 });
+    const b3 = r.bajantes.find((b) => b.nombre === '3"')!;
+    expect(Math.ceil(r.caudalPorCanaletaLs / b3.capacidadLs)).toBe(1);
+    expect(b3.areaFabricanteM2).toBe(60);
+    expect(b3.porCanaleta).toBe(2);
+    const b2 = r.bajantes.find((b) => b.nombre === '2"')!;
+    expect(b2.porCanaleta).toBe(5); // 100 / 20
+    const b6 = r.bajantes.find((b) => b.nombre === '6"')!;
+    expect(b6.areaFabricanteM2).toBeNull();
   });
 
   it('cada opción de bajante cubre el caudal de su canaleta', () => {

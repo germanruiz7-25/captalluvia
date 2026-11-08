@@ -65,7 +65,10 @@ El área total en planta es la misma en ambos casos; lo que cambia es cuántas c
 3. **Sugerencia de bajante:** el diámetro más pequeño desde 3" (mínimo práctico) que resuelve con 1 o 2 bajantes por canaleta.
 4. **Canaleta (Manning):** Q = (1/n) × A × R^(2/3) × S^(1/2) para sección semicircular llenando hasta 3/4 del radio (25 % de borde libre). n = 0.011 (PVC) o 0.013 (lámina galvanizada); S = pendiente (0.5 % por defecto). Cada tramo entre bajantes lleva Q_canaleta / n_bajantes. Se sugiere la canaleta comercial más pequeña (4", 5", 6", 8") que cumple.
 
-Todas son **dimensiones mínimas**; el diseñador decide si las adopta o las aumenta.
+5. **Comparación con los fabricantes (Guatemala):** Durman y Amanco Wavin publican cuántas bajantes poner según el área de techo; ambas tablas equivalen a 2" = 20 m², 3" = 60 m² y 4" = 120 m² por bajante (no indican la intensidad de lluvia). Para cada diámetro se toma el número de bajantes por canaleta más exigente entre el cálculo de Wyly y Eaton y la tabla del fabricante. Para 6" no hay tabla y se usa solo el cálculo.
+6. **Tipo de canal comercial:** se sugiere **canal tipo colonial** (Amanco Wavin Canal Colonial; Durman Estilo Clásico o Estilo Tradicional) cuando bastan 1 o 2 bajantes de 3" por canaleta y la sección semicircular equivalente no pasa de 5" (125 mm). Si no, **canal de alto caudal** (Amanco Wavin Canal Alto Caudal; Durman MaxiCanal) con bajantes de 4". Los fabricantes no publican la sección exacta de cada perfil en sus fichas en línea, por eso la sección semicircular se presenta como **sección útil mínima** que el canal comercial debe igualar o superar. Los fabricantes indican soportes cada 40 a 50 cm y pendiente mínima de 0.2 %.
+
+Todas son **dimensiones mínimas**; el diseñador decide si las adopta o las aumenta y verifica existencias y medidas con el distribuidor.
 
 ## Ejemplo de verificación
 
@@ -85,6 +88,8 @@ En dos aguas, el techo de 9.5 × 10.0 m queda en dos segmentos de 4.75 × 10.0 m
 - Anaya Garduño, M. (2011). *Captación del agua de lluvia. Solución caída del cielo* (1.ª ed.). Colegio de Postgraduados; Universidad Autónoma Chapingo. ISBN 9786077150176. Umbral de 40 mm de PN: pp. 56–57, fig. 4.7.
 - Anaya-Garduño, M., Pérez-Hernández, A. y Luque-Delgadillo, A. (2021). Sistemas de captación del agua de lluvia (SCALL) para diversos usos. *Agro-Divulgación*, 1(0). https://doi.org/10.54767/ad.v1i1.3
 - Chow, V. T. (1959). *Open-channel hydraulics*. Nueva York: McGraw-Hill.
+- Durman (Aliaxis). *Canales para techo. Catálogo 2024*.
+- Amanco Wavin. *Canales de PVC: Canal Colonial y Canal Alto Caudal. Ficha técnica*.
 - Wyly, R. S. y Eaton, H. N. (1961). *Capacities of plumbing stacks in buildings* (BMS Report 158). Washington: National Bureau of Standards.
 - OPS/CEPIS (2004). *Guía de diseño para captación del agua de lluvia* (OPS/CEPIS/04.122). Lima: Organización Panamericana de la Salud.
 - Hersbach, H. et al. (2020). The ERA5 global reanalysis. *Quarterly Journal of the Royal Meteorological Society*, 146(730), 1999–2049. https://doi.org/10.1002/qj.3803

@@ -1,7 +1,11 @@
 <script lang="ts">
+  import DibujosDrenaje from './DibujosDrenaje.svelte';
   import {
     BAJANTE_MINIMA_PRACTICA,
+    CANALES_MERCADO,
+    EQUIVALENTE_MAX_COLONIAL_MM,
     MATERIALES_CANALETA,
+    NOMBRES_TIPO_CANAL,
     disenarDrenaje,
     type MaterialCanaleta,
   } from '../core/drenaje';
@@ -118,47 +122,87 @@
       <div class="destacado">
         <span class="cifra">{b.total} × {b.nombre}</span>
         <span>
-          <strong>Sugerencia mínima:</strong> {b.porCanaleta} bajante{b.porCanaleta > 1 ? 's' : ''} de {b.nombre} por canaleta
-          ({b.total} en total), cada una atiende un tramo de {n1(r.tramoM)} m de canaleta.
+          <strong>Sugerencia mínima: {NOMBRES_TIPO_CANAL[r.tipoCanal].toLowerCase()}</strong>
+          ({r.lineasSugeridas.map((l) => `${l.modelo} de ${l.marca}`).join(' o ')}), con {b.porCanaleta}
+          bajante{b.porCanaleta > 1 ? 's' : ''} de {b.nombre} por canaleta ({b.total} en total); cada bajante atiende
+          un tramo de {n1(r.tramoM)} m.
           {#if c}
-            Canaleta semicircular de {c.nombre} de {MATERIALES_CANALETA[material].nombre} con pendiente de
+            La sección útil del canal no debe ser menor que una canaleta semicircular de {c.nombre} con pendiente de
             {n1(Number(pendientePct))} %.
           {:else}
-            Ninguna canaleta comercial de la lista alcanza: agrega más bajantes, aumenta la pendiente o usa una canaleta mayor.
+            Ni la canaleta semicircular más grande de la lista alcanza: agrega más bajantes o aumenta la pendiente.
           {/if}
         </span>
       </div>
       <p class="nota">
-        Son dimensiones mínimas calculadas: el diseñador decide si las toma como base o las aumenta (por ejemplo, por
-        hojas, granizo o mantenimiento).
+        Son dimensiones mínimas: el diseñador decide si las toma como base o las aumenta (por ejemplo, por hojas,
+        granizo o mantenimiento). Verifica existencias y medidas con el distribuidor.
       </p>
 
-      <h3>Bajantes: m² de techo que evacua cada diámetro</h3>
+      {#if c}
+        <DibujosDrenaje
+          canaletaNombre={c.nombre}
+          canaletaMm={c.diametroMm}
+          tipoCanal={NOMBRES_TIPO_CANAL[r.tipoCanal]}
+          pendientePct={Number(pendientePct)}
+          bajanteNombre={b.nombre}
+          exteriorMm={b.exteriorMm}
+          interiorMm={b.interiorMm}
+        />
+      {/if}
+
+      <h3>Canales de PVC en el mercado de Guatemala</h3>
       <div class="tabla-desplazable">
-        <table class="tabla">
+        <table class="tabla mercado">
           <thead>
-            <tr><th>Diámetro</th><th class="extra">Ø interior aprox.</th><th>Capacidad</th><th>m² que evacua c/u</th><th>Por canaleta</th><th>Total</th></tr>
+            <tr><th>Tipo</th><th>Marca y modelo</th><th class="extra">Largos</th><th>Bajantes</th></tr>
           </thead>
           <tbody>
-            {#each r.bajantes as x, i (x.nombre)}
-              <tr class:sugerida={i === r.bajanteSugerida} class:tenue={!x.practica}>
-                <td>{x.nombre}{i === r.bajanteSugerida ? ' ✓' : ''}</td>
-                <td class="extra">{x.interiorMm} mm</td>
-                <td>{n2(x.capacidadLs)} L/s</td>
-                <td>{n0(x.areaQueEvacuaM2)} m²</td>
-                <td>{x.porCanaleta}</td>
-                <td>{x.total}</td>
+            {#each CANALES_MERCADO as l (l.marca + l.modelo)}
+              <tr class:sugerida={l.tipo === r.tipoCanal}>
+                <td>{l.tipo === 'colonial' ? 'Colonial' : 'Alto caudal'}{l.tipo === r.tipoCanal ? ' ✓' : ''}</td>
+                <td>{l.marca}: {l.modelo}</td>
+                <td class="extra largos">{l.largosM.join(', ')} m</td>
+                <td>{l.bajantes}</td>
               </tr>
             {/each}
           </tbody>
         </table>
       </div>
       <p class="nota">
-        Con una lluvia de {n0(Number(intensidad))} mm/h y C = {ce}. Diámetros menores a {BAJANTE_MINIMA_PRACTICA} (en gris) se
+        Criterio: se sugiere canal tipo colonial cuando bastan 1 o 2 bajantes de 3" por canaleta y la sección
+        equivalente no pasa de 5" ({EQUIVALENTE_MAX_COLONIAL_MM / 10} cm); si no, canal de
+        alto caudal con bajantes de 4". Los fabricantes indican soportes cada 40 a 50 cm y una pendiente mínima de 0.2 %.
+      </p>
+
+      <h3>Bajantes: m² de techo que evacua cada diámetro</h3>
+      <div class="tabla-desplazable">
+        <table class="tabla">
+          <thead>
+            <tr><th>Diámetro</th><th class="extra">Ø interior aprox.</th><th class="extra">Capacidad</th><th>m² c/u cálculo</th><th>m² c/u fabricante</th><th>Por canaleta</th><th class="extra">Total</th></tr>
+          </thead>
+          <tbody>
+            {#each r.bajantes as x, i (x.nombre)}
+              <tr class:sugerida={i === r.bajanteSugerida} class:tenue={!x.practica}>
+                <td>{x.nombre}{i === r.bajanteSugerida ? ' ✓' : ''}</td>
+                <td class="extra">{x.interiorMm} mm</td>
+                <td class="extra">{n2(x.capacidadLs)} L/s</td>
+                <td>{n0(x.areaQueEvacuaM2)} m²</td>
+                <td>{x.areaFabricanteM2 ? `${x.areaFabricanteM2} m²` : '—'}</td>
+                <td>{x.porCanaleta}</td>
+                <td class="extra">{x.total}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+      <p class="nota">
+        Cálculo con una lluvia de {n0(Number(intensidad))} mm/h y C = {ce}; fabricante según las tablas de Durman y Amanco
+        Wavin. «Por canaleta» usa el valor más exigente de los dos. Diámetros menores a {BAJANTE_MINIMA_PRACTICA} (en gris) se
         tapan con facilidad y no se sugieren como mínimo.
       </p>
 
-      <h3>Canaletas semicirculares: tramo de {n1(r.tramoM)} m con {n2(r.caudalPorTramoLs)} L/s</h3>
+      <h3>Sección equivalente (semicircular): tramo de {n1(r.tramoM)} m con {n2(r.caudalPorTramoLs)} L/s</h3>
       <div class="tabla-desplazable">
         <table class="tabla">
           <thead>
@@ -204,4 +248,7 @@
   .tabla tr.sugerida td { background: var(--acento-suave); font-weight: 700; }
   .tabla tr.tenue td { color: var(--texto-suave); }
   .destacado .cifra { white-space: nowrap; }
+  .tabla.mercado td { white-space: normal; text-align: left; }
+  .tabla.mercado th { text-align: left; }
+  .tabla.mercado td.largos { white-space: nowrap; }
 </style>

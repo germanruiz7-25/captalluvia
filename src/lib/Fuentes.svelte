@@ -76,6 +76,11 @@
       Chow, V. T. (1959). <em>Open-channel hydraulics</em>. Nueva York: McGraw-Hill.
     </li>
     <li>
+      Canales de PVC del mercado de Guatemala y m² de techo por bajante (2" = 20 m², 3" = 60 m², 4" = 120 m²):
+      Durman (Aliaxis). <em>Canales para techo. Catálogo 2024</em>; Amanco Wavin. <em>Canales de PVC: Canal
+      Colonial y Canal Alto Caudal. Ficha técnica</em>. Consultados el 7/11/2026.
+    </li>
+    <li>
       Capacidad de bajantes: Wyly, R. S. y Eaton, H. N. (1961). <em>Capacities of plumbing stacks in buildings</em>
       (BMS Report 158). Washington: National Bureau of Standards. Llenado de 1/3 de la sección.
     </li>
