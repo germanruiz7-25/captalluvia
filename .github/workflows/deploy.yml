@@ -1,0 +1,47 @@
+name: Publicar en GitHub Pages
+
+# Se publica al crear un Release (por ejemplo v0.1.0) o a mano desde la pestaña Actions.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  compilar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Compilar el sitio
+        run: npm run build
+        env:
+          # '/captalluvia/' en germanruiz7-25.github.io; '/' con el dominio captalluvia.org
+          BASE_PATH: ${{ vars.BASE_PATH || '/captalluvia/' }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  publicar:
+    needs: compilar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
