@@ -73,7 +73,7 @@ En dos aguas, el techo de 9.5 × 10.0 m queda en dos segmentos de 4.75 × 10.0 m
 
 ## Referencias
 
-- Anaya Garduño, M. (2011). *Captación del agua de lluvia: solución caída del cielo*. Biblioteca Básica de Agricultura, Colegio de Postgraduados. ISBN 9786077150176.
+- Anaya Garduño, M. (2011). *Captación del agua de lluvia. Solución caída del cielo* (1.ª ed.). Colegio de Postgraduados; Universidad Autónoma Chapingo. ISBN 9786077150176. Umbral de 40 mm de PN: pp. 56–57, fig. 4.7.
 - Anaya-Garduño, M., Pérez-Hernández, A. y Luque-Delgadillo, A. (2021). Sistemas de captación del agua de lluvia (SCALL) para diversos usos. *Agro-Divulgación*, 1(0). https://doi.org/10.54767/ad.v1i1.3
 - OPS/CEPIS (2004). *Guía de diseño para captación del agua de lluvia* (OPS/CEPIS/04.122). Lima: Organización Panamericana de la Salud.
 - Hersbach, H. et al. (2020). The ERA5 global reanalysis. *Quarterly Journal of the Royal Meteorological Society*, 146(730), 1999–2049. https://doi.org/10.1002/qj.3803

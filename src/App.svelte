@@ -83,7 +83,7 @@
     </label>
   </section>
 
-  <PasoLluvia bind:lluvia bind:lat bind:lon umbralMm={Number(umbralMm) || 0} />
+  <PasoLluvia bind:lluvia bind:lat bind:lon {oferta} {tipoTecho} descarteMm={Number(descarteMm) || 0} />
   <PasoTecho {lluvia} {oferta} bind:tipoTecho bind:aguas bind:descarteMm bind:areaDisponible bind:umbralMm />
   <PasoUsuarios bind:edificio bind:usuarios bind:dotacionId bind:usos bind:diasUso {demanda} />
   <PasoResultados {oferta} {demanda} {aguas} onInforme={descargarInforme} />

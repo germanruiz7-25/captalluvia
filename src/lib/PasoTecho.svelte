@@ -52,7 +52,7 @@
     <label>Primer descarte por lluvia (mm)
       <input type="number" min="0" max="5" step="0.5" bind:value={descarteMm} />
     </label>
-    <label>Captar desde (mm de lluvia al mes)
+    <label>Captar desde (mm de PN al mes)
       <input type="number" min="0" max="300" step="5" bind:value={umbralMm} />
     </label>
     <label>Área de techo existente (m², opcional)
@@ -62,7 +62,7 @@
 
   <p class="solo-impresion">
     Techo de {NOMBRES_TECHO[tipoTecho].toLowerCase()} (Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}),
-    {aguas === 2 ? 'dos aguas' : 'un agua'}, primer descarte de {n1(descarteMm)} mm por lluvia, captación desde {n0(umbralMm)} mm al mes{#if areaDisponible}, área existente {n0(areaDisponible)} m²{/if}.
+    {aguas === 2 ? 'dos aguas' : 'un agua'}, primer descarte de {n1(descarteMm)} mm por lluvia, captación en meses con {n0(umbralMm)} mm o más de precipitación neta{#if areaDisponible}, área existente {n0(areaDisponible)} m²{/if}.
   </p>
 
   {#if !lluvia || !oferta}
@@ -71,7 +71,7 @@
     <table class="cascada">
       <tbody>
         <tr><td>Lluvia que cae al año</td><td>{n0(oferta.brutaAnualMm)} mm</td></tr>
-        <tr><td>− Meses con menos de {n0(oferta.umbralMm)} mm, no se captan{mesesSecos.length ? ` (${mesesSecos.join(', ')})` : ''}</td><td>−{n0(oferta.perdidaMesesSecosMm)} mm</td></tr>
+        <tr><td>− Meses con PN menor a {n0(oferta.umbralMm)} mm, no se captan{mesesSecos.length ? ` (${mesesSecos.join(', ')})` : ''}</td><td>−{n0(oferta.perdidaMesesSecosMm)} mm</td></tr>
         <tr><td>− Pérdida por el material del techo (Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}, {NOMBRES_TECHO[tipoTecho].toLowerCase()})</td><td>−{n0(oferta.perdidaEscorrentiaMm)} mm</td></tr>
         <tr><td>− Primer descarte ({n1(descarteMm)} mm por cada día con lluvia de los meses captados)</td><td>−{n0(oferta.perdidaDescarteMm)} mm</td></tr>
         <tr class="total"><td>Lluvia neta aprovechable</td><td>{n0(oferta.netaAnualMm)} mm</td></tr>
@@ -95,14 +95,14 @@
       <p class="nota">Si ya existe un techo, escribe su área para ver cuántos m³ netos se pueden obtener al año.</p>
     {/if}
 
-    <h3>Lluvia bruta y neta por mes (mm)</h3>
-    <GraficoMensual brutaMm={lluvia.mensualMm} netaMm={oferta.netaMensualMm} umbralMm={oferta.umbralMm || null} />
+    <h3>Precipitación promedio y PN cosechada por mes (mm)</h3>
+    <GraficoMensual brutaMm={lluvia.mensualMm} netaMm={oferta.pnMensualMm} captados={oferta.mesesCaptados} umbralMm={oferta.umbralMm || null} />
     <p class="leyenda-grafico">
-      <span class="item"><span class="muestra bruta"></span> Lluvia que cae</span>
-      <span class="item"><span class="muestra neta"></span> Lluvia neta aprovechable</span>
+      <span class="item"><span class="muestra bruta"></span> Precipitación promedio</span>
+      <span class="item"><span class="muestra neta"></span> PN a cosechar</span>
       {#if oferta.umbralMm > 0}
-        <span class="item"><span class="muestra seco"></span> Mes que no se capta</span>
-        <span class="item"><span class="linea-umbral"></span> Inicio de captación ({n0(oferta.umbralMm)} mm)</span>
+        <span class="item"><span class="muestra gris"></span> PN de un mes que no se capta</span>
+        <span class="item"><span class="linea-umbral"></span> {n0(oferta.umbralMm)} mm de PN: inicio de captación</span>
       {/if}
     </p>
   {/if}
@@ -118,7 +118,7 @@
   .muestra { display: inline-block; width: 0.9rem; height: 0.9rem; border-radius: 2px; }
   .muestra.bruta { background: var(--acento-suave); border: 1px solid var(--acento); }
   .muestra.neta { background: var(--acento); }
-  .muestra.seco { background: var(--fondo); border: 1px dashed var(--texto-suave); }
+  .muestra.gris { background: var(--texto-suave); opacity: 0.45; }
   .item { display: inline-flex; align-items: center; gap: 0.3rem; }
   .linea-umbral { display: inline-block; width: 1.5rem; border-top: 2px dashed #c4320a; }
 </style>
