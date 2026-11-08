@@ -11,7 +11,7 @@ CaptaLluvia es una herramienta web gratuita para ubicar una vivienda, analizar l
 
 ## Estado
 
-Versión **0.0.2 — fase 0 (preparación)**. Incluye la estructura del proyecto, la licencia, la integración continua y un primer cálculo: el **área mínima de techo** que necesita una familia, con tres formas sugeridas de ancho × largo.
+Versión **0.1.0**. La app funciona en cuatro pasos con resultados preliminares en pantalla: (1) lluvia del lugar por coordenadas/GPS (20 años de Open-Meteo) o a mano; (2) techo, coeficiente de escorrentía, primer descarte y lluvia neta en m³; (3) usuarios de vivienda, escuela o institución y litros por usuario (sugeridos o personalizados); (4) m² de techo necesarios con dibujo de uno o dos aguas. Al final genera un **informe en PDF**.
 
 La hoja de ruta completa está en [docs/HOJA-DE-RUTA.md](docs/HOJA-DE-RUTA.md).
 
@@ -38,7 +38,7 @@ docs/          privacidad, publicación, hoja de ruta y metodología
 
 ## Cómo citar
 
-> Alfaro, G. (2026). *CaptaLluvia v0.0.2*. Programa de Gestión de Riesgo de Desastres, ICC. https://captalluvia.org
+> Alfaro, G. (2026). *CaptaLluvia v0.1.0*. Programa de Gestión de Riesgo de Desastres, ICC. https://captalluvia.org
 
 GitHub también ofrece la cita en el botón **"Cite this repository"** (archivo `CITATION.cff`).
 

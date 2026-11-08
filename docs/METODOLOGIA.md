@@ -1,7 +1,26 @@
 # Metodología de cálculo
 
 Unidades: lluvia en mm (1 mm = 1 L/m²), áreas en m², volúmenes en m³.
-Código: `src/core/techo.ts` · Pruebas: `tests/core/techo.test.ts`.
+Código: `src/core/` · Pruebas: `tests/core/`.
+
+## 0. Lluvia del lugar (`lluvia.ts`, `openmeteo.ts`)
+
+- Se descargan los últimos 20 años completos de lluvia diaria de Open-Meteo (reanálisis ERA5) para las coordenadas redondeadas a 2 decimales (~1 km).
+- Para cada mes de cada año se suma la lluvia; un mes se acepta si tiene al menos 80 % de días con dato (los días faltantes se completan en proporción).
+- La lluvia mensual es el promedio de los años válidos; la anual, la suma de los 12 promedios.
+- Un día con 1 mm o más cuenta como día con lluvia (un evento de primer descarte).
+- En el modo manual, los días con lluvia del año se reparten entre los meses en proporción a la lluvia de cada mes.
+
+## 0.1 Lluvia neta y m³ (`oferta.ts`)
+
+Para cada mes: neta = máx(0, P_mes × Ce − días_con_lluvia_mes × d_ff). La neta anual es la suma de los meses.
+Con un área de techo A: m³ netos = neta (mm) × A / 1000.
+
+## 0.2 Demanda (`demanda.ts`)
+
+V = usuarios × litros por usuario al día × días de uso al año / 1000.
+Días de uso: vivienda 365; escuela 180 (mínimo de días de clase en Guatemala; editable); institución 250 (editable).
+La dotación puede elegirse de opciones sugeridas o definirse por usos (por ejemplo escuela: 2 L para beber + 1 L para lavado de manos y boca o cocina).
 
 ## 1. Demanda anual de la familia
 
@@ -11,7 +30,7 @@ Dotaciones de referencia: 20 L/persona/día (acceso básico, OMS); 50 y 100 L/pe
 
 ## 2. Lluvia aprovechable
 
-P_aprovechable = P_anual × Ce − n_eventos × d_ff
+P_aprovechable = P_anual × Ce − n_eventos × d_ff  (desde v0.1.0 se calcula mes a mes, ver 0.1)
 
 - **Ce**, coeficiente de escorrentía: lámina metálica 0.90; teja de barro 0.80; losa de concreto 0.80; paja 0.60.
 - **n_eventos**: días con lluvia en el año (en la fase 1 se contarán los días con más de 1 mm en la serie diaria).
