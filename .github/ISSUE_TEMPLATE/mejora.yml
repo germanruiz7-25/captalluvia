@@ -1,0 +1,19 @@
+name: Proponer una mejora
+description: Una idea, un dato local (tanques, precios) o una nueva función
+labels: [mejora]
+body:
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: ¿Qué propones?
+    validations:
+      required: true
+  - type: textarea
+    id: para-que
+    attributes:
+      label: ¿Para qué serviría y a quién?
+  - type: input
+    id: organizacion
+    attributes:
+      label: Organización y país (opcional)
+      description: Nos ayuda a medir el impacto de CaptaLluvia.

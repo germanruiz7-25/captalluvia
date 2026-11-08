@@ -1,0 +1,39 @@
+/* Sin fuentes externas (ni Google Fonts ni CDN): se usan las del sistema. */
+:root {
+  --fondo: #ffffff;
+  --fondo-tarjeta: #f6f9fb;
+  --texto: #14212b;
+  --texto-suave: #52606d;
+  --borde: #cbd5df;
+  --acento: #0b6fb3;
+  --acento-suave: #e3f0fa;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.5;
+  color: var(--texto);
+  background: var(--fondo);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #0f171e;
+    --fondo-tarjeta: #16222c;
+    --texto: #e6edf3;
+    --texto-suave: #9fb0bf;
+    --borde: #2c3d4b;
+    --acento: #4fa8e8;
+    --acento-suave: #173246;
+  }
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+a { color: var(--acento); }
+
+.tarjeta {
+  background: var(--fondo-tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: 0.75rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+.tarjeta h2 { margin-top: 0; }
+.nota { color: var(--texto-suave); font-size: 0.9rem; }

@@ -1,0 +1,29 @@
+name: Reportar un error
+description: Algo no funciona o un cálculo parece incorrecto
+labels: [error]
+body:
+  - type: textarea
+    id: que-paso
+    attributes:
+      label: ¿Qué pasó?
+      description: Describe el problema y qué esperabas que ocurriera.
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para repetirlo
+      placeholder: "1. Abrí la calculadora\n2. Escribí 5 personas y 1,200 mm\n3. ..."
+  - type: input
+    id: version
+    attributes:
+      label: Versión de CaptaLluvia
+      description: Aparece al pie de la página (por ejemplo v0.0.1).
+  - type: input
+    id: dispositivo
+    attributes:
+      label: Dispositivo y navegador
+      placeholder: Teléfono Android con Chrome
+  - type: markdown
+    attributes:
+      value: "No incluyas datos personales ni coordenadas exactas de una vivienda."

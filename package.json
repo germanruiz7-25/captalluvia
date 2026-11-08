@@ -1,0 +1,35 @@
+{
+  "name": "captalluvia",
+  "private": true,
+  "version": "0.0.1",
+  "description": "CaptaLluvia: diseño de sistemas de cosecha de agua de lluvia (SCALL) a nivel domiciliario",
+  "author": "Alfaro, G. <galfaro@icc.org.gt>",
+  "license": "SEE LICENSE IN LICENSE",
+  "homepage": "https://captalluvia.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/germanruiz7-25/captalluvia.git"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@tsconfig/svelte": "^5.0.8",
+    "@types/node": "^24.19.2",
+    "svelte": "^5.57.3",
+    "svelte-check": "^4.7.7",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  }
+}
