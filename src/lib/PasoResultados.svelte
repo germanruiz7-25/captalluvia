@@ -8,12 +8,10 @@
     oferta,
     demanda,
     aguas,
-    onInforme,
   }: {
     oferta: ResumenOferta | null;
     demanda: ResumenDemanda;
     aguas: NumeroAguas;
-    onInforme: () => void;
   } = $props();
 
   const exacta = $derived(oferta ? areaMinimaM2(demanda.m3Anual, oferta.netaAnualMm) : null);
@@ -28,8 +26,8 @@
 </script>
 
 <section class="tarjeta paso">
-  <p class="numero-paso">Paso 4 de 4</p>
-  <h2>Resultados del diseño</h2>
+  <p class="numero-paso">Paso 4 de 5</p>
+  <h2>Área de techo necesaria</h2>
 
   {#if !oferta}
     <p class="nota">Completa el paso 1 para ver los resultados.</p>
@@ -65,14 +63,7 @@
     <p class="nota">
       Este es el balance anual: el agua que cae en la época de lluvia debe guardarse para la época seca.
       En la siguiente versión se agregan la simulación mes a mes del tanque, el área recomendada para la
-      época seca, y el cálculo de canaletas, bajantes, tanque comercial, materiales y presupuesto.
-    </p>
-
-    <div class="acciones no-imprimir">
-      <button class="principal" onclick={onInforme}>Descargar informe en PDF</button>
-    </div>
-    <p class="nota no-imprimir">
-      Se abrirá la ventana de impresión: elige "Guardar como PDF" como destino.
+      época seca, el tanque comercial, los materiales y el presupuesto.
     </p>
   {/if}
 </section>

@@ -2,6 +2,24 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.2.0] — 2026-11-08 — Canaletas y bajantes
+
+### Agregado
+- **Paso 5 · Canaletas y bajantes:** caudal de diseño por el **método racional** (Q = C·i·A/3600), con intensidad de diseño, pendiente y material de la canaleta editables.
+- **Bajantes:** capacidad de cada diámetro (2", 3", 4", 6") con la ecuación de Wyly y Eaton, **m² de techo que evacua cada bajante** y número de bajantes por canaleta. Sugerencia mínima: el diámetro más pequeño desde 3" que resuelve con 1 o 2 bajantes por canaleta.
+- **Canaletas semicirculares** (4", 5", 6", 8"): capacidad con Manning y 25 % de borde libre, comparada con el caudal de cada tramo entre bajantes; se sugiere la menor que cumple.
+- **Canales del mercado de Guatemala:** tabla con los canales de PVC tipo colonial (Amanco Wavin Canal Colonial; Durman Estilo Clásico y Estilo Tradicional) y de alto caudal (Amanco Wavin Canal Alto Caudal; Durman MaxiCanal), con largos y bajantes compatibles. La app sugiere cuál usar.
+- El número de bajantes se compara con las tablas de los fabricantes (2" = 20 m², 3" = 60 m², 4" = 120 m² por bajante) y se usa el valor más exigente.
+- **Opción 2 · canal comercial:** revisión con Manning del Canal Colonial (fondo 100 mm, lados de 90 y 130 mm) y del Canal Alto Caudal (fondo 151.2 mm, lados de 90.72 y 136.08 mm) de Amanco Wavin, o de un canal con medidas propias; el agua se limita a 3/4 del lado más bajo.
+- La sugerencia colonial o alto caudal se decide con la capacidad real de esas secciones; con alto caudal se agregan bajantes de 4" si el canal no alcanza.
+- **Dibujos** del corte del canal comercial (colonial o alto caudal), del corte de la canaleta (agua a 3/4 del radio, borde libre, pendiente) y del tubo PVC de la bajante (Ø exterior, Ø interior, agua pegada a la pared).
+- Se puede elegir una de las tres formas de techo sugeridas o escribir medidas propias.
+- Fuentes y metodología: método racional, Chow (1959), Wyly y Eaton (1961).
+- 17 pruebas nuevas (57 en total).
+
+### Cambiado
+- El flujo pasa a 5 pasos; el botón del informe PDF queda al final, después de canaletas y bajantes.
+
 ## [0.1.1] — 2026-11-07 — Precipitación neta (PN) y umbral de 40 mm de PN
 
 ### Cambiado
