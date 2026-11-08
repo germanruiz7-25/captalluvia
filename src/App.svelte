@@ -70,6 +70,7 @@
   }
 
   let resumenDrenaje = $state('');
+  let fuenteIntensidad = $state('');
   let confirmarBorrado = $state(false);
 
   function borrarTodo() {
@@ -212,7 +213,7 @@
     <PasoResultados {oferta} {demanda} {aguas} />
   </div>
   <div class="pantalla" class:activa={paso === 6}>
-    <PasoDrenaje opciones={opcionesTecho} {aguas} {tipoTecho} bind:resumen={resumenDrenaje} />
+    <PasoDrenaje opciones={opcionesTecho} {aguas} {tipoTecho} {lat} {lon} bind:resumen={resumenDrenaje} bind:fuenteIntensidad />
   </div>
   <div class="pantalla" class:activa={paso === 7}>
     <section class="tarjeta paso no-imprimir">
@@ -262,7 +263,7 @@
         {/if}
       </details>
     </section>
-    <Fuentes {lluvia} {lat} {lon} {edificio} umbralMm={Number(umbralMm) || 0} />
+    <Fuentes {lluvia} {lat} {lon} {edificio} umbralMm={Number(umbralMm) || 0} {fuenteIntensidad} />
     <Acerca />
   </div>
 

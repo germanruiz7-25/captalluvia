@@ -74,6 +74,13 @@ El área total en planta es la misma en ambos casos; lo que cambia es cuántas c
 
 Todas son **dimensiones mínimas**; el diseñador decide si las adopta o las aumenta y verifica existencias y medidas con el distribuidor.
 
+## 7. Intensidad de diseño y simulador (`idf.ts`, `drenaje.ts`)
+
+1. **Curvas IDF de estación:** I [mm/h] = A / (D + B)^n, con D en minutos y A, B, n de la distribución de Gumbel para T = 2, 5, 10, 25, 50 y 100 años (INSIVUMEH e ICC, 2025; 22 estaciones de la vertiente del Pacífico). Se usa la estación más cercana (distancia haversine) si está a 25 km o menos; si no, el usuario escribe la intensidad.
+2. **Diseño:** D = 5 minutos (techos con tiempo de concentración muy corto) y T = 10 años por defecto (editable).
+3. **Forma de Sherman con periodo de retorno** (app de W. Bardales en Google Earth Engine, rejilla de 1 km para Guatemala): I = K · T^m / (D + B)^n. La app enlaza a esa herramienta; el valor se escribe a mano.
+4. **Simulador:** para cada intensidad, Q del tramo = C · i · A_tramo / 3600, con A_tramo = área del techo / canaletas / bajantes por canaleta. El nivel del agua en el canal rectangular se obtiene resolviendo Manning por bisección. Estados: dentro del diseño (≤ 3/4 del lado bajo), al límite (entre 3/4 y el lado bajo) y rebalsa (> lado bajo). La bajante se satura cuando Q supera su capacidad (Wyly y Eaton, llenado 1/3). Las intensidades límite salen de i = 3600 · Q / (C · A_tramo).
+
 ## Ejemplo de verificación
 
 5 personas × 50 L/día = 91.25 m³/año. Lluvia de 1,200 mm con 110 días de lluvia, lámina metálica, descarte de 1 mm:
@@ -91,6 +98,8 @@ En dos aguas, el techo de 9.5 × 10.0 m queda en dos segmentos de 4.75 × 10.0 m
 
 - Anaya Garduño, M. (2011). *Captación del agua de lluvia. Solución caída del cielo* (1.ª ed.). Colegio de Postgraduados; Universidad Autónoma Chapingo. ISBN 9786077150176. Umbral de 40 mm de PN: pp. 56–57, fig. 4.7.
 - Anaya-Garduño, M., Pérez-Hernández, A. y Luque-Delgadillo, A. (2021). Sistemas de captación del agua de lluvia (SCALL) para diversos usos. *Agro-Divulgación*, 1(0). https://doi.org/10.54767/ad.v1i1.3
+- INSIVUMEH e ICC (2025). *Curvas de intensidad, duración y frecuencia (IDF) para la vertiente del Pacífico de Guatemala*. 54 p. https://icc.org.gt/wp-content/uploads/2023/03/265.pdf
+- Bardales, W. (s. f.). *IDF_Guatemala_Sherman* [aplicación de Google Earth Engine]. https://ee-bardaleswa.projects.earthengine.app/view/idfguatemalasherman
 - Chow, V. T. (1959). *Open-channel hydraulics*. Nueva York: McGraw-Hill.
 - Durman (Aliaxis). *Canales para techo. Catálogo 2024*.
 - Amanco Wavin. *Canales de PVC: Canal Colonial y Canal Alto Caudal. Ficha técnica*.

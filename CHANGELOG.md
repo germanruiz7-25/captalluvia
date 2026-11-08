@@ -2,6 +2,15 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.4.0] — 2026-11-08 — Curvas IDF y simulador de lluvia intensa
+
+### Agregado
+- **Intensidad de diseño desde curvas IDF:** la app busca la estación más cercana al punto marcado entre las 22 estaciones de *Curvas de intensidad, duración y frecuencia (IDF) para la vertiente del Pacífico de Guatemala* (INSIVUMEH e ICC, 2025) y calcula I = A / (D + B)^n para un aguacero de 5 minutos y el periodo de retorno elegido (10 años sugerido). Si la estación está a más de 25 km, se pide escribir el dato.
+- Enlace a la app **IDF Guatemala (Sherman) de Walter Bardales** en Google Earth Engine para consultar la curva del punto y escribir el valor; citada en las fuentes.
+- **Simulador "¿qué pasa si llueve más fuerte?":** barra de intensidad con marcas de los periodos de retorno de la estación, dibujo del canal con el nivel del agua (dentro del diseño, al límite o rebalsa), uso de la bajante y las intensidades a las que el canal rebalsa y la bajante se satura; indica qué falla primero.
+- **Tabla de aguaceros cortos** de la estación (5 a 60 minutos × 2 a 100 años) coloreada según cómo responde el canal.
+- 13 pruebas nuevas (79 en total).
+
 ## [0.3.0] — 2026-11-08 — Asistente por pasos y mapa
 
 ### Agregado

@@ -1,5 +1,17 @@
 <script lang="ts">
   import DibujosDrenaje from './DibujosDrenaje.svelte';
+  import SimuladorLluvia from './SimuladorLluvia.svelte';
+  import {
+    DURACION_DISENO_MIN,
+    DISTANCIA_MAX_KM,
+    FUENTE_IDF_BARDALES,
+    FUENTE_IDF_ICC,
+    PERIODOS_RETORNO,
+    PERIODO_DISENO,
+    estacionMasCercana,
+    intensidadEstacion,
+    type PeriodoRetorno,
+  } from '../core/idf';
   import {
     BAJANTE_MINIMA_PRACTICA,
     CANALES_MERCADO,
@@ -16,14 +28,39 @@
     opciones,
     aguas,
     tipoTecho,
+    lat = '',
+    lon = '',
     resumen = $bindable(''),
-  }: { opciones: OpcionTecho[]; aguas: NumeroAguas; tipoTecho: TipoTecho; resumen?: string } = $props();
+    fuenteIntensidad = $bindable(''),
+  }: {
+    opciones: OpcionTecho[];
+    aguas: NumeroAguas;
+    tipoTecho: TipoTecho;
+    lat?: string;
+    lon?: string;
+    resumen?: string;
+    fuenteIntensidad?: string;
+  } = $props();
 
   // Parámetros de diseño (editables por el diseñador)
   let techoElegido = $state('rectangular');
   let largoPropio: number | null = $state(null);
   let anchoPropio: number | null = $state(null);
-  let intensidad = $state(150);
+  // Intensidad de diseño: de la curva IDF de la estación más cercana o escrita a mano
+  let intensidadManual = $state(150);
+  let periodo: PeriodoRetorno = $state(PERIODO_DISENO);
+  const cercana = $derived(lat !== '' && lon !== '' ? estacionMasCercana(Number(lat), Number(lon)) : null);
+  let origen = $state<'auto' | 'estacion' | 'manual'>('auto');
+  const usarEstacion = $derived(cercana !== null && (origen === 'estacion' || (origen === 'auto' && cercana.util)));
+  const intensidad = $derived(
+    usarEstacion && cercana ? Math.round(intensidadEstacion(cercana.estacion, periodo, DURACION_DISENO_MIN)) : Number(intensidadManual) || 0,
+  );
+  $effect(() => {
+    fuenteIntensidad =
+      usarEstacion && cercana
+        ? `${FUENTE_IDF_ICC.corta}, estación ${cercana.estacion.nombre}, ${DURACION_DISENO_MIN} min, T = ${periodo} años`
+        : 'Escrita por el usuario';
+  });
   let pendientePct = $state(0.5);
   let material: MaterialCanaleta = $state('pvc');
   // Opción 2: canal comercial (colonial o alto caudal) o medidas propias
@@ -110,9 +147,6 @@
           <input type="number" min="1" step="0.5" bind:value={anchoPropio} />
         </label>
       {/if}
-      <label>Intensidad de lluvia de diseño (mm/h)
-        <input type="number" min="10" max="400" step="5" bind:value={intensidad} />
-      </label>
       <label>Pendiente de la canaleta (%)
         <input type="number" min="0.1" max="5" step="0.1" bind:value={pendientePct} />
       </label>
@@ -124,11 +158,67 @@
         </select>
       </label>
     </div>
-    <p class="nota no-imprimir">
-      La intensidad de diseño debe tomarse de la curva intensidad-duración-frecuencia (IDF) de la estación más
-      cercana (INSIVUMEH en Guatemala), para una lluvia de 5 minutos y un periodo de retorno de 5 a 10 años.
-      150 mm/h es solo un valor de partida.
-    </p>
+    <div class="intensidad-caja">
+      <h3>¿Qué tan fuerte llueve aquí?</h3>
+      <p class="nota">
+        La canaleta se calcula para un aguacero corto e intenso ({DURACION_DISENO_MIN} minutos), no para la lluvia
+        promedio. Ese dato sale de la curva intensidad-duración-frecuencia (IDF).
+      </p>
+      <div class="campos no-imprimir">
+        <label>De dónde sale la intensidad
+          <select bind:value={origen}>
+            <option value="auto">Automático</option>
+            <option value="estacion" disabled={!cercana}>Estación con curva IDF más cercana</option>
+            <option value="manual">Escribirla yo</option>
+          </select>
+        </label>
+        {#if usarEstacion}
+          <label>Periodo de retorno (cada cuántos años)
+            <select bind:value={periodo}>
+              {#each PERIODOS_RETORNO as tr (tr)}
+                <option value={tr}>{tr} años{tr === PERIODO_DISENO ? ' (sugerido)' : ''}</option>
+              {/each}
+            </select>
+          </label>
+        {:else}
+          <label>Intensidad de lluvia de diseño (mm/h)
+            <input type="number" min="10" max="500" step="5" bind:value={intensidadManual} />
+          </label>
+        {/if}
+      </div>
+      {#if usarEstacion && cercana}
+        <div class="destacado">
+          <span class="cifra">{n0(intensidad)} mm/h</span>
+          <span>
+            Estación <strong>{cercana.estacion.nombre}</strong> ({cercana.estacion.municipio}, {cercana.estacion.departamento}),
+            a {n0(cercana.km)} km: aguacero de {DURACION_DISENO_MIN} minutos que se repite cada {periodo} años.
+            Fuente: {FUENTE_IDF_ICC.corta}.
+          </span>
+        </div>
+        {#if !cercana.util}
+          <p class="alerta">
+            La estación está a más de {DISTANCIA_MAX_KM} km: úsala solo como referencia y, si puedes, escribe el dato de
+            tu punto.
+          </p>
+        {/if}
+      {:else}
+        <p class="nota">
+          {#if cercana && !cercana.util}
+            Las curvas IDF incluidas son de la vertiente del Pacífico (22 estaciones) y la más cercana,
+            {cercana.estacion.nombre}, está a {n0(cercana.km)} km.
+          {:else if !cercana}
+            Marca la vivienda en el mapa (paso 1) para buscar la estación con curva IDF más cercana.
+          {/if}
+          <span class="no-imprimir">
+            Puedes consultar la curva IDF de tu punto en la
+            <a href={FUENTE_IDF_BARDALES.url} target="_blank" rel="noopener">app IDF Guatemala de Walter Bardales</a>
+            {#if lat && lon}(escribe allí {lat}, {lon}){/if}: busca la línea de {PERIODO_DISENO} años en {DURACION_DISENO_MIN} minutos y
+            escribe ese valor aquí.
+          </span>
+          Valor usado: {n0(intensidad)} mm/h.
+        </p>
+      {/if}
+    </div>
 
     {#if !techo || !r || !b}
       <p class="nota">Escribe el largo y el ancho del techo.</p>
@@ -205,6 +295,23 @@
         sección sea igual o mayor. Los fabricantes indican soportes cada 40 a 50 cm y una pendiente mínima de 0.2 %.
       </p>
       </details>
+
+      {#if seccion && seccion.anchoMm > 0 && seccion.altoBajoMm > 0}
+        <SimuladorLluvia
+          entrada={{
+            areaTramoM2: (techo.largo * techo.ancho) / r.numeroCanaletas / b.porCanaleta,
+            c: ce,
+            seccion,
+            pendientePct: Number(pendientePct) || 0,
+            material,
+            capacidadBajanteLs: b.capacidadLs,
+          }}
+          nombreCanal={seccion.nombre}
+          altoAltoMm={seccion.altoAltoMm}
+          intensidadDiseno={intensidad}
+          estacion={usarEstacion && cercana ? cercana.estacion : null}
+        />
+      {/if}
 
       <details class="detalle">
         <summary>Ver cómo se calcularon las bajantes y la canaleta</summary>
@@ -325,5 +432,7 @@
   .destacado .cifra { white-space: nowrap; }
   .tabla.mercado td { white-space: normal; text-align: left; }
   .tabla.mercado th { text-align: left; }
+  .intensidad-caja { border: 1px solid var(--borde); border-radius: 0.75rem; padding: 0.25rem 1rem 0.75rem; margin: 1rem 0; background: var(--fondo); }
+  .intensidad-caja h3 { margin-top: 0.75rem; }
   .tabla.mercado td.largos { white-space: nowrap; }
 </style>

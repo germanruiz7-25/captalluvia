@@ -11,7 +11,7 @@ CaptaLluvia es una herramienta web gratuita para ubicar una vivienda, analizar l
 
 ## Estado
 
-Versión **0.3.0**. La app es un **asistente en 7 pasos**, una pantalla a la vez, con barra de avance y resultados preliminares: (1) ubicar la vivienda en un mapa (OpenStreetMap: tocar el techo, buscar el municipio o usar el GPS) o escribir datos de lluvia; (2) lluvia del lugar (20 años de Open-Meteo); (3) techo, coeficiente de escorrentía, primer descarte y lluvia neta; (4) usuarios de vivienda, escuela o institución; (5) m² de techo necesarios con dibujo; (6) canaletas y bajantes por método racional, con el canal de PVC del mercado nacional (colonial o alto caudal) y dibujos; (7) resumen e **informe en PDF**. El proyecto se guarda solo en el dispositivo y se puede borrar.
+Versión **0.4.0**. La app es un **asistente en 7 pasos**, una pantalla a la vez, con barra de avance y resultados preliminares: (1) ubicar la vivienda en un mapa (OpenStreetMap: tocar el techo, buscar el municipio o usar el GPS) o escribir datos de lluvia; (2) lluvia del lugar (20 años de Open-Meteo); (3) techo, coeficiente de escorrentía, primer descarte y lluvia neta; (4) usuarios de vivienda, escuela o institución; (5) m² de techo necesarios con dibujo; (6) canaletas y bajantes por método racional, con la intensidad de diseño tomada de la curva IDF de la estación más cercana (INSIVUMEH e ICC, 2025) y un **simulador** de lluvia intensa, con el canal de PVC del mercado nacional (colonial o alto caudal) y dibujos; (7) resumen e **informe en PDF**. El proyecto se guarda solo en el dispositivo y se puede borrar.
 
 La hoja de ruta completa está en [docs/HOJA-DE-RUTA.md](docs/HOJA-DE-RUTA.md).
 
@@ -38,7 +38,7 @@ docs/          privacidad, publicación, hoja de ruta y metodología
 
 ## Cómo citar
 
-> Alfaro, G. (2026). *CaptaLluvia v0.3.0*. Programa de Gestión de Riesgo de Desastres, ICC. https://captalluvia.org
+> Alfaro, G. (2026). *CaptaLluvia v0.4.0*. Programa de Gestión de Riesgo de Desastres, ICC. https://captalluvia.org
 
 GitHub también ofrece la cita en el botón **"Cite this repository"** (archivo `CITATION.cff`).
 
