@@ -79,6 +79,22 @@ button:disabled { opacity: 0.6; cursor: progress; }
 
 .solo-impresion { display: none; }
 
+.proyecto-campo { display: grid; gap: 0.35rem; color: var(--texto-suave); font-size: 0.9rem; }
+.principal.grande { font-size: 1.05rem; padding: 0.8rem 1.4rem; }
+
+/* Detalle del cálculo, plegado para no saturar la pantalla (en el PDF se abre). */
+details.detalle {
+  border: 1px solid var(--borde); border-radius: 0.6rem; background: var(--fondo);
+  padding: 0 0.9rem; margin: 0.9rem 0;
+}
+details.detalle > summary {
+  cursor: pointer; padding: 0.65rem 0; color: var(--acento); font-weight: 600; list-style: none;
+}
+details.detalle > summary::-webkit-details-marker { display: none; }
+details.detalle > summary::before { content: '▸ '; }
+details.detalle[open] > summary::before { content: '▾ '; }
+details.detalle[open] { padding-bottom: 0.75rem; }
+
 /* ---------- Informe PDF (impresión) ---------- */
 @media print {
   @page { size: letter; margin: 14mm 12mm; }
@@ -96,5 +112,7 @@ button:disabled { opacity: 0.6; cursor: progress; }
   .nota { font-size: 9pt; }
   .destacado { break-inside: avoid; }
   svg, table, figure { break-inside: avoid; }
+  details.detalle { border: 0; padding: 0; margin: 0.4rem 0; background: none; }
+  details.detalle > summary { display: none; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

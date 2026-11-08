@@ -16,7 +16,8 @@
     opciones,
     aguas,
     tipoTecho,
-  }: { opciones: OpcionTecho[]; aguas: NumeroAguas; tipoTecho: TipoTecho } = $props();
+    resumen = $bindable(''),
+  }: { opciones: OpcionTecho[]; aguas: NumeroAguas; tipoTecho: TipoTecho; resumen?: string } = $props();
 
   // Parámetros de diseño (editables por el diseñador)
   let techoElegido = $state('rectangular');
@@ -76,13 +77,17 @@
       : null,
   );
 
+  $effect(() => {
+    resumen = r && b ? `${NOMBRES_TIPO_CANAL[r.tipoCanal]} · ${b.total} bajante${b.total > 1 ? 's' : ''} de ${b.nombre}` : '';
+  });
+
   const n0 = (v: number) => Math.round(v).toLocaleString('es-GT');
   const n1 = (v: number) => v.toLocaleString('es-GT', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const n2 = (v: number) => v.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 </script>
 
 <section class="tarjeta paso">
-  <p class="numero-paso">Paso 5 de 5</p>
+  <p class="numero-paso">Paso 6 de 7</p>
   <h2>Canaletas y bajantes</h2>
 
   {#if opciones.length === 0}
@@ -173,6 +178,8 @@
         />
       {/if}
 
+      <details class="detalle">
+        <summary>Ver los canales de PVC del mercado de Guatemala</summary>
       <h3>Canales de PVC en el mercado de Guatemala</h3>
       <div class="tabla-desplazable">
         <table class="tabla mercado">
@@ -197,7 +204,10 @@
         (se agregan bajantes si hace falta). Se usan las medidas de Amanco Wavin; si eliges Durman, verifica que su
         sección sea igual o mayor. Los fabricantes indican soportes cada 40 a 50 cm y una pendiente mínima de 0.2 %.
       </p>
+      </details>
 
+      <details class="detalle">
+        <summary>Ver cómo se calcularon las bajantes y la canaleta</summary>
       <h3>Bajantes: m² de techo que evacua cada diámetro</h3>
       <div class="tabla-desplazable">
         <table class="tabla">
@@ -247,6 +257,7 @@
         Capacidad con la ecuación de Manning, llenando la canaleta hasta 3/4 de su radio (25 % de borde libre).
         Reparte las bajantes a lo largo de la canaleta para que cada una reciba un tramo igual.
       </p>
+      </details>
 
       <h3>Opción 2 · canal comercial: {seccion?.nombre}</h3>
       <div class="campos no-imprimir">

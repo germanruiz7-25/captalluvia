@@ -9,7 +9,7 @@
   "repositorio": "https://github.com/germanruiz7-25/captalluvia",
   "licencia": "PolyForm Noncommercial 1.0.0 (uso no comercial)",
   "licenciaUrl": "https://polyformproject.org/licenses/noncommercial/1.0.0/",
-  "fuentesDatos": "Open-Meteo, NASA POWER, CHIRPS, Esri, OpenStreetMap y estaciones conectadas por el usuario",
+  "fuentesDatos": "Open-Meteo (reanálisis ERA5), mapa y búsqueda de OpenStreetMap (Nominatim), y datos de lluvia ingresados por el usuario",
   "citaPlantilla": "Alfaro, G. ({anio}). CaptaLluvia v{version}. Programa de Gestión de Riesgo de Desastres, ICC. https://captalluvia.org",
   "aviso": "Resultados estimados para prefactibilidad; no reemplazan el diseño firmado por un profesional.",
   "avisoIA": "CaptaLluvia no usa inteligencia artificial para calcular: los resultados salen de fórmulas documentadas. El código se desarrolla con asistencia de IA y revisión humana."
