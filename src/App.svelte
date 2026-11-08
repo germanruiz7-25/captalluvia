@@ -56,10 +56,11 @@
     const n = m ? Number(m[1]) : 0;
     return n >= 1 && n <= PASOS.length ? n : null;
   };
-  let paso = $state(leerPasoDeUrl() ?? (g?.paso && g.paso >= 1 && g.paso <= PASOS.length ? g.paso : 1));
+  const pasoInicial = leerPasoDeUrl() ?? (g?.paso && g.paso >= 1 && g.paso <= PASOS.length ? g.paso : 1);
+  let paso = $state(pasoInicial);
 
   // Pasos ya vistos (para marcar ✓ solo lo que la persona revisó)
-  let visitados: number[] = $state(Array.from({ length: paso }, (_, i) => i + 1));
+  let visitados: number[] = $state(Array.from({ length: pasoInicial }, (_, i) => i + 1));
 
   function irAPaso(n: number) {
     paso = Math.min(PASOS.length, Math.max(1, n));

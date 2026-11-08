@@ -1,10 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import 'leaflet/dist/leaflet.css';
-  import type { Map as MapaLeaflet, Marker } from 'leaflet';
+  import type { Map as MapaLeaflet, Marker, TileLayer } from 'leaflet';
+  import { CLAVES_COMPILADAS, capaInicial, capasDisponibles, type CapaMapa } from '../core/capasMapa';
   import {
-    ATRIBUCION_OSM,
-    TESELAS_OSM,
     VISTA_INICIAL,
     ZOOM_VIVIENDA,
     buscarLugar,
@@ -18,6 +17,38 @@
   let mapa: MapaLeaflet | null = null;
   let marcador: Marker | null = null;
   let L: typeof import('leaflet') | null = null;
+  let teselas: TileLayer | null = null;
+
+  const CLAVE_CAPA = 'captalluvia.mapa';
+  const capas = capasDisponibles(CLAVES_COMPILADAS);
+  let capa: CapaMapa = $state(
+    capaInicial(
+      capas,
+      (() => {
+        try {
+          return localStorage.getItem(CLAVE_CAPA);
+        } catch {
+          return null;
+        }
+      })(),
+    ),
+  );
+
+  function ponerCapa(c: CapaMapa) {
+    capa = c;
+    try {
+      localStorage.setItem(CLAVE_CAPA, c.id);
+    } catch {
+      /* sin almacenamiento */
+    }
+    if (!mapa || !L) return;
+    teselas?.remove();
+    teselas = L.tileLayer(c.url, {
+      maxZoom: c.maxZoom,
+      attribution: c.atribucion,
+      ...(c.tileSize ? { tileSize: c.tileSize, zoomOffset: c.zoomOffset ?? 0 } : {}),
+    }).addTo(mapa);
+  }
 
   let texto = $state('');
   let buscando = $state(false);
@@ -68,7 +99,7 @@
         [inicio.lat, inicio.lon],
         punto ? ZOOM_VIVIENDA - 1 : VISTA_INICIAL.zoom,
       );
-      L.tileLayer(TESELAS_OSM, { maxZoom: 19, attribution: ATRIBUCION_OSM }).addTo(mapa);
+      ponerCapa(capa);
       mapa.attributionControl.setPrefix(false);
       if (punto) colocarMarcador(punto.lat, punto.lon);
       mapa.on('click', (e) => fijar(e.latlng.lat, e.latlng.lng));
@@ -162,6 +193,17 @@
   {/if}
   {#if error}<p class="alerta" role="alert">{error}</p>{/if}
 
+  {#if capas.length > 1}
+    <div class="capas" role="radiogroup" aria-label="Tipo de mapa">
+      <span class="titulo-capas">Mapa:</span>
+      {#each capas as c (c.id)}
+        <button type="button" role="radio" title={c.nombre} aria-label={c.nombre} aria-checked={capa.id === c.id} class:activa={capa.id === c.id} onclick={() => ponerCapa(c)}>
+          {c.satelite ? '🛰️' : '🗺️'} {c.corto}
+        </button>
+      {/each}
+    </div>
+  {/if}
+
   <div class="mapa" bind:this={contenedor} role="application" aria-label="Mapa: toca el techo de la vivienda para marcarla"></div>
   <p class="ayuda">
     {#if punto}
@@ -187,6 +229,13 @@
   .resultados li + li { border-top: 1px solid var(--borde); }
   .resultados button { width: 100%; text-align: left; background: none; border: 0; padding: 0.55rem 0.75rem; color: var(--texto); }
   .resultados button:hover { background: var(--acento-suave); }
+  .capas { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+  .titulo-capas { font-size: 0.85rem; color: var(--texto-suave); }
+  .capas button {
+    background: var(--fondo); border: 1px solid var(--borde); border-radius: 999px; padding: 0.3rem 0.75rem;
+    font-size: 0.85rem; color: var(--texto);
+  }
+  .capas button.activa { background: var(--texto); border-color: var(--texto); color: var(--fondo); }
   .ayuda { margin: 0; font-size: 0.9rem; color: var(--texto-suave); }
   :global(.pin-vivienda) { background: none; border: 0; }
 </style>

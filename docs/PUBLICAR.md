@@ -65,3 +65,19 @@ Cada versión nueva repite este paso con el número siguiente (v0.1.0, v0.2.0…
 5. Cambia la variable `BASE_PATH` a `/` y publica una versión nueva.
 
 Los cambios de DNS pueden tardar hasta 24 horas. Comprueba los valores vigentes en la guía oficial: https://docs.github.com/es/pages/configuring-a-custom-domain-for-your-github-pages-site
+
+
+## Claves de mapas satelitales (opcional)
+
+El mapa de calles de OpenStreetMap funciona sin clave. Para agregar satélite:
+
+1. En cada proveedor crea una **clave de API** (no uses la contraseña de la cuenta):
+   - **Esri** (ArcGIS Location Platform): *API keys → New API key*, con el privilegio *Basemaps* (incluye World Imagery).
+   - **Mapbox**: *Tokens → Create a token* (token público `pk.…`) con el permiso *styles:tiles*.
+   - **MapTiler**: *Account → Keys → New key*.
+2. Restringe cada clave a tu sitio (`https://germanruiz7-25.github.io/*` y, cuando exista, `https://captalluvia.org/*`). Las claves de mapas web quedan visibles en el navegador; la restricción evita que otros las usen.
+3. En GitHub: *Settings → Secrets and variables → Actions → Variables → New repository variable*:
+   - `VITE_ESRI_KEY`
+   - `VITE_MAPBOX_TOKEN`
+   - `VITE_MAPTILER_KEY`
+4. Publica un Release nuevo (o vuelve a ejecutar *Publicar en GitHub Pages*). Cada mapa aparece solo si su clave existe.
