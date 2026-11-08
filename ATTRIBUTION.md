@@ -12,4 +12,4 @@ CaptaLluvia usa fuentes de datos gratuitas. Cada una se cita en la app y en los 
 | [Meteostat](https://meteostat.net/) | Datos de estaciones (fase 3) | CC BY 4.0 |
 | [RedMet del ICC](https://icc.org.gt/) | Estaciones de la vertiente del Pacífico (fase 3) | Según acuerdo con el ICC |
 
-En la versión 0.0.1 todavía no se consulta ninguna de estas fuentes: la lluvia se escribe a mano.
+Desde la versión 0.1.0 se consulta Open-Meteo para estimar la lluvia del punto; las demás fuentes se incorporan en las fases siguientes.

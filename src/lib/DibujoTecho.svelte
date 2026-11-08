@@ -8,7 +8,7 @@
   const ANCHO_MARCO = 300;
   const ALTO_MARCO = 240; // alto máximo; cada dibujo usa solo el que necesita
   const IZQ = 12;
-  const DER = 84; // espacio para la cota del ancho (hasta "100.25 m")
+  const DER = 92; // espacio para la cota del ancho (hasta "100.25 m")
   const ARRIBA = 18;
   const ABAJO = 50; // espacio para la cota del largo
 
@@ -53,9 +53,9 @@
           <!-- Cumbrera al centro, a lo largo del lado largo -->
           <line x1={x} x2={x + w} y1={y + h / 2} y2={y + h / 2} class="cumbrera" />
           <text x={x + w / 2} y={y + h / 4 - 2} text-anchor="middle" class="etiqueta">Agua 1</text>
-          <text x={x + w / 2} y={y + h / 4 + 15} text-anchor="middle" class="area">{fmt(segs[0].area)} m²</text>
+          <text x={x + w / 2} y={y + h / 4 + 17} text-anchor="middle" class="area">{fmt(segs[0].area)} m²</text>
           <text x={x + w / 2} y={y + (3 * h) / 4 - 2} text-anchor="middle" class="etiqueta">Agua 2</text>
-          <text x={x + w / 2} y={y + (3 * h) / 4 + 15} text-anchor="middle" class="area">{fmt(segs[1].area)} m²</text>
+          <text x={x + w / 2} y={y + (3 * h) / 4 + 17} text-anchor="middle" class="area">{fmt(segs[1].area)} m²</text>
           <!-- Una canaleta y una bajante por cada agua -->
           <line x1={x} x2={x + w} y1={y} y2={y} class="canaleta" />
           <circle cx={x + w} cy={y} r="5" class="bajante" />
@@ -72,7 +72,7 @@
         <line x1={x} x2={x + w} y1={y + h} y2={y + h} class="canaleta" />
         <circle cx={x + w} cy={y + h} r="5" class="bajante" />
         <path d="M{x} {y + h + 12}v8M{x} {y + h + 16}H{x + w}M{x + w} {y + h + 12}v8" class="cota" />
-        <text x={x + w / 2} y={y + h + 36} text-anchor="middle" class="medida">{fmt(o.largo)} m</text>
+        <text x={x + w / 2} y={y + h + 38} text-anchor="middle" class="medida">{fmt(o.largo)} m</text>
       </svg>
     </figure>
   {/each}
@@ -100,9 +100,9 @@
   .canaleta { stroke: var(--acento); stroke-width: 4; }
   .bajante { fill: var(--acento); }
   .cota { fill: none; stroke: var(--texto-suave); stroke-width: 1; }
-  .area { font-size: 15px; font-weight: 600; fill: var(--texto); }
-  .etiqueta { font-size: 12px; fill: var(--texto-suave); }
-  .medida { font-size: 13px; fill: var(--texto); }
+  .area { font-size: 17px; font-weight: 600; fill: var(--texto); }
+  .etiqueta { font-size: 14px; fill: var(--texto-suave); }
+  .medida { font-size: 15px; fill: var(--texto); }
   .leyenda { color: var(--texto-suave); font-size: 0.85rem; display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; }
   .item { display: inline-flex; align-items: center; gap: 0.5rem; }
   .muestra-canaleta { display: inline-block; width: 1.5rem; height: 4px; background: var(--acento); }
