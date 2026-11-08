@@ -22,6 +22,17 @@ describe('oferta de agua', () => {
     expect(o.m3NetosAnual).toBeCloseTo(92.15, 6);
     expect(o.m3NetosMensual?.reduce((t, x) => t + x, 0)).toBeCloseTo(92.15, 6);
   });
+  it('compara el umbral con la precipitación neta (PN), no con la lluvia', () => {
+    // Mayo: 45 mm de lluvia, pero PN = 45 × 0.9 − días × 1 < 40 → no se capta
+    const l = resumirMensualManual([0, 0, 0, 0, 45, 200, 100, 100, 200, 200, 0, 0], 100);
+    const o = calcularOferta(l, 0.9, 1);
+    expect(l.mensualMm[4]).toBeGreaterThan(40);
+    expect(o.pnMensualMm[4]).toBeLessThan(40);
+    expect(o.mesesCaptados[4]).toBe(false);
+    expect(o.netaMensualMm[4]).toBe(0);
+    expect(o.mesesCaptados[5]).toBe(true);
+    expect(o.netaMensualMm[5]).toBeCloseTo(o.pnMensualMm[5], 6);
+  });
   it('no capta los meses con menos de 40 mm', () => {
     // 1,000 mm en meses lluviosos + 30 mm en dos meses secos
     const l = resumirMensualManual([0, 0, 15, 15, 200, 200, 100, 100, 200, 200, 0, 0], 100);

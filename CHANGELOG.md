@@ -2,6 +2,17 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.1.1] — 2026-11-07 — Precipitación neta (PN) y umbral de 40 mm de PN
+
+### Cambiado
+- El umbral de captación se compara con la **precipitación neta (PN)** de cada mes (precipitación × Ce − primer descarte), no con la lluvia que cae: se captan los meses con PN ≥ 40 mm (Anaya Garduño, 2011, pp. 56–57, fig. 4.7).
+- Las gráficas muestran la PN a cosechar como barra dentro de la precipitación promedio y una fila "PN" con los valores debajo de los meses; la línea punteada de 40 mm se lee sobre la PN. Los meses que no se captan aparecen en gris.
+- La tabla mensual del paso 1 incluye la fila de PN.
+- Cita completa del criterio en Fuentes de consulta: 1.ª ed., Colegio de Postgraduados y Universidad Autónoma Chapingo, pp. 56–57, fig. 4.7.
+
+### Nota
+- La etiqueta v0.1.0 quedó apuntando al código anterior (se creó antes de fusionar el PR #10); el sitio se publicó después desde main. v0.1.1 es la primera etiqueta que incluye el flujo por pasos.
+
 ## [0.1.0] — 2026-11-07 — Flujo por pasos e informe PDF
 
 ### Agregado

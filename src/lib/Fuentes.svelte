@@ -53,11 +53,11 @@
       Panamericana de la Salud.
     </li>
     <li>
-      Umbral de captación de {umbralMm} mm por mes (meses con menos lluvia no se captan): criterio de la
-      metodología de Sistemas de Captación del Agua de Lluvia (SCALL) del Colegio de Postgraduados, México
-      (Centro Internacional de Demostración y Capacitación del Aprovechamiento del Agua de Lluvia, CIDECALLI).
-      Anaya Garduño, M. (2011). <em>Captación del agua de lluvia: solución caída del cielo</em>. Biblioteca
-      Básica de Agricultura, Colegio de Postgraduados. ISBN 9786077150176. Editable en la app.
+      Umbral de captación: se captan los meses con {umbralMm} mm o más de precipitación neta (PN). Anaya Garduño, M.
+      (2011). <em>Captación del agua de lluvia. Solución caída del cielo</em> (1.ª ed., pp. 56–57, fig. 4.7
+      "Precipitación pluvial promedio mensual histórico"). Colegio de Postgraduados; Universidad Autónoma Chapingo.
+      ISBN 9786077150176. Metodología SCALL del Centro Internacional de Demostración y Capacitación del
+      Aprovechamiento del Agua de Lluvia (CIDECALLI). Editable en la app.
     </li>
     <li>
       Anaya-Garduño, M., Pérez-Hernández, A. y Luque-Delgadillo, A. (2021). Sistemas de captación del agua de
