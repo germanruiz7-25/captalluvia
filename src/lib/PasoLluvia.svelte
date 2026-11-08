@@ -71,7 +71,7 @@
 </script>
 
 <section class="tarjeta paso">
-  <p class="numero-paso">Paso 1 de 4</p>
+  <p class="numero-paso">Paso 1 de 5</p>
   <h2>Lluvia del lugar</h2>
 
   <div class="no-imprimir">

@@ -58,6 +58,15 @@ Para cada proporción largo:ancho de 1, 1.5 y 2 se calcula el ancho = √(A / pr
 
 El área total en planta es la misma en ambos casos; lo que cambia es cuántas canaletas y bajantes se necesitan y el caudal que recibe cada una (fase 2).
 
+## 6. Canaletas y bajantes (`drenaje.ts`)
+
+1. **Caudal de diseño (método racional):** Q [L/s] = C × i [mm/h] × A [m²] / 3600. C es el coeficiente del material del techo; i es la intensidad de diseño (150 mm/h por defecto, editable; usar la curva IDF local para 5 minutos y periodo de retorno de 5 a 10 años). En techo de dos aguas cada canaleta recibe la mitad del caudal.
+2. **Bajantes (Wyly y Eaton, 1961):** Q [L/s] = K × r^(5/3) × D^(8/3), D = diámetro interior en mm, r = 1/3 de llenado, K = 27.8 × 0.0630902 / 25.4^(8/3) ≈ 3.14×10⁻⁴. Con esa capacidad se calcula cuántos m² de techo evacua cada diámetro y cuántas bajantes necesita cada canaleta: n = ⌈Q_canaleta / Q_bajante⌉. Diámetros interiores aproximados de PVC: 2" = 54 mm, 3" = 82 mm, 4" = 107 mm, 6" = 158 mm.
+3. **Sugerencia de bajante:** el diámetro más pequeño desde 3" (mínimo práctico) que resuelve con 1 o 2 bajantes por canaleta.
+4. **Canaleta (Manning):** Q = (1/n) × A × R^(2/3) × S^(1/2) para sección semicircular llenando hasta 3/4 del radio (25 % de borde libre). n = 0.011 (PVC) o 0.013 (lámina galvanizada); S = pendiente (0.5 % por defecto). Cada tramo entre bajantes lleva Q_canaleta / n_bajantes. Se sugiere la canaleta comercial más pequeña (4", 5", 6", 8") que cumple.
+
+Todas son **dimensiones mínimas**; el diseñador decide si las adopta o las aumenta.
+
 ## Ejemplo de verificación
 
 5 personas × 50 L/día = 91.25 m³/año. Lluvia de 1,200 mm con 110 días de lluvia, lámina metálica, descarte de 1 mm:
@@ -75,6 +84,8 @@ En dos aguas, el techo de 9.5 × 10.0 m queda en dos segmentos de 4.75 × 10.0 m
 
 - Anaya Garduño, M. (2011). *Captación del agua de lluvia. Solución caída del cielo* (1.ª ed.). Colegio de Postgraduados; Universidad Autónoma Chapingo. ISBN 9786077150176. Umbral de 40 mm de PN: pp. 56–57, fig. 4.7.
 - Anaya-Garduño, M., Pérez-Hernández, A. y Luque-Delgadillo, A. (2021). Sistemas de captación del agua de lluvia (SCALL) para diversos usos. *Agro-Divulgación*, 1(0). https://doi.org/10.54767/ad.v1i1.3
+- Chow, V. T. (1959). *Open-channel hydraulics*. Nueva York: McGraw-Hill.
+- Wyly, R. S. y Eaton, H. N. (1961). *Capacities of plumbing stacks in buildings* (BMS Report 158). Washington: National Bureau of Standards.
 - OPS/CEPIS (2004). *Guía de diseño para captación del agua de lluvia* (OPS/CEPIS/04.122). Lima: Organización Panamericana de la Salud.
 - Hersbach, H. et al. (2020). The ERA5 global reanalysis. *Quarterly Journal of the Royal Meteorological Society*, 146(730), 1999–2049. https://doi.org/10.1002/qj.3803
 - Open-Meteo.com, Historical Weather API (datos CC BY 4.0). https://open-meteo.com

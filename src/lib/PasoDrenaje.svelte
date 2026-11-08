@@ -1,0 +1,207 @@
+<script lang="ts">
+  import {
+    BAJANTE_MINIMA_PRACTICA,
+    MATERIALES_CANALETA,
+    disenarDrenaje,
+    type MaterialCanaleta,
+  } from '../core/drenaje';
+  import { COEFICIENTES_ESCORRENTIA, type NumeroAguas, type OpcionTecho, type TipoTecho } from '../core/techo';
+
+  let {
+    opciones,
+    aguas,
+    tipoTecho,
+  }: { opciones: OpcionTecho[]; aguas: NumeroAguas; tipoTecho: TipoTecho } = $props();
+
+  // Parámetros de diseño (editables por el diseñador)
+  let techoElegido = $state('rectangular');
+  let largoPropio: number | null = $state(null);
+  let anchoPropio: number | null = $state(null);
+  let intensidad = $state(150);
+  let pendientePct = $state(0.5);
+  let material: MaterialCanaleta = $state('pvc');
+
+  const techo = $derived.by(() => {
+    if (techoElegido === 'propio') {
+      const l = Number(largoPropio) || 0;
+      const a = Number(anchoPropio) || 0;
+      return l > 0 && a > 0 ? { largo: Math.max(l, a), ancho: Math.min(l, a), nombre: 'Medidas propias' } : null;
+    }
+    const o = opciones.find((x) => x.forma === techoElegido) ?? opciones[1] ?? opciones[0];
+    return o ? { largo: o.largo, ancho: o.ancho, nombre: o.nombre } : null;
+  });
+
+  const ce = $derived(COEFICIENTES_ESCORRENTIA[tipoTecho]);
+  const r = $derived(
+    techo
+      ? disenarDrenaje({
+          areaM2: techo.largo * techo.ancho,
+          largoM: techo.largo,
+          aguas,
+          c: ce,
+          intensidadMmH: Number(intensidad) || 0,
+          pendientePct: Number(pendientePct) || 0,
+          material,
+        })
+      : null,
+  );
+  const b = $derived(r ? r.bajantes[r.bajanteSugerida] : null);
+  const c = $derived(r && r.canaletaSugerida >= 0 ? r.canaletas[r.canaletaSugerida] : null);
+
+  const n0 = (v: number) => Math.round(v).toLocaleString('es-GT');
+  const n1 = (v: number) => v.toLocaleString('es-GT', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const n2 = (v: number) => v.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+</script>
+
+<section class="tarjeta paso">
+  <p class="numero-paso">Paso 5 de 5</p>
+  <h2>Canaletas y bajantes</h2>
+
+  {#if opciones.length === 0}
+    <p class="nota">Completa los pasos anteriores para dimensionar canaletas y bajantes.</p>
+  {:else}
+    <div class="campos no-imprimir">
+      <label>Techo a drenar
+        <select bind:value={techoElegido}>
+          {#each opciones as o (o.forma)}
+            <option value={o.forma}>{o.nombre}: {n1(o.ancho)} × {n1(o.largo)} m</option>
+          {/each}
+          <option value="propio">Medidas propias</option>
+        </select>
+      </label>
+      {#if techoElegido === 'propio'}
+        <label>Largo del techo (m), lado de la canaleta
+          <input type="number" min="1" step="0.5" bind:value={largoPropio} />
+        </label>
+        <label>Ancho del techo (m)
+          <input type="number" min="1" step="0.5" bind:value={anchoPropio} />
+        </label>
+      {/if}
+      <label>Intensidad de lluvia de diseño (mm/h)
+        <input type="number" min="10" max="400" step="5" bind:value={intensidad} />
+      </label>
+      <label>Pendiente de la canaleta (%)
+        <input type="number" min="0.1" max="5" step="0.1" bind:value={pendientePct} />
+      </label>
+      <label>Material de la canaleta
+        <select bind:value={material}>
+          {#each Object.entries(MATERIALES_CANALETA) as [id, m] (id)}
+            <option value={id}>{m.nombre} (n = {m.n})</option>
+          {/each}
+        </select>
+      </label>
+    </div>
+    <p class="nota no-imprimir">
+      La intensidad de diseño debe tomarse de la curva intensidad-duración-frecuencia (IDF) de la estación más
+      cercana (INSIVUMEH en Guatemala), para una lluvia de 5 minutos y un periodo de retorno de 5 a 10 años.
+      150 mm/h es solo un valor de partida.
+    </p>
+
+    {#if !techo || !r || !b}
+      <p class="nota">Escribe el largo y el ancho del techo.</p>
+    {:else}
+      <p class="solo-impresion">
+        Parámetros: techo {techo.nombre.toLowerCase()} de {n1(techo.ancho)} × {n1(techo.largo)} m, intensidad de diseño
+        {n0(Number(intensidad))} mm/h, C = {ce}, canaleta de {MATERIALES_CANALETA[material].nombre} con
+        pendiente de {n1(Number(pendientePct))} %.
+      </p>
+
+      <table class="cascada">
+        <tbody>
+          <tr><td>Techo a drenar ({techo.nombre.toLowerCase()})</td><td>{n1(techo.ancho)} × {n1(techo.largo)} m = {n1(techo.ancho * techo.largo)} m²</td></tr>
+          <tr><td>Canaletas ({aguas === 2 ? 'una por cada agua' : 'un agua'})</td><td>{r.numeroCanaletas} × {n1(techo.largo)} m = {n1(r.longitudTotalCanaletaM)} m</td></tr>
+          <tr><td>Caudal de diseño total, Q = C × i × A / 3600</td><td>{n2(r.caudalTotalLs)} L/s</td></tr>
+          <tr class="total"><td>Caudal por canaleta ({n1(r.areaPorCanaletaM2)} m² de techo cada una)</td><td>{n2(r.caudalPorCanaletaLs)} L/s</td></tr>
+        </tbody>
+      </table>
+
+      <div class="destacado">
+        <span class="cifra">{b.total} × {b.nombre}</span>
+        <span>
+          <strong>Sugerencia mínima:</strong> {b.porCanaleta} bajante{b.porCanaleta > 1 ? 's' : ''} de {b.nombre} por canaleta
+          ({b.total} en total), cada una atiende un tramo de {n1(r.tramoM)} m de canaleta.
+          {#if c}
+            Canaleta semicircular de {c.nombre} de {MATERIALES_CANALETA[material].nombre} con pendiente de
+            {n1(Number(pendientePct))} %.
+          {:else}
+            Ninguna canaleta comercial de la lista alcanza: agrega más bajantes, aumenta la pendiente o usa una canaleta mayor.
+          {/if}
+        </span>
+      </div>
+      <p class="nota">
+        Son dimensiones mínimas calculadas: el diseñador decide si las toma como base o las aumenta (por ejemplo, por
+        hojas, granizo o mantenimiento).
+      </p>
+
+      <h3>Bajantes: m² de techo que evacua cada diámetro</h3>
+      <div class="tabla-desplazable">
+        <table class="tabla">
+          <thead>
+            <tr><th>Diámetro</th><th class="extra">Ø interior aprox.</th><th>Capacidad</th><th>m² que evacua c/u</th><th>Por canaleta</th><th>Total</th></tr>
+          </thead>
+          <tbody>
+            {#each r.bajantes as x, i (x.nombre)}
+              <tr class:sugerida={i === r.bajanteSugerida} class:tenue={!x.practica}>
+                <td>{x.nombre}{i === r.bajanteSugerida ? ' ✓' : ''}</td>
+                <td class="extra">{x.interiorMm} mm</td>
+                <td>{n2(x.capacidadLs)} L/s</td>
+                <td>{n0(x.areaQueEvacuaM2)} m²</td>
+                <td>{x.porCanaleta}</td>
+                <td>{x.total}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+      <p class="nota">
+        Con una lluvia de {n0(Number(intensidad))} mm/h y C = {ce}. Diámetros menores a {BAJANTE_MINIMA_PRACTICA} (en gris) se
+        tapan con facilidad y no se sugieren como mínimo.
+      </p>
+
+      <h3>Canaletas semicirculares: tramo de {n1(r.tramoM)} m con {n2(r.caudalPorTramoLs)} L/s</h3>
+      <div class="tabla-desplazable">
+        <table class="tabla">
+          <thead>
+            <tr><th>Canaleta</th><th>Capacidad</th><th>m² que sirve c/tramo</th><th>¿Cumple?</th></tr>
+          </thead>
+          <tbody>
+            {#each r.canaletas as x, i (x.nombre)}
+              <tr class:sugerida={i === r.canaletaSugerida}>
+                <td>{x.nombre}{i === r.canaletaSugerida ? ' ✓' : ''}</td>
+                <td>{n2(x.capacidadLs)} L/s</td>
+                <td>{n0(x.areaPorTramoM2)} m²</td>
+                <td>{x.cumple ? 'Sí' : 'No'}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+      <p class="nota">
+        Capacidad con la ecuación de Manning, llenando la canaleta hasta 3/4 de su radio (25 % de borde libre).
+        Reparte las bajantes a lo largo de la canaleta para que cada una reciba un tramo igual.
+      </p>
+    {/if}
+  {/if}
+</section>
+
+<style>
+  h3 { font-size: 1rem; margin: 1.25rem 0 0.4rem; }
+  .cascada { width: 100%; border-collapse: collapse; margin: 0.75rem 0; }
+  .cascada td { padding: 0.45rem 0.25rem; border-bottom: 1px solid var(--borde); vertical-align: top; }
+  .cascada td:last-child { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .cascada .total td { font-weight: 700; border-bottom: 2px solid var(--texto); }
+  .tabla-desplazable { overflow-x: auto; }
+  .tabla { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+  .tabla th, .tabla td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--borde); text-align: right; }
+  .tabla td { white-space: nowrap; }
+  @media (max-width: 36rem) {
+    .tabla .extra { display: none; }
+    .tabla th, .tabla td { padding: 0.35rem 0.3rem; }
+    .cascada { font-size: 0.9rem; }
+  }
+  .tabla th { color: var(--texto-suave); font-weight: 600; font-size: 0.8rem; }
+  .tabla th:first-child, .tabla td:first-child { text-align: left; white-space: nowrap; }
+  .tabla tr.sugerida td { background: var(--acento-suave); font-weight: 700; }
+  .tabla tr.tenue td { color: var(--texto-suave); }
+  .destacado .cifra { white-space: nowrap; }
+</style>

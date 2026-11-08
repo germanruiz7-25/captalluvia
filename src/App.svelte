@@ -3,11 +3,12 @@
   import type { ResumenLluvia } from './core/lluvia';
   import { calcularOferta, UMBRAL_CAPTACION_MM } from './core/oferta';
   import { calcularDemanda, DOTACIONES, EDIFICIOS, USOS_INICIALES, litrosDeUsos, type TipoEdificio, type UsoAgua } from './core/demanda';
-  import { COEFICIENTES_ESCORRENTIA, type NumeroAguas, type TipoTecho } from './core/techo';
+  import { COEFICIENTES_ESCORRENTIA, areaMinimaM2, opcionesDeTecho, type NumeroAguas, type TipoTecho } from './core/techo';
   import PasoLluvia from './lib/PasoLluvia.svelte';
   import PasoTecho from './lib/PasoTecho.svelte';
   import PasoUsuarios from './lib/PasoUsuarios.svelte';
   import PasoResultados from './lib/PasoResultados.svelte';
+  import PasoDrenaje from './lib/PasoDrenaje.svelte';
   import Acerca from './lib/Acerca.svelte';
   import Fuentes from './lib/Fuentes.svelte';
 
@@ -43,6 +44,11 @@
       : (DOTACIONES[edificio].find((d) => d.id === dotacionId)?.litros ?? 0),
   );
   const demanda = $derived(calcularDemanda(usuarios, litrosPorUsuario, diasUso));
+  const areaNecesaria = $derived.by(() => {
+    const exacta = oferta ? areaMinimaM2(demanda.m3Anual, oferta.netaAnualMm) : null;
+    return exacta === null || demanda.m3Anual <= 0 ? null : Math.ceil(exacta - 1e-9);
+  });
+  const opcionesTecho = $derived(areaNecesaria === null ? [] : opcionesDeTecho(areaNecesaria));
 
   const fecha = new Date().toLocaleDateString('es-GT', { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -86,7 +92,16 @@
   <PasoLluvia bind:lluvia bind:lat bind:lon {oferta} {tipoTecho} descarteMm={Number(descarteMm) || 0} />
   <PasoTecho {lluvia} {oferta} bind:tipoTecho bind:aguas bind:descarteMm bind:areaDisponible bind:umbralMm />
   <PasoUsuarios bind:edificio bind:usuarios bind:dotacionId bind:usos bind:diasUso {demanda} />
-  <PasoResultados {oferta} {demanda} {aguas} onInforme={descargarInforme} />
+  <PasoResultados {oferta} {demanda} {aguas} />
+  <PasoDrenaje opciones={opcionesTecho} {aguas} {tipoTecho} />
+  <section class="tarjeta no-imprimir informe">
+    <h2>Informe</h2>
+    <p class="nota">El informe reúne los cinco pasos, las fuentes de consulta y la nota "Acerca de CaptaLluvia".</p>
+    <div class="acciones">
+      <button class="principal" onclick={descargarInforme} disabled={!oferta}>Descargar informe en PDF</button>
+    </div>
+    <p class="nota">Se abrirá la ventana de impresión: elige "Guardar como PDF" como destino.</p>
+  </section>
   <Fuentes {lluvia} {lat} {lon} {edificio} umbralMm={Number(umbralMm) || 0} />
   <Acerca />
 </main>
