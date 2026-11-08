@@ -2,7 +2,9 @@
   import DibujosDrenaje from './DibujosDrenaje.svelte';
   import {
     BAJANTE_MINIMA_PRACTICA,
+    CANAL_ALTO_CAUDAL_WAVIN,
     CANALES_MERCADO,
+    evaluarCanalRectangular,
     EQUIVALENTE_MAX_COLONIAL_MM,
     MATERIALES_CANALETA,
     NOMBRES_TIPO_CANAL,
@@ -24,6 +26,16 @@
   let intensidad = $state(150);
   let pendientePct = $state(0.5);
   let material: MaterialCanaleta = $state('pvc');
+  // Opción 2: canal rectangular (por defecto, el Canal Alto Caudal de Amanco Wavin)
+  let anchoRect = $state(CANAL_ALTO_CAUDAL_WAVIN.anchoMm);
+  let altoFrente = $state(CANAL_ALTO_CAUDAL_WAVIN.altoFrenteMm);
+  let altoPosterior = $state(CANAL_ALTO_CAUDAL_WAVIN.altoPosteriorMm);
+  const esWavin = $derived(
+    Number(anchoRect) === CANAL_ALTO_CAUDAL_WAVIN.anchoMm &&
+      Number(altoFrente) === CANAL_ALTO_CAUDAL_WAVIN.altoFrenteMm &&
+      Number(altoPosterior) === CANAL_ALTO_CAUDAL_WAVIN.altoPosteriorMm,
+  );
+  const nombreRect = $derived(esWavin ? CANAL_ALTO_CAUDAL_WAVIN.nombre : 'Medidas propias');
 
   const techo = $derived.by(() => {
     if (techoElegido === 'propio') {
@@ -51,6 +63,18 @@
   );
   const b = $derived(r ? r.bajantes[r.bajanteSugerida] : null);
   const c = $derived(r && r.canaletaSugerida >= 0 ? r.canaletas[r.canaletaSugerida] : null);
+  const rect = $derived(
+    r
+      ? evaluarCanalRectangular(
+          { anchoMm: Number(anchoRect) || 0, altoFrenteMm: Number(altoFrente) || 0 },
+          r.caudalPorTramoLs,
+          Number(pendientePct) || 0,
+          material,
+          ce,
+          Number(intensidad) || 0,
+        )
+      : null,
+  );
 
   const n0 = (v: number) => Math.round(v).toLocaleString('es-GT');
   const n1 = (v: number) => v.toLocaleString('es-GT', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -143,7 +167,7 @@
         <DibujosDrenaje
           canaletaNombre={c.nombre}
           canaletaMm={c.diametroMm}
-          tipoCanal={NOMBRES_TIPO_CANAL[r.tipoCanal]}
+          rect={{ nombre: nombreRect, anchoMm: Number(anchoRect) || 0, altoFrenteMm: Number(altoFrente) || 0, altoPosteriorMm: Number(altoPosterior) || 0 }}
           pendientePct={Number(pendientePct)}
           bajanteNombre={b.nombre}
           exteriorMm={b.exteriorMm}
@@ -202,7 +226,7 @@
         tapan con facilidad y no se sugieren como mínimo.
       </p>
 
-      <h3>Sección equivalente (semicircular): tramo de {n1(r.tramoM)} m con {n2(r.caudalPorTramoLs)} L/s</h3>
+      <h3>Opción 1 · canaleta semicircular: tramo de {n1(r.tramoM)} m con {n2(r.caudalPorTramoLs)} L/s</h3>
       <div class="tabla-desplazable">
         <table class="tabla">
           <thead>
@@ -224,6 +248,34 @@
         Capacidad con la ecuación de Manning, llenando la canaleta hasta 3/4 de su radio (25 % de borde libre).
         Reparte las bajantes a lo largo de la canaleta para que cada una reciba un tramo igual.
       </p>
+
+      <h3>Opción 2 · canal rectangular: {nombreRect}</h3>
+      <div class="campos no-imprimir">
+        <label>Fondo o ancho (mm)
+          <input type="number" min="50" max="400" step="0.1" bind:value={anchoRect} />
+        </label>
+        <label>Alto del frente, lado bajo (mm)
+          <input type="number" min="30" max="300" step="0.1" bind:value={altoFrente} />
+        </label>
+        <label>Alto del lado de la pared (mm)
+          <input type="number" min="30" max="300" step="0.1" bind:value={altoPosterior} />
+        </label>
+      </div>
+      {#if rect}
+        <table class="cascada">
+          <tbody>
+            <tr><td>Sección</td><td>{n1(Number(anchoRect))} × {n1(Number(altoFrente))} mm (pared {n1(Number(altoPosterior))} mm)</td></tr>
+            <tr><td>Tirante de diseño (3/4 del frente)</td><td>{n1(rect.tiranteMm)} mm</td></tr>
+            <tr><td>Capacidad (Manning, {MATERIALES_CANALETA[material].nombre}, {n1(Number(pendientePct))} %)</td><td>{n2(rect.capacidadLs)} L/s</td></tr>
+            <tr><td>m² de techo que sirve cada tramo</td><td>{n0(rect.areaPorTramoM2)} m²</td></tr>
+            <tr class="total"><td>Caudal del tramo: {n2(r.caudalPorTramoLs)} L/s</td><td>{rect.cumple ? 'Cumple' : 'No cumple'}</td></tr>
+          </tbody>
+        </table>
+        <p class="nota">
+          Medidas por defecto del Canal Alto Caudal de Amanco Wavin (ficha técnica). Puedes escribir las de otro canal
+          rectangular. El agua se limita a 3/4 del frente, que es el lado más bajo (25 % de borde libre).
+        </p>
+      {/if}
     {/if}
   {/if}
 </section>

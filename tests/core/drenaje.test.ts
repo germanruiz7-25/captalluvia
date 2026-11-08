@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CANAL_ALTO_CAUDAL_WAVIN,
+  capacidadCanalRectangularLs,
+  evaluarCanalRectangular,
   areaParaCaudalM2,
   capacidadBajanteLs,
   capacidadCanaletaLs,
@@ -101,5 +104,24 @@ describe('diseño de canaletas y bajantes', () => {
     for (const b of r.bajantes) {
       expect(b.porCanaleta * b.capacidadLs).toBeGreaterThanOrEqual(r.caudalPorCanaletaLs - 1e-9);
     }
+  });
+});
+
+describe('canal rectangular (opción 2)', () => {
+  it('Manning en sección rectangular con 25 % de borde libre', () => {
+    // b = 0.1512 m, y = 0.75 × 0.09072 = 0.06804 m, n 0.011, S 0.005
+    const b = 0.1512, y = 0.06804;
+    const a = b * y, rh = a / (b + 2 * y);
+    const esperado = (1 / 0.011) * a * Math.pow(rh, 2 / 3) * Math.sqrt(0.005) * 1000;
+    expect(capacidadCanalRectangularLs(0.1512, 0.09072, 0.005, 0.011)).toBeCloseTo(esperado, 9);
+    expect(esperado).toBeCloseTo(7.18, 1);
+  });
+
+  it('el Canal Alto Caudal cumple el tramo de una escuela y no uno enorme', () => {
+    const ok = evaluarCanalRectangular(CANAL_ALTO_CAUDAL_WAVIN, 1.38, 0.5, 'pvc', 0.9, 150);
+    expect(ok.cumple).toBe(true);
+    expect(ok.tiranteMm).toBeCloseTo(68.04, 2);
+    expect(ok.areaPorTramoM2).toBeCloseTo((ok.capacidadLs * 3600) / (0.9 * 150), 9);
+    expect(evaluarCanalRectangular(CANAL_ALTO_CAUDAL_WAVIN, 20, 0.5, 'pvc', 0.9, 150).cumple).toBe(false);
   });
 });

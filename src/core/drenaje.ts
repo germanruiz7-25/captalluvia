@@ -45,6 +45,68 @@ export function capacidadCanaletaLs(diametroM: number, pendiente: number, n: num
 }
 
 /**
+ * Capacidad (L/s) de un canal de sección rectangular (Manning). `anchoM` es el fondo y
+ * `altoM` la altura del lado más bajo (el frente, por donde rebalsaría); el tirante es
+ * `llenado` × altoM (por defecto 0.75: 25 % de borde libre).
+ */
+export function capacidadCanalRectangularLs(anchoM: number, altoM: number, pendiente: number, n: number, llenado = 0.75): number {
+  const y = Math.min(1, Math.max(0, llenado)) * altoM;
+  if (anchoM <= 0 || y <= 0 || pendiente <= 0 || n <= 0) return 0;
+  const area = anchoM * y;
+  const radioHidraulico = area / (anchoM + 2 * y);
+  return (1 / n) * area * Math.pow(radioHidraulico, 2 / 3) * Math.sqrt(pendiente) * 1000;
+}
+
+/** Sección rectangular de un canal comercial (mm). */
+export interface SeccionRectangular {
+  nombre: string;
+  anchoMm: number;
+  /** Altura del frente (lado bajo, por donde rebalsa). */
+  altoFrenteMm: number;
+  /** Altura del lado de la pared o fascia. */
+  altoPosteriorMm: number;
+}
+
+/** Canal Alto Caudal de Amanco Wavin, según su ficha técnica. */
+export const CANAL_ALTO_CAUDAL_WAVIN: SeccionRectangular = {
+  nombre: 'Canal Alto Caudal (Amanco Wavin)',
+  anchoMm: 151.2,
+  altoFrenteMm: 90.72,
+  altoPosteriorMm: 136.08,
+};
+
+export interface EvaluacionRectangular {
+  capacidadLs: number;
+  tiranteMm: number;
+  /** m² de techo que puede servir cada tramo con la lluvia de diseño. */
+  areaPorTramoM2: number;
+  cumple: boolean;
+}
+
+/** Revisa un canal rectangular contra el caudal de cada tramo. */
+export function evaluarCanalRectangular(
+  seccion: Pick<SeccionRectangular, 'anchoMm' | 'altoFrenteMm'>,
+  caudalTramoLs: number,
+  pendientePct: number,
+  material: MaterialCanaleta,
+  c: number,
+  intensidadMmH: number,
+): EvaluacionRectangular {
+  const capacidadLs = capacidadCanalRectangularLs(
+    seccion.anchoMm / 1000,
+    seccion.altoFrenteMm / 1000,
+    Math.max(0, pendientePct) / 100,
+    MATERIALES_CANALETA[material].n,
+  );
+  return {
+    capacidadLs,
+    tiranteMm: 0.75 * seccion.altoFrenteMm,
+    areaPorTramoM2: areaParaCaudalM2(capacidadLs, c, intensidadMmH),
+    cumple: capacidadLs > 0 && capacidadLs >= caudalTramoLs,
+  };
+}
+
+/**
  * Constante de Wyly y Eaton en unidades métricas. La forma original es
  * Q [gpm] = 27.8 × r^(5/3) × d^(8/3) con d en pulgadas; aquí Q en L/s y D en mm (≈ 3.14×10⁻⁴).
  */
@@ -95,7 +157,7 @@ export interface LineaCanal {
 export const CANALES_MERCADO: LineaCanal[] = [
   { tipo: 'colonial', marca: 'Amanco Wavin', modelo: 'Canal Colonial', largosM: [3, 4, 6], bajantes: 'Redonda 50, 75 o 100 mm; rectangular 60 × 100 mm' },
   { tipo: 'colonial', marca: 'Durman', modelo: 'Estilo Clásico / Estilo Tradicional', largosM: [2, 3, 6], bajantes: 'Redonda 2" o 3"; rectangular 3½ × 2"' },
-  { tipo: 'alto', marca: 'Amanco Wavin', modelo: 'Canal Alto Caudal', largosM: [3, 4, 6], bajantes: 'Redonda 50, 75 o 100 mm; rectangular 60 × 100 mm' },
+  { tipo: 'alto', marca: 'Amanco Wavin', modelo: 'Canal Alto Caudal (rectangular: fondo 151.2 mm, alto 90.7 mm al frente y 136.1 mm a la pared)', largosM: [3, 4, 6], bajantes: 'Redonda 50, 75 o 100 mm; rectangular 60 × 100 mm' },
   { tipo: 'alto', marca: 'Durman', modelo: 'MaxiCanal (máximo caudal)', largosM: [3, 4, 6], bajantes: 'Redonda 3" o 4"' },
 ];
 

@@ -4,20 +4,31 @@
   let {
     canaletaNombre,
     canaletaMm,
-    tipoCanal,
     pendientePct,
     bajanteNombre,
     exteriorMm,
     interiorMm,
+    rect = null,
   }: {
     canaletaNombre: string;
     canaletaMm: number;
-    tipoCanal: string;
     pendientePct: number;
     bajanteNombre: string;
     exteriorMm: number;
     interiorMm: number;
+    rect?: { nombre: string; anchoMm: number; altoFrenteMm: number; altoPosteriorMm: number } | null;
   } = $props();
+
+  // Canal rectangular (opción 2): escala fija para que quepa en el marco.
+  const RX0 = 64;
+  const RY = 186; // fondo del canal
+  const escalaR = $derived(
+    rect ? Math.min(170 / Math.max(1, rect.anchoMm), 150 / Math.max(1, rect.altoPosteriorMm, rect.altoFrenteMm)) : 1,
+  );
+  const rw = $derived(rect ? rect.anchoMm * escalaR : 0);
+  const hf = $derived(rect ? rect.altoFrenteMm * escalaR : 0);
+  const hp = $derived(rect ? rect.altoPosteriorMm * escalaR : 0);
+  const ha = $derived(0.75 * hf);
 
   const fmt = (v: number, d = 1) =>
     v.toLocaleString('es-GT', { minimumFractionDigits: 0, maximumFractionDigits: d });
@@ -39,7 +50,7 @@
 
 <div class="dibujos">
   <figure>
-    <figcaption><strong>Canaleta: {canaletaNombre}</strong><span>{tipoCanal}, corte transversal</span></figcaption>
+    <figcaption><strong>Opción 1: canaleta semicircular de {canaletaNombre}</strong><span>sección mínima equivalente, corte transversal</span></figcaption>
     <svg viewBox="0 0 300 236" role="img"
       aria-label="Corte de canaleta semicircular de {fmt(canaletaMm / 10)} centímetros, con agua hasta tres cuartos del radio">
       <!-- cota del ancho -->
@@ -57,6 +68,30 @@
       <text x={CX} y={BORDE + R + 54} text-anchor="middle" class="nota-svg">= {fmt(pendientePct * 10, 1)} mm de caída por metro</text>
     </svg>
   </figure>
+
+  {#if rect}
+    <figure>
+      <figcaption><strong>Opción 2: canal rectangular</strong><span>{rect.nombre}, corte transversal</span></figcaption>
+      <svg viewBox="0 0 300 236" role="img"
+        aria-label="Corte de canal rectangular de {fmt(rect.anchoMm)} milímetros de fondo, {fmt(rect.altoFrenteMm)} de alto al frente y {fmt(rect.altoPosteriorMm)} a la pared">
+        <!-- agua hasta 3/4 del lado bajo -->
+        <rect x={RX0} y={RY - ha} width={rw} height={ha} class="agua" />
+        <!-- perfil: frente bajo (izquierda) y pared alta (derecha), con pestañas -->
+        <path d="M{RX0 + 8} {RY - hf + 8}V{RY - hf}H{RX0}V{RY}H{RX0 + rw}V{RY - hp}H{RX0 + rw - 8}V{RY - hp + 8}" class="pared" />
+        <text x={RX0 + rw / 2} y={RY - hf + (hf - ha) / 2 + 5} text-anchor="middle" class="nota-svg">borde libre 25 %</text>
+        <text x={RX0 + rw / 2} y={RY - ha / 2 + 5} text-anchor="middle" class="etiqueta-agua">agua: 3/4 del frente</text>
+        <!-- cotas -->
+        <path d="M{RX0 - 20} {RY - hf}h10M{RX0 - 15} {RY - hf}V{RY}M{RX0 - 20} {RY}h10" class="cota" />
+        <text x={RX0 - 22} y={RY - hf / 2} text-anchor="middle" class="medida" transform="rotate(-90 {RX0 - 22} {RY - hf / 2})">{fmt(rect.altoFrenteMm)} mm</text>
+        <path d="M{RX0 + rw + 10} {RY - hp}h10M{RX0 + rw + 15} {RY - hp}V{RY}M{RX0 + rw + 10} {RY}h10" class="cota" />
+        <text x={RX0 + rw + 34} y={RY - hp / 2} text-anchor="middle" class="medida" transform="rotate(-90 {RX0 + rw + 34} {RY - hp / 2})">{fmt(rect.altoPosteriorMm)} mm</text>
+        <path d="M{RX0} {RY + 10}v10M{RX0} {RY + 15}H{RX0 + rw}M{RX0 + rw} {RY + 10}v10" class="cota" />
+        <text x={RX0 + rw / 2} y={RY + 36} text-anchor="middle" class="medida">{fmt(rect.anchoMm)} mm</text>
+        <text x={RX0 - 8} y="28" class="nota-svg">frente</text>
+        <text x={RX0 + rw + 8} y="28" text-anchor="end" class="nota-svg">pared o fascia</text>
+      </svg>
+    </figure>
+  {/if}
 
   <figure>
     <figcaption><strong>Bajante: tubo PVC de {bajanteNombre}</strong><span>corte transversal</span></figcaption>
@@ -81,8 +116,8 @@
   </figure>
 </div>
 <p class="leyenda">
-  Dibujos esquemáticos, sin escala. La canaleta comercial puede tener otra forma (colonial o de alto caudal), pero
-  su sección útil no debe ser menor que la del semicírculo indicado.
+  Dibujos esquemáticos. El canal comercial puede tener otra forma (colonial o de alto caudal), pero su capacidad no
+  debe ser menor que la de la canaleta semicircular indicada.
 </p>
 
 <style>
