@@ -1,6 +1,6 @@
 # Política de privacidad de CaptaLluvia
 
-**Versión:** borrador 0.1 — 7 de noviembre de 2026
+**Versión:** borrador 0.2 — 8 de noviembre de 2026
 **Responsable:** G. Alfaro — galfaro@icc.org.gt
 **Aplica a:** https://captalluvia.org y a la app instalada (PWA)
 
@@ -12,13 +12,13 @@
 - Tus proyectos (ubicación, techo, número de personas, precios) **se guardan solo en tu dispositivo**.
 - Para medir el impacto, la app pide **una sola vez** un registro de tu organización.
 - No vendemos ni compartimos datos con fines comerciales. CaptaLluvia es gratuita y no tiene anuncios.
-- Puedes **borrar todos tus datos** en cualquier momento desde Ajustes.
+- Puedes **borrar todos tus datos** en cualquier momento (paso 7 → "Tus datos en este dispositivo").
 
 ## 2. Qué datos se recopilan
 
 | Dato | Dónde se guarda | Para qué |
 | --- | --- | --- |
-| Proyectos: ubicación, medidas del techo, número de personas, consumo, precios | Solo en tu dispositivo (IndexedDB) | Hacer los cálculos y el informe PDF |
+| Proyecto en curso: punto marcado en el mapa, lluvia, techo, usuarios y consumo | Solo en tu dispositivo (almacenamiento del navegador, `localStorage`) | Continuar el proyecto después y hacer el informe PDF |
 | Archivos Excel/CSV de lluvia que importes y claves de APIs de estaciones | Solo en tu dispositivo | Usar tus propios datos de lluvia |
 | Registro de la organización: nombre, tipo, país, departamento, aceptación de esta política | Servidor (Cloudflare D1) | Saber qué organizaciones usan la app y desde dónde (impacto) |
 | Correo electrónico (opcional) | Servidor (Cloudflare D1) | Avisarte de versiones nuevas |
@@ -39,14 +39,15 @@ CaptaLluvia **no usa inteligencia artificial** para calcular: los resultados sal
 | GitHub Pages (GitHub, Inc.) | Datos técnicos de la conexión al descargar la app | Alojar el sitio |
 | Cloudflare (Workers y D1) | Registro de la organización, eventos de uso y consultas a estaciones | Base de datos y puente de estaciones |
 | Open-Meteo, NASA POWER, Climate Hazards Center | Coordenadas redondeadas | Obtener la lluvia histórica |
-| Esri y OpenStreetMap (Nominatim) | Zona del mapa visible o texto de búsqueda | Mostrar el mapa y buscar direcciones |
+| OpenStreetMap (servidores de teselas) | La zona del mapa que estás viendo (como cualquier mapa en línea) y datos técnicos de la conexión | Mostrar el mapa para ubicar la vivienda |
+| Nominatim (OpenStreetMap) | El texto que escribes en "Buscar" | Encontrar el municipio o la dirección |
 | APIs de estaciones que tú conectes | Lo que exija cada API (por ejemplo tu clave) | Traer datos de tus estaciones |
 
 No se usan fuentes tipográficas externas (como Google Fonts), CDN externos ni servicios de publicidad.
 
 ## 5. Tus derechos
 
-- **Borrar todo:** el botón "Borrar todos mis datos" elimina los proyectos y archivos del dispositivo **y** tu registro y eventos en el servidor.
+- **Borrar todo:** el botón "Borrar mis datos de este dispositivo" (paso 7) elimina el proyecto guardado en el navegador. Cuando exista el registro de organizaciones, el mismo botón también borrará tu registro y tus eventos en el servidor.
 - **Consultar o corregir:** escribe a galfaro@icc.org.gt.
 - **Retirar el correo:** cada aviso incluye cómo darte de baja.
 

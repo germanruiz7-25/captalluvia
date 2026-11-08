@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { MESES_LARGOS, resumirMensualManual, type ResumenLluvia } from '../core/lluvia';
-  import { ATRIBUCION_OPEN_METEO, consultarLluviaOpenMeteo, redondearCoordenada } from '../core/openmeteo';
+  import { MESES_LARGOS, type ResumenLluvia } from '../core/lluvia';
+  import { ATRIBUCION_OPEN_METEO, redondearCoordenada } from '../core/openmeteo';
   import GraficoMensual from './GraficoMensual.svelte';
   import IlustracionLitro from './IlustracionLitro.svelte';
   import type { ResumenOferta } from '../core/oferta';
   import { COEFICIENTES_ESCORRENTIA, NOMBRES_TECHO, type TipoTecho } from '../core/techo';
 
   let {
-    lluvia = $bindable(null),
-    lat = $bindable(''),
-    lon = $bindable(''),
+    lluvia,
+    lat,
+    lon,
     oferta = null,
     tipoTecho,
     descarteMm,
@@ -27,105 +27,16 @@
     oferta ? oferta.mesesCaptados.flatMap((c, i) => (c ? [MESES_LARGOS[i]] : [])) : [],
   );
 
-  let modo: 'coordenadas' | 'manual' = $state('coordenadas');
-  let consultando = $state(false);
-  let error = $state('');
-
-  // Valores de ejemplo para el modo manual (reemplazarlos por datos del lugar).
-  let manualMm = $state([5, 5, 10, 40, 150, 250, 200, 200, 280, 220, 60, 10]);
-  let manualDias = $state(120);
-
-  function usarGps() {
-    error = '';
-    if (!('geolocation' in navigator)) {
-      error = 'Este dispositivo no permite obtener la ubicación.';
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        lat = String(redondearCoordenada(pos.coords.latitude));
-        lon = String(redondearCoordenada(pos.coords.longitude));
-      },
-      () => (error = 'No se pudo obtener la ubicación. Revisa el permiso de ubicación del navegador.'),
-      { enableHighAccuracy: true, timeout: 15000 },
-    );
-  }
-
-  async function consultar() {
-    error = '';
-    consultando = true;
-    try {
-      lluvia = await consultarLluviaOpenMeteo(Number(lat), Number(lon));
-    } catch (e) {
-      error = e instanceof Error ? e.message : 'No se pudo consultar la lluvia.';
-    } finally {
-      consultando = false;
-    }
-  }
-
-  function usarManual() {
-    lluvia = resumirMensualManual(manualMm, manualDias);
-  }
-
   const n0 = (v: number) => Math.round(v).toLocaleString('es-GT');
 </script>
 
 <section class="tarjeta paso">
-  <p class="numero-paso">Paso 1 de 5</p>
+  <p class="numero-paso">Paso 2 de 7</p>
   <h2>Lluvia del lugar</h2>
 
-  <div class="no-imprimir">
-    <div class="pestanas" role="tablist">
-      <button role="tab" aria-selected={modo === 'coordenadas'} class:activa={modo === 'coordenadas'} onclick={() => (modo = 'coordenadas')}>
-        Por ubicación (satélite)
-      </button>
-      <button role="tab" aria-selected={modo === 'manual'} class:activa={modo === 'manual'} onclick={() => (modo = 'manual')}>
-        Ingresar a mano
-      </button>
-    </div>
-
-    {#if modo === 'coordenadas'}
-      <p class="nota">
-        Escribe las coordenadas del inmueble o usa el GPS del teléfono. Se consultan los últimos 20 años de
-        lluvia diaria. En la siguiente versión también podrás marcar el punto en un mapa satelital.
-      </p>
-      <div class="campos">
-        <label>Latitud
-          <input inputmode="decimal" placeholder="14.31" bind:value={lat} />
-        </label>
-        <label>Longitud
-          <input inputmode="decimal" placeholder="-90.79" bind:value={lon} />
-        </label>
-      </div>
-      <div class="acciones">
-        <button class="secundario" onclick={usarGps}>Usar mi ubicación (GPS)</button>
-        <button class="principal" onclick={consultar} disabled={consultando || lat === '' || lon === ''}>
-          {consultando ? 'Consultando 20 años…' : 'Estimar la lluvia'}
-        </button>
-      </div>
-    {:else}
-      <p class="nota">
-        Escribe la lluvia promedio de cada mes en milímetros (por ejemplo, de una estación cercana). Los valores
-        que aparecen son solo un ejemplo.
-      </p>
-      <div class="meses">
-        {#each MESES_LARGOS as mes, i (mes)}
-          <label>{mes}
-            <input type="number" min="0" step="1" bind:value={manualMm[i]} />
-          </label>
-        {/each}
-        <label>Días con lluvia al año
-          <input type="number" min="0" max="366" bind:value={manualDias} />
-        </label>
-      </div>
-      <div class="acciones">
-        <button class="principal" onclick={usarManual}>Usar estos datos</button>
-      </div>
-    {/if}
-
-    {#if error}<p class="alerta" role="alert">{error}</p>{/if}
-  </div>
-
+  {#if !lluvia}
+    <p class="nota">Primero marca la vivienda en el mapa o escribe tus datos de lluvia (paso 1).</p>
+  {/if}
   {#if lluvia}
     <div class="resumen">
       <div class="cifras">
@@ -150,7 +61,7 @@
         {/if}
       </p>
       <p class="nota">
-        PN = precipitación × Ce − primer descarte, con el techo del paso 2
+        PN = precipitación × Ce − primer descarte, con el techo del paso 3
         ({NOMBRES_TECHO[tipoTecho].toLowerCase()}, Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}, descarte de {descarteMm} mm por lluvia).
       </p>
       {#if umbralMm > 0}
@@ -164,6 +75,8 @@
           Los demás meses no se cuentan en la captación.
         </p>
       {/if}
+      <details class="detalle">
+        <summary>Ver los datos mes a mes y la fuente</summary>
       <table class="tabla-meses">
         <thead><tr><th>Mes</th>{#each MESES_LARGOS as m (m)}<th>{m.slice(0, 3)}</th>{/each}<th>Año</th></tr></thead>
         <tbody>
@@ -181,13 +94,12 @@
       {#if lluvia.mesesSinDatos.length}
         <p class="alerta">Sin datos suficientes en: {lluvia.mesesSinDatos.map((m) => MESES_LARGOS[m]).join(', ')} (se tomaron como 0 mm).</p>
       {/if}
+      </details>
     </div>
   {/if}
 </section>
 
 <style>
-  .pestanas { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
-  .meses { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: 0.5rem 0.75rem; margin: 0.75rem 0; }
   .resumen { margin-top: 1rem; }
   h3 { font-size: 1rem; margin: 1rem 0 0.25rem; }
   .leyenda-grafico { display: flex; gap: 0.4rem 1rem; flex-wrap: wrap; align-items: center; font-size: 0.85rem; color: var(--texto-suave); margin: 0.25rem 0; }

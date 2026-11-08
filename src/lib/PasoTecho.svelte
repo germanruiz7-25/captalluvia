@@ -32,7 +32,7 @@
 </script>
 
 <section class="tarjeta paso">
-  <p class="numero-paso">Paso 2 de 5</p>
+  <p class="numero-paso">Paso 3 de 7</p>
   <h2>Techo y lluvia neta</h2>
 
   <div class="campos no-imprimir">
@@ -68,6 +68,13 @@
   {#if !lluvia || !oferta}
     <p class="nota">Completa el paso 1 para ver la lluvia neta.</p>
   {:else}
+    <div class="destacado">
+      <span class="cifra">{n0(oferta.netaAnualMm)} L</span>
+      <span>
+        netos al año por cada m² de techo: {Math.round(oferta.eficiencia * 100)} % de la lluvia que cae
+        ({n0(oferta.brutaAnualMm)} mm).
+      </span>
+    </div>
     <table class="cascada">
       <tbody>
         <tr><td>Lluvia que cae al año</td><td>{n0(oferta.brutaAnualMm)} mm</td></tr>
@@ -77,10 +84,6 @@
         <tr class="total"><td>Lluvia neta aprovechable</td><td>{n0(oferta.netaAnualMm)} mm</td></tr>
       </tbody>
     </table>
-    <p>
-      Cada m² de techo capta <strong>{n0(oferta.netaAnualMm)} litros netos al año</strong>
-      ({Math.round(oferta.eficiencia * 100)} % de la lluvia que cae).
-    </p>
 
     {#if oferta.m3NetosAnual !== null && oferta.m3BrutosAnual !== null}
       <div class="destacado">
@@ -95,6 +98,9 @@
       <p class="nota">Si ya existe un techo, escribe su área para ver cuántos m³ netos se pueden obtener al año.</p>
     {/if}
 
+    <!-- La misma gráfica ya sale en el paso 2 del informe: aquí no se imprime. -->
+    <details class="detalle no-imprimir">
+    <summary>Ver la gráfica mes a mes</summary>
     <h3>Precipitación promedio y PN cosechada por mes (mm)</h3>
     <GraficoMensual brutaMm={lluvia.mensualMm} netaMm={oferta.pnMensualMm} captados={oferta.mesesCaptados} umbralMm={oferta.umbralMm || null} />
     <p class="leyenda-grafico">
@@ -105,6 +111,7 @@
         <span class="item"><span class="linea-umbral"></span> {n0(oferta.umbralMm)} mm de PN: inicio de captación</span>
       {/if}
     </p>
+    </details>
   {/if}
 </section>
 

@@ -4,6 +4,9 @@
   import { calcularOferta, UMBRAL_CAPTACION_MM } from './core/oferta';
   import { calcularDemanda, DOTACIONES, EDIFICIOS, USOS_INICIALES, litrosDeUsos, type TipoEdificio, type UsoAgua } from './core/demanda';
   import { COEFICIENTES_ESCORRENTIA, areaMinimaM2, opcionesDeTecho, type NumeroAguas, type TipoTecho } from './core/techo';
+  import { onMount } from 'svelte';
+  import { borrarProyecto, cargarProyecto, guardarProyecto } from './core/proyecto';
+  import PasoUbicacion from './lib/PasoUbicacion.svelte';
   import PasoLluvia from './lib/PasoLluvia.svelte';
   import PasoTecho from './lib/PasoTecho.svelte';
   import PasoUsuarios from './lib/PasoUsuarios.svelte';
@@ -15,23 +18,64 @@
   const version = __APP_VERSION__;
   const privacidad = `${acerca.repositorio}/blob/main/docs/PRIVACIDAD.md`;
 
-  // Proyecto (solo vive en este dispositivo)
-  let nombreProyecto = $state('');
-  let lat = $state('');
-  let lon = $state('');
-  let lluvia: ResumenLluvia | null = $state(null);
+  // Proyecto: se guarda solo en este dispositivo (localStorage)
+  const g = cargarProyecto();
+  const edificioInicial = (g?.edificio && g.edificio in EDIFICIOS ? g.edificio : 'vivienda') as TipoEdificio;
 
-  let tipoTecho: TipoTecho = $state('lamina_metalica');
-  let aguas: NumeroAguas = $state(2);
-  let descarteMm = $state(1);
-  let umbralMm = $state(UMBRAL_CAPTACION_MM);
-  let areaDisponible: number | null = $state(null);
+  let nombreProyecto = $state(g?.nombreProyecto ?? '');
+  let lat = $state(g?.lat ?? '');
+  let lon = $state(g?.lon ?? '');
+  let lluvia: ResumenLluvia | null = $state(g?.lluvia ?? null);
 
-  let edificio: TipoEdificio = $state('vivienda');
-  let usuarios = $state(5);
-  let dotacionId = $state(DOTACIONES.vivienda[0].id);
-  let usos: UsoAgua[] = $state(USOS_INICIALES.vivienda.map((u) => ({ ...u })));
-  let diasUso = $state(EDIFICIOS.vivienda.diasUso);
+  let tipoTecho: TipoTecho = $state(
+    (g?.tipoTecho && g.tipoTecho in COEFICIENTES_ESCORRENTIA ? g.tipoTecho : 'lamina_metalica') as TipoTecho,
+  );
+  let aguas: NumeroAguas = $state(g?.aguas === 1 ? 1 : 2);
+  let descarteMm = $state(g?.descarteMm ?? 1);
+  let umbralMm = $state(g?.umbralMm ?? UMBRAL_CAPTACION_MM);
+  let areaDisponible: number | null = $state(g?.areaDisponible ?? null);
+
+  let edificio: TipoEdificio = $state(edificioInicial);
+  let usuarios = $state(g?.usuarios ?? 5);
+  let dotacionId = $state(g?.dotacionId ?? DOTACIONES[edificioInicial][0].id);
+  let usos: UsoAgua[] = $state(g?.usos ?? USOS_INICIALES[edificioInicial].map((u) => ({ ...u })));
+  let diasUso = $state(g?.diasUso ?? EDIFICIOS[edificioInicial].diasUso);
+
+  // ---------- Asistente por pasos ----------
+  const PASOS = [
+    { icono: '📍', nombre: 'Ubicación' },
+    { icono: '🌧️', nombre: 'Lluvia' },
+    { icono: '🏠', nombre: 'Techo' },
+    { icono: '👥', nombre: 'Usuarios' },
+    { icono: '📐', nombre: 'Área' },
+    { icono: '🔽', nombre: 'Canaletas' },
+    { icono: '📄', nombre: 'Informe' },
+  ];
+  const leerPasoDeUrl = () => {
+    const m = /^#paso-(\d)$/.exec(location.hash);
+    const n = m ? Number(m[1]) : 0;
+    return n >= 1 && n <= PASOS.length ? n : null;
+  };
+  let paso = $state(leerPasoDeUrl() ?? (g?.paso && g.paso >= 1 && g.paso <= PASOS.length ? g.paso : 1));
+
+  // Pasos ya vistos (para marcar ✓ solo lo que la persona revisó)
+  let visitados: number[] = $state(Array.from({ length: paso }, (_, i) => i + 1));
+
+  function irAPaso(n: number) {
+    paso = Math.min(PASOS.length, Math.max(1, n));
+    if (!visitados.includes(paso)) visitados.push(paso);
+    if (location.hash !== `#paso-${paso}`) history.pushState(null, '', `#paso-${paso}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  let resumenDrenaje = $state('');
+  let confirmarBorrado = $state(false);
+
+  function borrarTodo() {
+    borrarProyecto();
+    location.hash = '';
+    location.reload();
+  }
 
   const oferta = $derived(
     lluvia
@@ -49,6 +93,55 @@
     return exacta === null || demanda.m3Anual <= 0 ? null : Math.ceil(exacta - 1e-9);
   });
   const opcionesTecho = $derived(areaNecesaria === null ? [] : opcionesDeTecho(areaNecesaria));
+
+  const listo = $derived(
+    [
+      lluvia !== null,
+      lluvia !== null,
+      oferta !== null,
+      demanda.m3Anual > 0,
+      areaNecesaria !== null,
+      opcionesTecho.length > 0,
+      false,
+    ].map((ok, i) => ok && visitados.includes(i + 1)),
+  );
+
+  // Guardar en el dispositivo cada vez que cambia algo.
+  $effect(() => {
+    guardarProyecto({
+      paso, nombreProyecto, lat, lon, lluvia, tipoTecho, aguas,
+      descarteMm: Number(descarteMm) || 0, umbralMm: Number(umbralMm) || 0, areaDisponible,
+      edificio, usuarios, dotacionId, usos: $state.snapshot(usos), diasUso,
+    });
+  });
+
+  onMount(() => {
+    const alCambiarUrl = () => {
+      const n = leerPasoDeUrl();
+      if (n) {
+        paso = n;
+        if (!visitados.includes(n)) visitados.push(n);
+      }
+    };
+    // En el PDF se abren todos los detalles plegados y se vuelven a cerrar después.
+    let abiertos: HTMLDetailsElement[] = [];
+    const antes = () => {
+      abiertos = [...document.querySelectorAll<HTMLDetailsElement>('details.detalle:not([open])')];
+      abiertos.forEach((d) => (d.open = true));
+    };
+    const despues = () => abiertos.forEach((d) => (d.open = false));
+    window.addEventListener('popstate', alCambiarUrl);
+    window.addEventListener('beforeprint', antes);
+    window.addEventListener('afterprint', despues);
+    return () => {
+      window.removeEventListener('popstate', alCambiarUrl);
+      window.removeEventListener('beforeprint', antes);
+      window.removeEventListener('afterprint', despues);
+    };
+  });
+
+  const n0 = (v: number) => Math.round(v).toLocaleString('es-GT');
+  const n1 = (v: number) => v.toLocaleString('es-GT', { maximumFractionDigits: 1 });
 
   const fecha = new Date().toLocaleDateString('es-GT', { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -71,7 +164,7 @@
       <p>{acerca.subtitulo}</p>
     </div>
   </div>
-  <a href="#acerca">Acerca de</a>
+  <button class="enlace" onclick={() => irAPaso(7)}>Acerca de</button>
 </header>
 
 <!-- Encabezado del informe (solo en el PDF) -->
@@ -82,28 +175,106 @@
   <p>Fecha: {fecha} · {EDIFICIOS[edificio].nombre} · Versión de la app: v{version}</p>
 </div>
 
-<main>
-  <section class="tarjeta no-imprimir">
-    <label class="proyecto-campo">Nombre del proyecto o lugar (opcional, aparece en el informe)
-      <input placeholder="Ej. Escuela Oficial Rural Mixta, aldea …" bind:value={nombreProyecto} />
-    </label>
-  </section>
+<nav class="avance no-imprimir" aria-label="Pasos">
+  <ol>
+    {#each PASOS as p, i (p.nombre)}
+      <li>
+        <button
+          class:actual={paso === i + 1}
+          class:hecho={listo[i] && paso !== i + 1}
+          aria-current={paso === i + 1 ? 'step' : undefined}
+          onclick={() => irAPaso(i + 1)}
+        >
+          <span class="circulo" aria-hidden="true">{listo[i] && paso !== i + 1 ? '✓' : p.icono}</span>
+          <span class="etiqueta">{i + 1}. {p.nombre}</span>
+        </button>
+      </li>
+    {/each}
+  </ol>
+  <div class="barra" aria-hidden="true"><div style="width: {((paso - 1) / (PASOS.length - 1)) * 100}%"></div></div>
+</nav>
 
-  <PasoLluvia bind:lluvia bind:lat bind:lon {oferta} {tipoTecho} descarteMm={Number(descarteMm) || 0} />
-  <PasoTecho {lluvia} {oferta} bind:tipoTecho bind:aguas bind:descarteMm bind:areaDisponible bind:umbralMm />
-  <PasoUsuarios bind:edificio bind:usuarios bind:dotacionId bind:usos bind:diasUso {demanda} />
-  <PasoResultados {oferta} {demanda} {aguas} />
-  <PasoDrenaje opciones={opcionesTecho} {aguas} {tipoTecho} />
-  <section class="tarjeta no-imprimir informe">
-    <h2>Informe</h2>
-    <p class="nota">El informe reúne los cinco pasos, las fuentes de consulta y la nota "Acerca de CaptaLluvia".</p>
-    <div class="acciones">
-      <button class="principal" onclick={descargarInforme} disabled={!oferta}>Descargar informe en PDF</button>
-    </div>
-    <p class="nota">Se abrirá la ventana de impresión: elige "Guardar como PDF" como destino.</p>
-  </section>
-  <Fuentes {lluvia} {lat} {lon} {edificio} umbralMm={Number(umbralMm) || 0} />
-  <Acerca />
+<main>
+  <div class="pantalla no-imprimir" class:activa={paso === 1}>
+    <PasoUbicacion bind:lluvia bind:lat bind:lon bind:nombreProyecto onListo={() => irAPaso(2)} />
+  </div>
+  <div class="pantalla" class:activa={paso === 2}>
+    <PasoLluvia {lluvia} {lat} {lon} {oferta} {tipoTecho} descarteMm={Number(descarteMm) || 0} />
+  </div>
+  <div class="pantalla" class:activa={paso === 3}>
+    <PasoTecho {lluvia} {oferta} bind:tipoTecho bind:aguas bind:descarteMm bind:areaDisponible bind:umbralMm />
+  </div>
+  <div class="pantalla" class:activa={paso === 4}>
+    <PasoUsuarios bind:edificio bind:usuarios bind:dotacionId bind:usos bind:diasUso {demanda} />
+  </div>
+  <div class="pantalla" class:activa={paso === 5}>
+    <PasoResultados {oferta} {demanda} {aguas} />
+  </div>
+  <div class="pantalla" class:activa={paso === 6}>
+    <PasoDrenaje opciones={opcionesTecho} {aguas} {tipoTecho} bind:resumen={resumenDrenaje} />
+  </div>
+  <div class="pantalla" class:activa={paso === 7}>
+    <section class="tarjeta paso no-imprimir">
+      <p class="numero-paso">Paso 7 de 7</p>
+      <h2>Resumen e informe</h2>
+      {#if !oferta}
+        <p class="nota">Completa al menos los pasos 1 y 2 para generar el informe.</p>
+      {/if}
+      <div class="resumen-final">
+        <button class="ficha" onclick={() => irAPaso(2)}>
+          <span class="icono">🌧️</span><span class="valor">{lluvia ? `${n0(lluvia.anualMm)} mm` : '—'}</span><span>lluvia al año</span>
+        </button>
+        <button class="ficha" onclick={() => irAPaso(3)}>
+          <span class="icono">💧</span><span class="valor">{oferta ? `${n0(oferta.netaAnualMm)} L` : '—'}</span><span>netos por m² de techo al año</span>
+        </button>
+        <button class="ficha" onclick={() => irAPaso(4)}>
+          <span class="icono">👥</span><span class="valor">{demanda.m3Anual > 0 ? `${n1(demanda.m3Anual)} m³` : '—'}</span><span>de agua al año ({EDIFICIOS[edificio].nombre.toLowerCase()})</span>
+        </button>
+        <button class="ficha" onclick={() => irAPaso(5)}>
+          <span class="icono">🏠</span><span class="valor">{areaNecesaria !== null ? `${n0(areaNecesaria)} m²` : '—'}</span><span>de techo como mínimo</span>
+        </button>
+        <button class="ficha ancha" onclick={() => irAPaso(6)}>
+          <span class="icono">🔽</span><span class="valor chico">{resumenDrenaje || '—'}</span><span>canaletas y bajantes</span>
+        </button>
+      </div>
+      <div class="acciones">
+        <button class="principal grande" onclick={descargarInforme} disabled={!oferta}>📄 Descargar informe en PDF</button>
+      </div>
+      <p class="nota">
+        Se abrirá la ventana de impresión: elige "Guardar como PDF". El informe reúne todos los pasos, las fuentes
+        de consulta y la nota "Acerca de CaptaLluvia".
+      </p>
+      <details class="detalle">
+        <summary>Tus datos en este dispositivo</summary>
+        <p class="nota">
+          El proyecto se guarda solo en este navegador para que puedas continuar después. No se envía a ningún
+          servidor. <a href={privacidad}>Política de privacidad</a>.
+        </p>
+        {#if !confirmarBorrado}
+          <button class="secundario peligro" onclick={() => (confirmarBorrado = true)}>Borrar mis datos de este dispositivo</button>
+        {:else}
+          <p class="alerta">¿Seguro? Se borra el proyecto guardado y la app vuelve a empezar.</p>
+          <div class="acciones">
+            <button class="principal peligro-lleno" onclick={borrarTodo}>Sí, borrar todo</button>
+            <button class="secundario" onclick={() => (confirmarBorrado = false)}>Cancelar</button>
+          </div>
+        {/if}
+      </details>
+    </section>
+    <Fuentes {lluvia} {lat} {lon} {edificio} umbralMm={Number(umbralMm) || 0} />
+    <Acerca />
+  </div>
+
+  <div class="navegacion no-imprimir">
+    {#if paso > 1}
+      <button class="secundario" onclick={() => irAPaso(paso - 1)}>← {PASOS[paso - 2].nombre}</button>
+    {:else}
+      <span></span>
+    {/if}
+    {#if paso < PASOS.length}
+      <button class="principal" onclick={() => irAPaso(paso + 1)}>{PASOS[paso].nombre} →</button>
+    {/if}
+  </div>
 </main>
 
 <footer>
@@ -120,10 +291,63 @@
   .marca { display: flex; gap: 0.75rem; align-items: center; }
   h1 { margin: 0; font-size: 1.5rem; }
   .marca p { margin: 0; color: var(--texto-suave); font-size: 0.9rem; }
-  header > a { white-space: nowrap; }
+  .enlace { background: none; border: 0; color: var(--acento); text-decoration: underline; padding: 0; white-space: nowrap; }
+
+  /* Barra de avance del asistente */
+  .avance {
+    position: sticky; top: 0; z-index: 10; background: var(--fondo);
+    border-bottom: 1px solid var(--borde); padding: 0.5rem clamp(0.5rem, 3vw, 2rem) 0;
+  }
+  .avance ol { list-style: none; margin: 0 auto; padding: 0; display: flex; justify-content: space-between; max-width: 60rem; gap: 0.25rem; }
+  .avance li { flex: 1 1 0; min-width: 0; }
+  .avance button {
+    width: 100%; background: none; border: 0; padding: 0.2rem 0; display: grid; justify-items: center; gap: 0.15rem;
+    color: var(--texto-suave); font-size: 0.8rem;
+  }
+  .circulo {
+    width: 2.3rem; height: 2.3rem; border-radius: 50%; display: grid; place-items: center; font-size: 1.1rem;
+    background: var(--fondo-tarjeta); border: 2px solid var(--borde);
+  }
+  .avance button.hecho .circulo { border-color: var(--acento); color: var(--acento); font-weight: 700; }
+  .avance button.actual .circulo { background: var(--acento); border-color: var(--acento); box-shadow: 0 0 0 4px var(--acento-suave); }
+  .avance button.actual { color: var(--texto); font-weight: 700; }
+  .etiqueta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .barra { height: 3px; background: var(--borde); margin: 0.4rem auto 0; max-width: 60rem; }
+  .barra div { height: 100%; background: var(--acento); transition: width 0.3s; }
+  @media (max-width: 40rem) {
+    .avance .etiqueta { display: none; }
+    .avance button.actual .etiqueta { display: block; position: absolute; left: 0; right: 0; text-align: center; }
+    .avance { padding-bottom: 1.4rem; position: sticky; }
+    .avance ol { position: relative; }
+    .avance li { position: static; }
+    .avance button.actual .etiqueta { top: 2.7rem; }
+    .circulo { width: 2rem; height: 2rem; font-size: 0.95rem; }
+  }
+
+  .pantalla { display: none; min-width: 0; }
+  .pantalla.activa { display: grid; gap: 1.5rem; grid-template-columns: minmax(0, 1fr); }
+  .navegacion { display: flex; justify-content: space-between; gap: 0.75rem; }
+  .navegacion button { padding: 0.7rem 1.2rem; font-size: 1rem; }
+
+  .resumen-final { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: 0.75rem; margin: 0.5rem 0 1rem; }
+  .ficha {
+    display: grid; justify-items: start; gap: 0.1rem; text-align: left; padding: 0.8rem 1rem;
+    background: var(--fondo); border: 1px solid var(--borde); border-radius: 0.75rem; color: var(--texto-suave); font-size: 0.85rem;
+  }
+  .ficha:hover { border-color: var(--acento); }
+  .ficha.ancha { grid-column: 1 / -1; }
+  .ficha .icono { font-size: 1.4rem; }
+  .ficha .valor { font-size: 1.6rem; font-weight: 700; color: var(--acento); line-height: 1.2; }
+  .ficha .valor.chico { font-size: 1.15rem; }
+  .peligro { color: var(--alerta); border-color: var(--alerta); }
+  .peligro-lleno { background: var(--alerta); }
+
+  @media print {
+    .pantalla { display: grid !important; gap: 0.6rem; }
+    .pantalla.no-imprimir { display: none !important; }
+  }
   main { max-width: 60rem; margin: 0 auto; padding: 1.5rem clamp(1rem, 4vw, 2rem); display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
   footer { text-align: center; color: var(--texto-suave); font-size: 0.85rem; padding: 2rem 1rem; }
-  .proyecto-campo { display: grid; gap: 0.35rem; color: var(--texto-suave); font-size: 0.9rem; }
   .encabezado-informe { padding: 0 0 0.5rem; border-bottom: 2px solid var(--acento); margin-bottom: 0.75rem; }
   .encabezado-informe h1 { font-size: 1.4rem; margin: 0.15rem 0; }
   .encabezado-informe p { margin: 0.1rem 0; }

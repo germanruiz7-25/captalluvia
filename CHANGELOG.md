@@ -2,6 +2,20 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.3.0] — 2026-11-08 — Asistente por pasos y mapa
+
+### Agregado
+- **Mapa para ubicar la vivienda** (OpenStreetMap con Leaflet): se toca el techo para marcarla, el marcador se puede arrastrar, se busca el municipio o la aldea (Nominatim) y se puede usar el GPS. Las coordenadas también se pueden escribir.
+- **Asistente en 7 pasos:** Ubicación → Lluvia → Techo → Usuarios → Área → Canaletas → Informe. Una pantalla a la vez, con barra de avance (iconos y ✓ en los pasos revisados), botones Anterior/Siguiente y el botón Atrás del navegador.
+- **Resumen final** con fichas de los resultados principales y el botón del informe PDF.
+- El proyecto **se guarda en el dispositivo** para continuar después, y el paso 7 permite **borrar los datos**.
+
+### Cambiado
+- Los detalles del cálculo (tablas mes a mes, bajantes, canaletas, canales del mercado) quedan plegados en "Ver…" para no saturar la pantalla; en el PDF se muestran completos.
+- El techo muestra primero los litros netos por m² en grande.
+- Política de privacidad (borrador 0.2) y atribuciones: OpenStreetMap, Nominatim y Leaflet; almacenamiento local.
+- 9 pruebas nuevas (66 en total).
+
 ## [0.2.0] — 2026-11-08 — Canaletas y bajantes
 
 ### Agregado

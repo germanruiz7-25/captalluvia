@@ -26,13 +26,13 @@
 </script>
 
 <section class="tarjeta paso">
-  <p class="numero-paso">Paso 4 de 5</p>
+  <p class="numero-paso">Paso 5 de 7</p>
   <h2>Área de techo necesaria</h2>
 
   {#if !oferta}
     <p class="nota">Completa el paso 1 para ver los resultados.</p>
   {:else if demanda.m3Anual <= 0}
-    <p class="nota">Indica los usuarios y los litros por día en el paso 3.</p>
+    <p class="nota">Indica los usuarios y los litros por día en el paso 4.</p>
   {:else if area === null}
     <p class="alerta">Con esta lluvia no queda lluvia neta aprovechable; no es posible dimensionar el techo.</p>
   {:else}

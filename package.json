@@ -1,7 +1,7 @@
 {
   "name": "captalluvia",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CaptaLluvia: diseño de sistemas de cosecha de agua de lluvia (SCALL) a nivel domiciliario",
   "author": "Alfaro, G. <galfaro@icc.org.gt>",
   "license": "SEE LICENSE IN LICENSE",
@@ -25,11 +25,15 @@
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@tsconfig/svelte": "^5.0.8",
+    "@types/leaflet": "^1.9.22",
     "@types/node": "^24.19.2",
     "svelte": "^5.57.3",
     "svelte-check": "^4.7.7",
     "typescript": "~6.0.3",
     "vite": "^8.3.6",
     "vitest": "^5.1.0"
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4"
   }
 }
