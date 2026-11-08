@@ -53,9 +53,18 @@
       Panamericana de la Salud.
     </li>
     <li>
-      Umbral de captación de {umbralMm} mm por mes y primer descarte por evento de lluvia: criterio técnico
-      definido para CaptaLluvia (editable en la app).
+      Umbral de captación de {umbralMm} mm por mes (meses con menos lluvia no se captan): criterio de la
+      metodología de Sistemas de Captación del Agua de Lluvia (SCALL) del Colegio de Postgraduados, México
+      (Centro Internacional de Demostración y Capacitación del Aprovechamiento del Agua de Lluvia, CIDECALLI).
+      Anaya Garduño, M. (2011). <em>Captación del agua de lluvia: solución caída del cielo</em>. Biblioteca
+      Básica de Agricultura, Colegio de Postgraduados. ISBN 9786077150176. Editable en la app.
     </li>
+    <li>
+      Anaya-Garduño, M., Pérez-Hernández, A. y Luque-Delgadillo, A. (2021). Sistemas de captación del agua de
+      lluvia (SCALL) para diversos usos. <em>Agro-Divulgación</em>, 1(0).
+      <a href="https://doi.org/10.54767/ad.v1i1.3">doi:10.54767/ad.v1i1.3</a>
+    </li>
+    <li>Primer descarte por evento de lluvia: valor de referencia de CaptaLluvia (1 mm por evento, editable).</li>
     <li>Coeficientes de escorrentía por material del techo: valores de referencia usuales, editables en la app.</li>
     <li>Equivalencia: 1 mm de lluvia sobre 1 m² de superficie = 1 litro de agua.</li>
     <li>

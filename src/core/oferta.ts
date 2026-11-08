@@ -9,7 +9,10 @@
  */
 import type { ResumenLluvia } from './lluvia';
 
-/** Lluvia mensual mínima para captar, criterio técnico de CaptaLluvia (editable). */
+/**
+ * Lluvia mensual mínima para captar (editable). Criterio de la metodología SCALL del
+ * Colegio de Postgraduados / CIDECALLI (Anaya Garduño, 2011).
+ */
 export const UMBRAL_CAPTACION_MM = 40;
 
 export interface ResumenOferta {

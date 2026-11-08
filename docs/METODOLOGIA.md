@@ -13,7 +13,7 @@ Código: `src/core/` · Pruebas: `tests/core/`.
 
 ## 0.1 Lluvia neta y m³ (`oferta.ts`)
 
-**Umbral de captación:** solo se capta en los meses con lluvia promedio igual o mayor a 40 mm (criterio técnico de CaptaLluvia, editable). La lluvia de los meses más secos no se cuenta.
+**Umbral de captación:** solo se capta en los meses con lluvia promedio igual o mayor a 40 mm (editable), criterio de la metodología SCALL del Colegio de Postgraduados, México, y su Centro Internacional de Demostración y Capacitación del Aprovechamiento del Agua de Lluvia (CIDECALLI) (Anaya Garduño, 2011). La lluvia de los meses más secos no se cuenta.
 
 Para cada mes captado: neta = máx(0, P_mes × Ce − días_con_lluvia_mes × d_ff); los meses bajo el umbral aportan 0. La neta anual es la suma de los meses.
 Resumen: lluvia bruta − lluvia de meses bajo el umbral − pérdida por Ce − primer descarte = lluvia neta.
@@ -73,6 +73,8 @@ En dos aguas, el techo de 9.5 × 10.0 m queda en dos segmentos de 4.75 × 10.0 m
 
 ## Referencias
 
+- Anaya Garduño, M. (2011). *Captación del agua de lluvia: solución caída del cielo*. Biblioteca Básica de Agricultura, Colegio de Postgraduados. ISBN 9786077150176.
+- Anaya-Garduño, M., Pérez-Hernández, A. y Luque-Delgadillo, A. (2021). Sistemas de captación del agua de lluvia (SCALL) para diversos usos. *Agro-Divulgación*, 1(0). https://doi.org/10.54767/ad.v1i1.3
 - OPS/CEPIS (2004). *Guía de diseño para captación del agua de lluvia* (OPS/CEPIS/04.122). Lima: Organización Panamericana de la Salud.
 - Hersbach, H. et al. (2020). The ERA5 global reanalysis. *Quarterly Journal of the Royal Meteorological Society*, 146(730), 1999–2049. https://doi.org/10.1002/qj.3803
 - Open-Meteo.com, Historical Weather API (datos CC BY 4.0). https://open-meteo.com
