@@ -22,6 +22,24 @@ describe('oferta de agua', () => {
     expect(o.m3NetosAnual).toBeCloseTo(92.15, 6);
     expect(o.m3NetosMensual?.reduce((t, x) => t + x, 0)).toBeCloseTo(92.15, 6);
   });
+  it('no capta los meses con menos de 40 mm', () => {
+    // 1,000 mm en meses lluviosos + 30 mm en dos meses secos
+    const l = resumirMensualManual([0, 0, 15, 15, 200, 200, 100, 100, 200, 200, 0, 0], 100);
+    const o = calcularOferta(l, 0.9, 1);
+    expect(o.umbralMm).toBe(40);
+    expect(o.mesesCaptados.slice(0, 5)).toEqual([false, false, false, false, true]);
+    expect(o.perdidaMesesSecosMm).toBe(30);
+    expect(o.netaMensualMm[2]).toBe(0);
+    // la suma de pérdidas y neta reconstruye la lluvia bruta
+    const total = o.perdidaMesesSecosMm + o.perdidaEscorrentiaMm + o.perdidaDescarteMm + o.netaAnualMm;
+    expect(total).toBeCloseTo(o.brutaAnualMm, 6);
+  });
+  it('con umbral 0 se capta todo mes con lluvia', () => {
+    const l = resumirMensualManual([0, 0, 15, 15, 200, 200, 100, 100, 200, 200, 0, 0], 100);
+    const o = calcularOferta(l, 0.9, 1, null, 0);
+    expect(o.perdidaMesesSecosMm).toBe(0);
+    expect(o.mesesCaptados[2]).toBe(true);
+  });
   it('un mes nunca queda negativo', () => {
     const seco = resumirMensualManual([2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 5);
     const o = calcularOferta(seco, 0.6, 1);

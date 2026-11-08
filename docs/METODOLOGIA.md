@@ -13,7 +13,12 @@ Código: `src/core/` · Pruebas: `tests/core/`.
 
 ## 0.1 Lluvia neta y m³ (`oferta.ts`)
 
-Para cada mes: neta = máx(0, P_mes × Ce − días_con_lluvia_mes × d_ff). La neta anual es la suma de los meses.
+**Umbral de captación:** solo se capta en los meses con lluvia promedio igual o mayor a 40 mm (criterio técnico de CaptaLluvia, editable). La lluvia de los meses más secos no se cuenta.
+
+Para cada mes captado: neta = máx(0, P_mes × Ce − días_con_lluvia_mes × d_ff); los meses bajo el umbral aportan 0. La neta anual es la suma de los meses.
+Resumen: lluvia bruta − lluvia de meses bajo el umbral − pérdida por Ce − primer descarte = lluvia neta.
+
+**Equivalencia:** 1 mm de lluvia sobre 1 m² = 1 litro.
 Con un área de techo A: m³ netos = neta (mm) × A / 1000.
 
 ## 0.2 Demanda (`demanda.ts`)
@@ -65,3 +70,12 @@ En dos aguas, el techo de 9.5 × 10.0 m queda en dos segmentos de 4.75 × 10.0 m
 
 - Área recomendada mediante simulación diaria del tanque con la confiabilidad objetivo (90 % por defecto).
 - Lluvia obtenida automáticamente de la serie diaria del punto.
+
+## Referencias
+
+- OPS/CEPIS (2004). *Guía de diseño para captación del agua de lluvia* (OPS/CEPIS/04.122). Lima: Organización Panamericana de la Salud.
+- Hersbach, H. et al. (2020). The ERA5 global reanalysis. *Quarterly Journal of the Royal Meteorological Society*, 146(730), 1999–2049. https://doi.org/10.1002/qj.3803
+- Open-Meteo.com, Historical Weather API (datos CC BY 4.0). https://open-meteo.com
+- Howard, G. y Bartram, J. (2003). *Domestic water quantity, service level and health*. Ginebra: OMS.
+- Asamblea General de las Naciones Unidas (2010). Resolución A/RES/64/292, El derecho humano al agua y el saneamiento.
+- Ministerio de Educación de Guatemala: mínimo de 180 días de clase por ciclo escolar.

@@ -1,7 +1,7 @@
 <script lang="ts">
   import acerca from './config/acerca.json';
   import type { ResumenLluvia } from './core/lluvia';
-  import { calcularOferta } from './core/oferta';
+  import { calcularOferta, UMBRAL_CAPTACION_MM } from './core/oferta';
   import { calcularDemanda, DOTACIONES, EDIFICIOS, USOS_INICIALES, litrosDeUsos, type TipoEdificio, type UsoAgua } from './core/demanda';
   import { COEFICIENTES_ESCORRENTIA, type NumeroAguas, type TipoTecho } from './core/techo';
   import PasoLluvia from './lib/PasoLluvia.svelte';
@@ -9,6 +9,7 @@
   import PasoUsuarios from './lib/PasoUsuarios.svelte';
   import PasoResultados from './lib/PasoResultados.svelte';
   import Acerca from './lib/Acerca.svelte';
+  import Fuentes from './lib/Fuentes.svelte';
 
   const version = __APP_VERSION__;
   const privacidad = `${acerca.repositorio}/blob/main/docs/PRIVACIDAD.md`;
@@ -22,6 +23,7 @@
   let tipoTecho: TipoTecho = $state('lamina_metalica');
   let aguas: NumeroAguas = $state(2);
   let descarteMm = $state(1);
+  let umbralMm = $state(UMBRAL_CAPTACION_MM);
   let areaDisponible: number | null = $state(null);
 
   let edificio: TipoEdificio = $state('vivienda');
@@ -31,7 +33,9 @@
   let diasUso = $state(EDIFICIOS.vivienda.diasUso);
 
   const oferta = $derived(
-    lluvia ? calcularOferta(lluvia, COEFICIENTES_ESCORRENTIA[tipoTecho], Number(descarteMm) || 0, areaDisponible) : null,
+    lluvia
+      ? calcularOferta(lluvia, COEFICIENTES_ESCORRENTIA[tipoTecho], Number(descarteMm) || 0, areaDisponible, Number(umbralMm) || 0)
+      : null,
   );
   const litrosPorUsuario = $derived(
     dotacionId === 'personalizada'
@@ -79,10 +83,11 @@
     </label>
   </section>
 
-  <PasoLluvia bind:lluvia bind:lat bind:lon />
-  <PasoTecho {lluvia} {oferta} bind:tipoTecho bind:aguas bind:descarteMm bind:areaDisponible />
+  <PasoLluvia bind:lluvia bind:lat bind:lon umbralMm={Number(umbralMm) || 0} />
+  <PasoTecho {lluvia} {oferta} bind:tipoTecho bind:aguas bind:descarteMm bind:areaDisponible bind:umbralMm />
   <PasoUsuarios bind:edificio bind:usuarios bind:dotacionId bind:usos bind:diasUso {demanda} />
   <PasoResultados {oferta} {demanda} {aguas} onInforme={descargarInforme} />
+  <Fuentes {lluvia} {lat} {lon} {edificio} umbralMm={Number(umbralMm) || 0} />
   <Acerca />
 </main>
 

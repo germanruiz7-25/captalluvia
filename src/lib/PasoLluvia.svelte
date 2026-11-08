@@ -2,12 +2,18 @@
   import { MESES_LARGOS, resumirMensualManual, type ResumenLluvia } from '../core/lluvia';
   import { ATRIBUCION_OPEN_METEO, consultarLluviaOpenMeteo, redondearCoordenada } from '../core/openmeteo';
   import GraficoMensual from './GraficoMensual.svelte';
+  import IlustracionLitro from './IlustracionLitro.svelte';
 
   let {
     lluvia = $bindable(null),
     lat = $bindable(''),
     lon = $bindable(''),
-  }: { lluvia: ResumenLluvia | null; lat: string; lon: string } = $props();
+    umbralMm = 40,
+  }: { lluvia: ResumenLluvia | null; lat: string; lon: string; umbralMm?: number } = $props();
+
+  const mesesCaptables = $derived(
+    lluvia ? lluvia.mensualMm.flatMap((v, i) => (umbralMm > 0 && v >= umbralMm ? [MESES_LARGOS[i]] : [])) : [],
+  );
 
   let modo: 'coordenadas' | 'manual' = $state('coordenadas');
   let consultando = $state(false);
@@ -115,7 +121,20 @@
         <div><span class="cifra">{n0(lluvia.diasLluviaAnual)}</span><span>días con lluvia al año</span></div>
         <div><span class="cifra">{n0(lluvia.anualMm)} L</span><span>caen al año sobre cada m² de techo</span></div>
       </div>
-      <GraficoMensual brutaMm={lluvia.mensualMm} />
+      <IlustracionLitro anualMm={lluvia.anualMm} />
+      <h3>Lluvia promedio por mes (mm)</h3>
+      <GraficoMensual brutaMm={lluvia.mensualMm} umbralMm={umbralMm || null} />
+      {#if umbralMm > 0}
+        <p class="recomendacion">
+          Recomendación: captar la lluvia desde los meses con {umbralMm} mm o más (línea roja punteada).
+          {#if mesesCaptables.length}
+            En este lugar: {mesesCaptables.join(', ')} ({mesesCaptables.length} meses).
+          {:else}
+            En este lugar ningún mes alcanza {umbralMm} mm.
+          {/if}
+          Los meses más secos (barras punteadas) no se cuentan en la captación.
+        </p>
+      {/if}
       <table class="tabla-meses">
         <thead><tr><th>Mes</th>{#each MESES_LARGOS as m (m)}<th>{m.slice(0, 3)}</th>{/each}<th>Año</th></tr></thead>
         <tbody><tr><td>mm</td>{#each lluvia.mensualMm as v, i (i)}<td>{n0(v)}</td>{/each}<td><strong>{n0(lluvia.anualMm)}</strong></td></tr></tbody>
@@ -136,6 +155,8 @@
   .pestanas { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
   .meses { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: 0.5rem 0.75rem; margin: 0.75rem 0; }
   .resumen { margin-top: 1rem; }
+  h3 { font-size: 1rem; margin: 1rem 0 0.25rem; }
+  .recomendacion { border-left: 4px solid #c4320a; padding: 0.4rem 0.75rem; background: var(--fondo); border-radius: 0.25rem; }
   .tabla-meses { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 0.75rem; display: block; overflow-x: auto; }
   .tabla-meses th, .tabla-meses td { padding: 0.25rem 0.35rem; text-align: right; border-bottom: 1px solid var(--borde); }
   .tabla-meses th:first-child, .tabla-meses td:first-child { text-align: left; }

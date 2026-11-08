@@ -9,7 +9,11 @@ Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado 
 - **Paso 2 · Techo y lluvia neta:** material del techo (Ce), forma (uno o dos aguas), primer descarte y área de techo existente opcional. Resumen paso a paso de lluvia bruta → pérdida por Ce → primer descarte → lluvia neta, gráfico mensual bruta vs. neta y m³ netos al año del techo existente.
 - **Paso 3 · Usuarios y consumo:** vivienda, escuela o institución; número de usuarios; litros por usuario con opciones sugeridas (escuela: 2 L para beber + 1 L para lavado = 3 L) o **dotación personalizada por usos**; días de uso al año (escuela: 180 días de clase).
 - **Paso 4 · Resultados:** m² de techo necesarios, comparación con el techo existente (% de la demanda cubierta) y medidas sugeridas con dibujo.
-- **Informe PDF** desde el navegador (Guardar como PDF), con encabezado, nombre del proyecto, resultados de los cuatro pasos y la nota "Acerca de CaptaLluvia".
+- **Informe PDF** desde el navegador (Guardar como PDF), con encabezado, nombre del proyecto, resultados de los cuatro pasos, **fuentes de consulta** y la nota "Acerca de CaptaLluvia".
+- **Umbral de captación:** solo se capta en los meses con 40 mm o más de lluvia (editable). Línea roja de referencia en las gráficas, meses secos marcados y su lluvia descontada en el resumen de lluvia neta.
+- **Dibujo "1 mm sobre 1 m² = 1 litro"** con un pichel, para explicar la equivalencia.
+- **Fuentes de consulta** (datos de lluvia, ERA5, OPS/CEPIS, OMS, ONU, MINEDUC) en pantalla y en el informe.
+- Las gráficas y el dibujo del litro se adaptan al ancho real de la pantalla para que el texto conserve su tamaño en el teléfono.
 - Motor de cálculo: `lluvia.ts`, `openmeteo.ts`, `oferta.ts`, `demanda.ts`; 37 pruebas automáticas.
 
 ### Cambiado
