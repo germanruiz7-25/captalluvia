@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  LITROS_BARRIL,
+  barrilesEquivalentes,
   calcularTanque,
   simularTanque,
   sugerirCisterna,
@@ -65,5 +67,20 @@ describe('tanque de almacenamiento', () => {
     expect(c.bordeLibreM).toBe(0.3);
     expect(volumenCisternaM3(3, 2, 1.5)).toBeCloseTo(9, 9);
     expect(sugerirCisterna(0)).toBeNull();
+  });
+});
+
+describe('barriles de 55 galones', () => {
+  it('10 m³ son unos 48 barriles de 208 L', () => {
+    expect(LITROS_BARRIL).toBeCloseTo(208.2, 1);
+    expect(barrilesEquivalentes(10)).toBeCloseTo(48.03, 2);
+    expect(barrilesEquivalentes(0)).toBe(0);
+  });
+
+  it('el volumen elegido cambia la simulación y la cobertura', () => {
+    const r = calcularTanque(oferta, demanda, 10);
+    expect(r.volumenM3).toBeCloseTo(36, 9); // el necesario no cambia
+    expect(Math.max(...r.meses.map((m) => m.nivelM3))).toBeCloseTo(10, 9);
+    expect(r.cobertura).toBeLessThan(1);
   });
 });

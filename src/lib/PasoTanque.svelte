@@ -4,6 +4,7 @@
   import {
     FUENTE_TANQUES,
     TANQUES_POLIETILENO,
+    barrilesEquivalentes,
     calcularTanque,
     sugerirCisterna,
     tanqueSugerido,
@@ -12,6 +13,7 @@
   } from '../core/tanque';
   import DibujoTinaco from './DibujoTinaco.svelte';
   import DibujoCisterna from './DibujoCisterna.svelte';
+  import DibujoBarriles from './DibujoBarriles.svelte';
   import type { DatosTanqueInforme } from '../core/informe';
 
 
@@ -32,6 +34,8 @@
   } = $props();
 
   let capacidadElegida = $state<number | 'auto'>('auto');
+  // Volumen que el diseñador decide usar (m³); vacío = el calculado
+  let volumenElegido: number | null = $state(null);
   let altoUtil = $state(1.5);
   let largoPropio: number | null = $state(null);
   let anchoPropio: number | null = $state(null);
@@ -40,18 +44,21 @@
     oferta && areaTechoM2 ? oferta.netaMensualMm.map((mm) => (mm * areaTechoM2) / 1000) : [],
   );
   const demandaM3 = $derived(Array(12).fill(demandaAnualM3 / 12) as number[]);
-  const r = $derived(ofertaM3.length === 12 && demandaAnualM3 > 0 ? calcularTanque(ofertaM3, demandaM3) : null);
+  const base = $derived(ofertaM3.length === 12 && demandaAnualM3 > 0 ? calcularTanque(ofertaM3, demandaM3) : null);
+  const vUsado = $derived(base ? (Number(volumenElegido) > 0 ? Number(volumenElegido) : base.volumenM3) : 0);
+  const r = $derived(base ? calcularTanque(ofertaM3, demandaM3, vUsado) : null);
+  const barriles = $derived(barrilesEquivalentes(vUsado));
 
   const tanque = $derived(
     r
       ? capacidadElegida === 'auto'
-        ? tanqueSugerido(r.volumenM3)
-        : (TANQUES_POLIETILENO.find((t) => t.capacidadL === capacidadElegida) ?? tanqueSugerido(r.volumenM3))
+        ? tanqueSugerido(vUsado)
+        : (TANQUES_POLIETILENO.find((t) => t.capacidadL === capacidadElegida) ?? tanqueSugerido(vUsado))
       : null,
   );
-  const cantidad = $derived(r && tanque ? tanquesNecesarios(r.volumenM3, tanque.capacidadL) : 0);
+  const cantidad = $derived(r && tanque ? tanquesNecesarios(vUsado, tanque.capacidadL) : 0);
 
-  const sugerida = $derived(r ? sugerirCisterna(r.volumenM3, Number(altoUtil) || 1.5) : null);
+  const sugerida = $derived(r ? sugerirCisterna(vUsado, Number(altoUtil) || 1.5) : null);
   const cisterna = $derived.by(() => {
     if (!sugerida) return null;
     const l = Number(largoPropio) || sugerida.largoM;
@@ -60,7 +67,7 @@
     return { largoM: l, anchoM: a, altoUtilM: h, bordeLibreM: 0.3, volumenM3: volumenCisternaM3(l, a, h) };
   });
 
-  const maxNivel = $derived(r ? Math.max(r.volumenM3, ...r.meses.map((m) => m.nivelM3), 0.001) : 1);
+  const maxNivel = $derived(r ? Math.max(vUsado, ...r.meses.map((m) => m.nivelM3), 0.001) : 1);
   let anchoGrafico = $state(600);
   const G = { izq: 44, der: 10, arriba: 14, abajo: 34, alto: 200 };
   const paso = $derived((anchoGrafico - G.izq - G.der) / 12);
@@ -77,7 +84,9 @@
     }
     const llenos = ofertaM3.map((q, i) => ({ i, n: (q * 1000) / tanque.capacidadL })).filter((x) => x.n >= 1);
     datos = {
-      volumenM3: r.volumenM3,
+      volumenM3: vUsado,
+      volumenNecesarioM3: r.volumenM3,
+      barriles,
       criterio: r.criterio,
       cobertura: r.cobertura,
       areaTechoM2,
@@ -103,7 +112,7 @@
     <div class="destacado">
       <span class="cifra">{n1(r.volumenM3)} m³</span>
       <span>
-        de almacenamiento ({n0(r.volumenM3 * 1000)} litros) para
+        de almacenamiento calculado ({n0(r.volumenM3 * 1000)} litros) para
         {r.criterio === 'cubre'
           ? 'cubrir la demanda todo el año, guardando agua de la época de lluvias para la época seca'
           : 'guardar todo el excedente de la época de lluvias'}.
@@ -113,16 +122,36 @@
     </div>
     {#if r.criterio === 'parcial'}
       <p class="alerta">
-        El techo capta {n1(r.ofertaAnualM3)} m³ al año, menos que la demanda ({n1(r.demandaAnualM3)} m³): el tanque cubre
-        {Math.round(r.cobertura * 100)} % del año. Para cubrirlo todo hace falta más techo (paso 5) o menos consumo.
+        El techo capta {n1(r.ofertaAnualM3)} m³ al año, menos que la demanda ({n1(r.demandaAnualM3)} m³): aun con el
+        volumen calculado se cubre {Math.round((base?.cobertura ?? 0) * 100)} % del año. Para cubrirlo todo hace falta más techo (paso 5) o menos consumo.
       </p>
     {/if}
+
+    <h3>Volumen que se decide usar</h3>
+    <div class="campos no-imprimir">
+      <label>Volumen del tanque (m³)
+        <input type="number" min="0.5" step="0.5" placeholder={n1(r.volumenM3)} bind:value={volumenElegido} />
+      </label>
+    </div>
+    <div class="destacado">
+      <span class="cifra">{n1(vUsado)} m³</span>
+      <span>
+        = {n0(vUsado * 1000)} litros = <strong>{n1(barriles)} barriles</strong> de 55 galones (208 L).
+        {#if Number(volumenElegido) > 0}
+          Calculado por el balance: {n1(r.volumenM3)} m³.
+          {#if r.cobertura < 0.999}Con este volumen se cubre {Math.round(r.cobertura * 100)} % de la demanda del año.{/if}
+        {:else}
+          Es el volumen calculado; puedes escribir otro (por ejemplo, 10 m³).
+        {/if}
+      </span>
+    </div>
+    <DibujoBarriles {barriles} />
 
     <h3>Opción 1: tanques de polietileno (tipo tinaco)</h3>
     <div class="campos no-imprimir">
       <label>Capacidad de cada tanque
         <select bind:value={capacidadElegida}>
-          <option value="auto">Sugerida ({tanqueSugerido(r.volumenM3).capacidadL.toLocaleString('es-GT')} L)</option>
+          <option value="auto">Sugerida ({tanqueSugerido(vUsado).capacidadL.toLocaleString('es-GT')} L)</option>
           {#each TANQUES_POLIETILENO as t (t.capacidadL)}
             <option value={t.capacidadL}>{t.capacidadL.toLocaleString('es-GT')} L</option>
           {/each}
@@ -198,12 +227,12 @@
             class="barra" class:vacia={m.faltanteM3 > 0} />
           <text x={x + paso / 2} y={G.alto - G.abajo + 16} text-anchor="middle" class="eje">{MESES[i].slice(0, anchoGrafico < 480 ? 1 : 3)}</text>
         {/each}
-        <line x1={G.izq} x2={anchoGrafico - G.der} y1={yDe(r.volumenM3)} y2={yDe(r.volumenM3)} class="capacidad" />
+        <line x1={G.izq} x2={anchoGrafico - G.der} y1={yDe(vUsado)} y2={yDe(vUsado)} class="capacidad" />
       </svg>
     </div>
     <p class="leyenda-tanque">
       <span><span class="cuadro azul"></span> agua guardada</span>
-      <span><span class="linea"></span> capacidad del tanque ({n1(r.volumenM3)} m³)</span>
+      <span><span class="linea"></span> capacidad del tanque ({n1(vUsado)} m³)</span>
     </p>
 
     <h3>Opción 2: cisterna de block y cemento</h3>
@@ -224,8 +253,8 @@
         <strong>{n2(cisterna.altoUtilM)} m</strong> de alto útil: <strong>{n1(cisterna.volumenM3)} m³</strong>
         ({n0(cisterna.volumenM3 * 1000)} L). Se agregan {n2(cisterna.bordeLibreM)} m de borde libre: alto interior total
         {n2(cisterna.altoUtilM + cisterna.bordeLibreM)} m.
-        {#if cisterna.volumenM3 + 1e-9 < r.volumenM3}
-          <span class="alerta">Es menor que los {n1(r.volumenM3)} m³ calculados.</span>
+        {#if cisterna.volumenM3 + 1e-9 < vUsado}
+          <span class="alerta">Es menor que los {n1(vUsado)} m³ elegidos.</span>
         {/if}
       </p>
       <DibujoCisterna largoM={cisterna.largoM} anchoM={cisterna.anchoM} altoUtilM={cisterna.altoUtilM} bordeLibreM={cisterna.bordeLibreM} />

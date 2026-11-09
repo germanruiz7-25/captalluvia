@@ -13,6 +13,8 @@ CaptaLluvia es una herramienta web gratuita para ubicar una vivienda, analizar l
 
 Versión **0.4.0**. La app es un **asistente en 8 pasos**, una pantalla a la vez, con barra de avance y resultados preliminares: (1) ubicar la vivienda en un mapa (OpenStreetMap: tocar el techo, buscar el municipio o usar el GPS) o escribir datos de lluvia; (2) lluvia del lugar (20 años de Open-Meteo); (3) techo (medidas ancho × largo del techo existente, opcional), coeficiente de escorrentía, primer descarte y lluvia neta; (4) usuarios de vivienda, escuela o institución; (5) m² de techo necesarios con dibujo; (6) canaletas y bajantes por método racional, con la intensidad de diseño tomada de la curva IDF de la estación más cercana (INSIVUMEH e ICC, 2025) y un **simulador** de lluvia intensa, con el canal de PVC del mercado nacional (colonial o alto caudal) y dibujos; (7) tanque de almacenamiento: balance mes a mes, tanques tipo tinaco o cisterna de block; (8) resumen e **informe técnico en PDF** con carátula, con introducción, cuadro resumen del diseño, conclusiones y bibliografía. El proyecto se guarda solo en el dispositivo y se puede borrar.
 
+> **Descargo de responsabilidad:** CaptaLluvia es una herramienta de apoyo para el prediseño; no sustituye la revisión de un profesional. El diseño definitivo, la construcción y la operación son responsabilidad de quien los realiza. Texto completo en [docs/DESCARGO.md](docs/DESCARGO.md).
+
 La hoja de ruta completa está en [docs/HOJA-DE-RUTA.md](docs/HOJA-DE-RUTA.md).
 
 ## Cómo usarla en tu computadora

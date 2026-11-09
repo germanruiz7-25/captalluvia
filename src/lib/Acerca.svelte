@@ -28,10 +28,18 @@
   </dl>
 </section>
 
+<section class="tarjeta paso descargo" id="descargo">
+  <h2>Descargo de responsabilidad</h2>
+  {#each acerca.descargo as parrafo (parrafo)}
+    <p>{parrafo}</p>
+  {/each}
+</section>
+
 <style>
   dl { display: grid; grid-template-columns: minmax(8rem, max-content) 1fr; gap: 0.4rem 1rem; margin: 0; }
   dt { font-weight: 600; color: var(--texto-suave); }
   dd { margin: 0; }
+  .descargo p { text-align: justify; }
   @media (max-width: 36rem) {
     dl { grid-template-columns: 1fr; }
     dd { margin-bottom: 0.5rem; }

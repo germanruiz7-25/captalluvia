@@ -28,6 +28,8 @@
 
   let nombreProyecto = $state(g?.nombreProyecto ?? '');
   let comunidad = $state(g?.comunidad ?? '');
+  let elaboradoPor = $state(g?.elaboradoPor ?? '');
+  let institucionTecnico = $state(g?.institucionTecnico ?? '');
   let municipio = $state(g?.municipio ?? '');
   let departamento = $state(g?.departamento ?? '');
   let lat = $state(g?.lat ?? '');
@@ -133,7 +135,7 @@
   // Guardar en el dispositivo cada vez que cambia algo.
   $effect(() => {
     guardarProyecto({
-      paso, nombreProyecto, comunidad, municipio, departamento, lat, lon, lluvia, tipoTecho, aguas,
+      paso, nombreProyecto, elaboradoPor, institucionTecnico, comunidad, municipio, departamento, lat, lon, lluvia, tipoTecho, aguas,
       descarteMm: Number(descarteMm) || 0, umbralMm: Number(umbralMm) || 0, areaDisponible, anchoTecho, largoTecho,
       edificio, usuarios, dotacionId, usos: $state.snapshot(usos), diasUso,
     });
@@ -249,6 +251,7 @@
     <h1>Proyecto: Diseño y cálculo de Sistema de Captación de Agua de Lluvia – SCALL</h1>
     <p class="caratula-lugar"><strong>Lugar:</strong> {nombreProyecto || `${EDIFICIOS[edificio].nombre} (sin nombre)`}</p>
     {#if ubicacionTexto}<p class="caratula-lugar"><strong>Ubicación:</strong> {ubicacionTexto}</p>{/if}
+    {#if elaboradoPor}<p class="caratula-lugar"><strong>Elaborado por:</strong> {elaboradoPor}{institucionTecnico ? `, ${institucionTecnico}` : ''}</p>{/if}
   </div>
 
   <table class="ficha-informe">
@@ -257,10 +260,10 @@
       <tr><td>Coordenadas aproximadas</td><td>{coordenadas ? `${coordenadas} (latitud, longitud; ~1 km)` : 'No indicadas (lluvia ingresada a mano)'}</td></tr>
       <tr><td>Fecha</td><td>{fecha}</td></tr>
       <tr><td>Herramienta</td><td>{acerca.nombre} v{version} {acerca.citaEnTexto.replace('{anio}', String(new Date().getFullYear()))}</td></tr>
-      <tr><td>Autores de la herramienta</td><td>{acerca.autores.join(' y ')}</td></tr>
-      <tr><td>Organización</td><td>{acerca.organizacion}</td></tr>
+      <tr><td>Autores de la herramienta</td><td>{acerca.autores.join(' y ')} · {acerca.organizacion}</td></tr>
     </tbody>
   </table>
+  <p class="caratula-descargo">{acerca.descargoCorto}</p>
 </div>
 
 <div class="solo-impresion">
@@ -352,6 +355,14 @@
         <button class="ficha ancha" onclick={() => irAPaso(6)}>
           <span class="icono">🔽</span><span class="valor chico">{resumenDrenaje || '—'}</span><span>canaletas y bajantes</span>
         </button>
+      </div>
+      <div class="campos tecnico">
+        <label>Elaborado por (técnico o personas que hacen el cálculo)
+          <input bind:value={elaboradoPor} placeholder="Ej. Ing. Ana López, Téc. Juan Pérez" />
+        </label>
+        <label>Institución o cargo (opcional)
+          <input bind:value={institucionTecnico} placeholder="Ej. COMRED de Masagua" />
+        </label>
       </div>
       <div class="acciones">
         <button class="principal grande" onclick={descargarInforme} disabled={!oferta}>📄 Descargar informe en PDF</button>
@@ -472,6 +483,8 @@
   .caratula-tipo { letter-spacing: 0.15em; font-weight: 700; margin: 0 0 0.5cm; }
   .caratula h1 { margin: 0 0 1cm; line-height: 1.3; }
   .caratula-lugar { margin: 0.2cm 0; }
+  .caratula-descargo { margin-top: 0.4cm; font-style: italic; }
+  .tecnico { margin: 0.5rem 0 0.75rem; }
   .logos { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; padding-bottom: 0.5rem; border-bottom: 2px solid var(--acento); margin-bottom: 0.75rem; }
   .logo-app { display: flex; align-items: center; gap: 0.5rem; margin-right: auto; font-size: 0.85rem; line-height: 1.25; }
   .logos img { max-height: 3.2rem; max-width: 10rem; object-fit: contain; }

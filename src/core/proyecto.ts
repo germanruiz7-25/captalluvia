@@ -10,6 +10,8 @@ export const CLAVE_PROYECTO = 'captalluvia.proyecto.v1';
 export interface ProyectoGuardado {
   paso: number;
   nombreProyecto: string;
+  elaboradoPor?: string;
+  institucionTecnico?: string;
   comunidad?: string;
   municipio?: string;
   departamento?: string;

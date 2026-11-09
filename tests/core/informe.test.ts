@@ -113,8 +113,8 @@ describe('informe con tanque', () => {
       },
     };
     const sec = cuadroResumen(d).find((s) => s.titulo === 'Tanque de almacenamiento')!;
-    expect(sec.filas).toContainEqual(['Volumen de almacenamiento', '36 m³ (36,000 L)']);
-    expect(conclusiones(d).join(' ')).toContain('Se requiere un almacenamiento de 36 m³');
+    expect(sec.filas).toContainEqual(['Volumen de almacenamiento elegido', '36 m³ (36,000 L)']);
+    expect(conclusiones(d).join(' ')).toContain('Se adopta un almacenamiento de 36 m³');
     expect(conclusiones(d).join(' ')).toContain('4 tanques de 10,000 L');
   });
 });

@@ -30,7 +30,12 @@ export interface DatosDrenajeInforme {
 }
 
 export interface DatosTanqueInforme {
+  /** Volumen elegido para el diseño (m³). */
   volumenM3: number;
+  /** Volumen calculado por el balance (m³). */
+  volumenNecesarioM3?: number;
+  /** Barriles de 55 galones equivalentes al volumen elegido. */
+  barriles?: number;
   criterio: 'cubre' | 'parcial';
   cobertura: number;
   areaTechoM2: number;
@@ -143,7 +148,11 @@ export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
       titulo: 'Tanque de almacenamiento',
       filas: [
         ['Techo usado para el cálculo', `${n1(t.areaTechoM2)} m² (${t.origenArea === 'existente' ? 'techo existente' : 'área mínima necesaria'})`],
-        ['Volumen de almacenamiento', `${n1(t.volumenM3)} m³ (${n0(t.volumenM3 * 1000)} L)`],
+        ...(t.volumenNecesarioM3 !== undefined && Math.abs(t.volumenNecesarioM3 - t.volumenM3) > 0.05
+          ? ([['Volumen calculado por el balance', `${n1(t.volumenNecesarioM3)} m³`]] as [string, string][])
+          : []),
+        ['Volumen de almacenamiento elegido', `${n1(t.volumenM3)} m³ (${n0(t.volumenM3 * 1000)} L)`],
+        ...(t.barriles ? ([['Equivale a', `${n1(t.barriles)} barriles de 55 galones (208 L)`]] as [string, string][]) : []),
         ['Cobertura de la demanda en el año', pct(t.cobertura)],
         ['Opción 1: tanques de polietileno', t.tanque],
         ['Opción 2: cisterna de block (medidas interiores)', t.cisterna],
@@ -214,7 +223,8 @@ export function conclusiones(d: DatosInforme): string[] {
   if (d.tanque) {
     const t = d.tanque;
     c.push(
-      `Se requiere un almacenamiento de ${n1(t.volumenM3)} m³ (${n0(t.volumenM3 * 1000)} litros)` +
+      `Se adopta un almacenamiento de ${n1(t.volumenM3)} m³ (${n0(t.volumenM3 * 1000)} litros` +
+        (t.barriles ? `, equivalente a ${n0(t.barriles)} barriles de 55 galones)` : ')') +
         (t.criterio === 'cubre'
           ? ' para cubrir la demanda durante todo el año'
           : `, con el que se cubre ${pct(t.cobertura)} de la demanda anual porque el techo no capta lo suficiente`) +

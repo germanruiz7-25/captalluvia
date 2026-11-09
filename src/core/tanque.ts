@@ -142,3 +142,11 @@ export function sugerirCisterna(volumenM3: number, altoUtilM = 1.5, bordeLibreM 
 export function volumenCisternaM3(largoM: number, anchoM: number, altoUtilM: number): number {
   return Math.max(0, largoM) * Math.max(0, anchoM) * Math.max(0, altoUtilM);
 }
+
+/** Barril o tonel de 55 galones estadounidenses (1 galón = 3.785 L). */
+export const LITROS_BARRIL = 55 * 3.785411784;
+
+/** Cuántos barriles de 55 galones caben en un volumen (m³). */
+export function barrilesEquivalentes(volumenM3: number): number {
+  return volumenM3 > 0 ? (volumenM3 * 1000) / LITROS_BARRIL : 0;
+}
