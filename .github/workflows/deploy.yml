@@ -37,6 +37,8 @@ jobs:
           VITE_MAPTILER_KEY: ${{ vars.VITE_MAPTILER_KEY }}
           # Aplicación web de Google Apps Script que recibe registros y eventos (docs/REGISTRO.md)
           VITE_REGISTRO_URL: ${{ vars.VITE_REGISTRO_URL }}
+          # Código del sitio en GoatCounter para contar visitas sin cookies (docs/ANALITICA.md)
+          VITE_GOATCOUNTER_CODE: ${{ vars.VITE_GOATCOUNTER_CODE }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

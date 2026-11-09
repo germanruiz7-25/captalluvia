@@ -19,6 +19,7 @@
   import InformeResumen from './lib/InformeResumen.svelte';
   import { redondearCoordenada } from './core/openmeteo';
   import Registro from './lib/Registro.svelte';
+  import { contar } from './core/visitas';
   import {
     URL_REGISTRO,
     borrarRegistroLocal,
@@ -44,6 +45,7 @@
     guardarRegistro(r);
     registro = r;
     void encolarYEnviar(URL_REGISTRO, eventoRegistro(r));
+    contar('registro-nuevo', { titulo: 'Registro nuevo', evento: true });
     window.scrollTo({ top: 0 });
   }
   onMount(() => {
@@ -132,6 +134,12 @@
     if (location.hash !== `#paso-${paso}`) history.pushState(null, '', `#paso-${paso}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+
+  // Conteo de visitas por paso (GoatCounter, sin cookies); la pantalla de registro cuenta como /registro
+  $effect(() => {
+    if (registro) contar(`/paso-${paso}`, { titulo: `Paso ${paso} · ${PASOS[paso - 1].nombre}` });
+    else contar('/registro', { titulo: 'Registro' });
+  });
 
   let resumenDrenaje = $state('');
   let fuenteIntensidad = $state('');
@@ -266,6 +274,7 @@
         }),
       );
     }
+    contar('informe-pdf', { titulo: 'Informe PDF descargado', evento: true });
     window.print();
     document.title = titulo;
   }

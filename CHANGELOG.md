@@ -8,8 +8,10 @@ Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado 
 - **Registro obligatorio al primer uso:** nombre, correo, institución u organización, uso (rol), país, departamento y municipio, con aceptación de la política de privacidad y del descargo. Se pide una vez por dispositivo y explica qué se envía y a quién.
 - **Hoja de registros en Google Sheets** mediante Google Apps Script (`herramientas/registro/Codigo.gs`): pestaña "Registros", correo de aviso al responsable por cada registro nuevo y pestaña "Informes" con un aviso por cada informe descargado (departamento, municipio, infraestructura, usuarios y volumen del tanque; nunca coordenadas). Pasos de instalación en `docs/REGISTRO.md`; la dirección se configura con la variable `VITE_REGISTRO_URL`.
 - Envíos sin conexión: quedan en cola y se mandan al volver la conexión.
+- **Conteo de visitas con GoatCounter** sin cookies ni scripts externos: una vista por paso (embudo de uso) y los eventos "registro nuevo" e "informe PDF"; se activa con la variable `VITE_GOATCOUNTER_CODE` y respeta "No rastrear".
+- Guía `docs/ANALITICA.md`: GoatCounter y **tablero en Looker Studio** sobre la hoja de registros.
 - **Borrar mi registro** (paso 8): pide a la hoja que elimine el registro y los avisos de esa instalación.
-- 5 pruebas nuevas (112 en total).
+- 7 pruebas nuevas (114 en total).
 
 ### Cambiado
 - Política de privacidad 1.0: nuevos datos recopilados, Google como tercero, base de consentimiento, borrado y conservación.

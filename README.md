@@ -64,6 +64,7 @@ Las sugerencias y mejoras son bienvenidas. Lee [CONTRIBUTING.md](CONTRIBUTING.md
 - Atribución de las fuentes de datos: [ATTRIBUTION.md](ATTRIBUTION.md)
 - Política de privacidad: [docs/PRIVACIDAD.md](docs/PRIVACIDAD.md)
 - Registro de uso (Google Sheets): [docs/REGISTRO.md](docs/REGISTRO.md)
+- Analítica sin cookies (GoatCounter) y tablero en Looker Studio: [docs/ANALITICA.md](docs/ANALITICA.md)
 
 ## Inteligencia artificial
 

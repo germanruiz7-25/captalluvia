@@ -72,7 +72,7 @@
       (Programa de Gestión de Riesgo de Desastres del ICC) y se guardan en una hoja de cálculo de Google. Cada vez que
       descargas un informe se envía además un aviso con el departamento, municipio, tipo de infraestructura, número de
       usuarios y volumen del tanque del proyecto. <strong>Nunca</strong> se envían coordenadas, mapas ni datos de la
-      familia. No vendemos ni compartimos estos datos. Puedes pedir que se borren desde el paso 8 o escribiendo a
+      familia. La app también cuenta visitas por paso, sin cookies (GoatCounter). No vendemos ni compartimos estos datos. Puedes pedir que se borren desde el paso 8 o escribiendo a
       <a href="mailto:{acerca.contacto}">{acerca.contacto}</a>.
     </div>
 

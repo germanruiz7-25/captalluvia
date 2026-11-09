@@ -26,6 +26,7 @@
 | Archivos Excel/CSV de lluvia que importes y claves de APIs de estaciones | Solo en tu dispositivo | Usar tus propios datos de lluvia |
 | Registro: nombre y apellido, correo, institución u organización, uso que le darás (rol), país, departamento y municipio (estos dos opcionales), fecha, versión de la app y de esta política | Tu dispositivo y la hoja de registros de los autores (Google Sheets) | Saber quién usa la app y desde dónde, contactarte por temas de la app y reportar su impacto |
 | Identificador aleatorio de instalación | Tu dispositivo y la hoja de registros | Relacionar tu registro con los informes descargados y poder borrarlos a tu pedido |
+| Conteo de visitas: paso de la app que se abre (por ejemplo "paso 3"), los eventos "registro nuevo" e "informe descargado", navegador, sistema operativo y país aproximado de la conexión | GoatCounter (sin cookies; según el servicio, no guarda la IP) | Saber cuántas personas abren la app y hasta qué paso llegan. Si activas "No rastrear" en tu navegador, no se cuenta |
 | Aviso de informe descargado: fecha, departamento, municipio, tipo de infraestructura, número de usuarios, volumen del tanque, versión | Hoja de registros de los autores (Google Sheets) | Medir cuántos diseños se hacen, de qué tipo y dónde |
 
 **No se envía:** coordenadas ni mapas del proyecto, nombre del lugar o de la escuela, datos del techo o de la familia, datos de pago. Tu dirección IP la ve Google al recibir el envío (como en cualquier conexión), pero no se guarda en la hoja.
@@ -41,14 +42,15 @@ CaptaLluvia **no usa inteligencia artificial** para calcular: los resultados sal
 | Tercero | Qué recibe | Para qué |
 | --- | --- | --- |
 | GitHub Pages (GitHub, Inc.) | Datos técnicos de la conexión al descargar la app | Alojar el sitio |
-| Google (Apps Script, Hojas de cálculo y Gmail) | Tu registro y los avisos de informes descargados | Guardar los registros en la hoja de los autores y enviarles un correo por cada registro nuevo |
+| GoatCounter (goatcounter.com) | El paso o evento contado y datos técnicos de la conexión (navegador, país); sin cookies ni identificadores | Contar visitas |
+| Google (Apps Script, Hojas de cálculo, Gmail y Looker Studio) | Tu registro y los avisos de informes descargados | Guardar los registros en la hoja de los autores y enviarles un correo por cada registro nuevo |
 | Open-Meteo, NASA POWER, Climate Hazards Center | Coordenadas redondeadas | Obtener la lluvia histórica |
 | OpenStreetMap (servidores de teselas) | La zona del mapa que estás viendo (como cualquier mapa en línea) y datos técnicos de la conexión | Mostrar el mapa para ubicar la vivienda |
 | Nominatim (OpenStreetMap) | El texto que escribes en "Buscar" y, solo si pulsas "Completar con el punto del mapa", el punto redondeado a ~100 m | Encontrar el lugar y completar comunidad, municipio y departamento |
 | Esri, Mapbox o MapTiler (solo si eliges su mapa satelital) | La zona del mapa que estás viendo y datos técnicos de la conexión | Mostrar la imagen satelital |
 | APIs de estaciones que tú conectes | Lo que exija cada API (por ejemplo tu clave) | Traer datos de tus estaciones |
 
-No se usan fuentes tipográficas externas (como Google Fonts), CDN externos ni servicios de publicidad.
+No se usan cookies, Google Analytics, fuentes tipográficas externas (como Google Fonts), CDN externos ni servicios de publicidad.
 
 ## 5. Tus derechos
 
