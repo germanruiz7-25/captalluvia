@@ -35,7 +35,7 @@
   const n1 = (v: number) => v.toLocaleString('es-GT', { maximumFractionDigits: 1 });
 </script>
 
-<section class="tarjeta paso">
+<section class="tarjeta paso salto-impresion">
   <p class="numero-paso">Paso 3 de 8</p>
   <h2>Techo y lluvia neta</h2>
 

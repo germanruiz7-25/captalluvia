@@ -79,6 +79,11 @@ button:disabled { opacity: 0.6; cursor: progress; }
 
 .solo-impresion { display: none; }
 
+/* Tablas con líneas (informe técnico) */
+table.rejilla { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; margin: 0.5rem 0; }
+table.rejilla th, table.rejilla td { border: 1px solid var(--borde); padding: 0.3rem 0.5rem; vertical-align: top; }
+table.rejilla thead th { background: var(--acento-suave); font-weight: 700; text-align: center; }
+
 /* URLs largas de la bibliografía: que corten línea en el celular */
 #fuentes li, #fuentes a, .resumen td { overflow-wrap: anywhere; }
 
@@ -128,6 +133,9 @@ details.detalle[open] { padding-bottom: 0.75rem; }
   body { counter-reset: seccion; }
   .paso > h2::before { counter-increment: seccion; content: counter(seccion) '. '; }
   .numero-paso { display: none; }
+  .salto-impresion { break-before: page; }
+  table.rejilla th, table.rejilla td { border-color: #000; }
+  p.atribucion { font-size: 9pt !important; }
 
   @page { size: letter; margin: 14mm 12mm; }
   :root {

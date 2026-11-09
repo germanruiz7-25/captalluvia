@@ -15,6 +15,7 @@
   import PasoTanque from './lib/PasoTanque.svelte';
   import Acerca from './lib/Acerca.svelte';
   import Fuentes from './lib/Fuentes.svelte';
+  import UbicacionProyecto from './lib/UbicacionProyecto.svelte';
   import InformeResumen from './lib/InformeResumen.svelte';
   import { redondearCoordenada } from './core/openmeteo';
   import type { DatosDrenajeInforme, DatosInforme, DatosTanqueInforme } from './core/informe';
@@ -280,6 +281,16 @@
       las conclusiones y la bibliografía consultada.
     </p>
   </section>
+  <UbicacionProyecto
+    {lat}
+    {lon}
+    lugar={nombreProyecto}
+    {comunidad}
+    {municipio}
+    {departamento}
+    infraestructura={EDIFICIOS[edificio].nombre}
+    usuarios={demanda.usuarios}
+  />
 </div>
 
 <nav class="avance no-imprimir" aria-label="Pasos">

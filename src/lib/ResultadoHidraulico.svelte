@@ -33,7 +33,7 @@
     bajante de {bajanteNombre}; el techo tiene {tramosTotales} tramo{tramosTotales === 1 ? '' : 's'}. Con la intensidad de diseño
     de {n0(a.intensidadDisenoMmH)} mm/h, cada tramo recibe {n2(a.caudalDisenoLs)} L/s ({lpm(a.caudalDisenoLs)}).
   </p>
-  <table class="tabla capacidades">
+  <table class="tabla rejilla capacidades">
     <thead><tr><th>Elemento</th><th>Capacidad</th><th>Por minuto</th></tr></thead>
     <tbody>
       <tr><td>{canalNombre}, con borde libre de diseño (agua a 3/4 del lado bajo)</td><td>{n2(a.canalDisenoLs)} L/s</td><td>{lpm(a.canalDisenoLs)}</td></tr>
@@ -52,7 +52,7 @@
   </p>
 
   {#if a.periodos.length}
-    <table class="tabla periodos">
+    <table class="tabla rejilla periodos">
       <thead>
         <tr>
           <th>Periodo de retorno</th><th>Intensidad 5 min</th><th>Caudal del tramo</th><th>Uso de la capacidad</th>

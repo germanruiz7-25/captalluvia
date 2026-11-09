@@ -24,9 +24,13 @@ Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado 
 - **Simulador "¿qué pasa si llueve más fuerte?":** barra de intensidad con marcas de los periodos de retorno de la estación, dibujo del canal con el nivel del agua (dentro del diseño, al límite o rebalsa), uso de la bajante y las intensidades a las que el canal rebalsa y la bajante se satura; indica qué falla primero.
 - **Tabla de aguaceros cortos** de la estación (5 a 60 minutos × 2 a 100 años) coloreada según cómo responde el canal.
 - **Análisis hidráulico del canal y la bajante** (pantalla e informe): capacidad del canal con borde libre y lleno, capacidad de la bajante y capacidad máxima del tramo en L/s y **L/min**, elemento que controla, intensidad máxima que soporta y, con la curva IDF, por periodo de retorno (2 a 100 años): intensidad de 5 min, caudal, % de la capacidad y **duración de los aguaceros que rebalsan** (D* = (A/i)^(1/n) − B).
-- 41 pruebas nuevas (102 en total).
+- 46 pruebas nuevas (107 en total).
+
+- **Sección 2 del informe · Ubicación y generalidades del proyecto:** mapa de macrolocalización (OpenStreetMap) y de microlocalización (satélite si hay clave configurada) con el punto marcado en el paso 1, norte y barra de escala; tabla con lugar, comunidad, municipio, departamento, coordenadas, tipo de infraestructura y cantidad de usuarios.
 
 ### Cambiado
+- Tablas del análisis hidráulico y de generalidades con líneas (cuadrícula).
+- "Lluvia del lugar" y "Techo y lluvia neta" empiezan en hoja nueva; la ilustración "1 mm = 1 L" ya no se imprime.
 - El informe deja solo la información técnica que justifica el diseño: se ocultan las instrucciones y explicaciones de uso de la app y el simulador interactivo (se reemplaza por el análisis hidráulico).
 - Cuadro resumen y conclusiones con la capacidad por tramo en L/min, la intensidad que soporta y los aguaceros que rebalsan según la curva IDF.
 
