@@ -10,7 +10,9 @@
     tipoTecho = $bindable(),
     aguas = $bindable(),
     descarteMm = $bindable(),
-    areaDisponible = $bindable(),
+    anchoTecho = $bindable(),
+    largoTecho = $bindable(),
+    areaDisponible = null,
     umbralMm = $bindable(),
   }: {
     lluvia: ResumenLluvia | null;
@@ -18,7 +20,9 @@
     tipoTecho: TipoTecho;
     aguas: NumeroAguas;
     descarteMm: number;
-    areaDisponible: number | null;
+    anchoTecho: number | null;
+    largoTecho: number | null;
+    areaDisponible?: number | null;
     umbralMm: number;
   } = $props();
 
@@ -31,8 +35,8 @@
   const n1 = (v: number) => v.toLocaleString('es-GT', { maximumFractionDigits: 1 });
 </script>
 
-<section class="tarjeta paso">
-  <p class="numero-paso">Paso 3 de 7</p>
+<section class="tarjeta paso salto-impresion">
+  <p class="numero-paso">Paso 3 de 8</p>
   <h2>Techo y lluvia neta</h2>
 
   <div class="campos no-imprimir">
@@ -55,19 +59,36 @@
     <label>Captar desde (mm de PN al mes)
       <input type="number" min="0" max="300" step="5" bind:value={umbralMm} />
     </label>
-    <label>Área de techo existente (m², opcional)
-      <input type="number" min="0" step="1" placeholder="Ej. 60" bind:value={areaDisponible} />
-    </label>
   </div>
+
+  <fieldset class="existente no-imprimir">
+    <legend>¿Ya hay un techo? Escribe sus medidas (opcional)</legend>
+    <div class="medidas">
+      <label>Ancho (m)
+        <input type="number" min="0" step="0.1" placeholder="Ej. 6" bind:value={anchoTecho} />
+      </label>
+      <span class="por" aria-hidden="true">×</span>
+      <label>Largo (m)
+        <input type="number" min="0" step="0.1" placeholder="Ej. 10" bind:value={largoTecho} />
+      </label>
+      <span class="por" aria-hidden="true">=</span>
+      <output class="area-resultado" aria-live="polite">{areaDisponible ? `${n1(areaDisponible)} m²` : '— m²'}</output>
+    </div>
+    <p class="nota">
+      Mide el techo en planta (visto desde arriba), sin contar la inclinación. Si es de dos aguas, el largo es el
+      lado donde van las canaletas. Si no hay techo todavía, deja esto vacío: la app sugiere los m² que hacen falta.
+    </p>
+  </fieldset>
 
   <p class="solo-impresion">
     Techo de {NOMBRES_TECHO[tipoTecho].toLowerCase()} (Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}),
-    {aguas === 2 ? 'dos aguas' : 'un agua'}, primer descarte de {n1(descarteMm)} mm por lluvia, captación en meses con {n0(umbralMm)} mm o más de precipitación neta{#if areaDisponible}, área existente {n0(areaDisponible)} m²{/if}.
+    {aguas === 2 ? 'dos aguas' : 'un agua'}, primer descarte de {n1(descarteMm)} mm por lluvia, captación en meses con {n0(umbralMm)} mm o más de precipitación neta{#if areaDisponible}, techo existente de {n1(Number(anchoTecho))} × {n1(Number(largoTecho))} m = {n1(areaDisponible)} m²{/if}.
   </p>
 
   {#if !lluvia || !oferta}
     <p class="nota">Completa el paso 1 para ver la lluvia neta.</p>
   {:else}
+<div class="bloque">
     <div class="destacado">
       <span class="cifra">{n0(oferta.netaAnualMm)} L</span>
       <span>
@@ -84,6 +105,7 @@
         <tr class="total"><td>Lluvia neta aprovechable</td><td>{n0(oferta.netaAnualMm)} mm</td></tr>
       </tbody>
     </table>
+</div>
 
     {#if oferta.m3NetosAnual !== null && oferta.m3BrutosAnual !== null}
       <div class="destacado">
@@ -128,4 +150,10 @@
   .muestra.gris { background: var(--texto-suave); opacity: 0.45; }
   .item { display: inline-flex; align-items: center; gap: 0.3rem; }
   .linea-umbral { display: inline-block; width: 1.5rem; border-top: 2px dashed #c4320a; }
+  .existente { border: 1px solid var(--borde); border-radius: 0.75rem; padding: 0.5rem 1rem 0.25rem; margin: 1rem 0; background: var(--fondo); }
+  .existente legend { font-weight: 600; padding: 0 0.3rem; }
+  .medidas { display: flex; align-items: flex-end; gap: 0.5rem; flex-wrap: wrap; }
+  .medidas label { flex: 1 1 6rem; max-width: 9rem; }
+  .por { font-size: 1.3rem; padding-bottom: 0.45rem; color: var(--texto-suave); }
+  .area-resultado { font-size: 1.5rem; font-weight: 700; color: var(--acento); padding-bottom: 0.2rem; white-space: nowrap; }
 </style>

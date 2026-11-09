@@ -2,6 +2,39 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.4.0] — 2026-11-08 — Curvas IDF, simulador, tanque e informe técnico
+
+### Agregado
+- **Paso 7 · Tanque de almacenamiento:** balance mes a mes (agua captada con el techo existente o el área mínima, demanda mensual) y volumen por el método del pico secuente (Rippl). Tabla mensual con lluvia, PN, m³ captados, **cuántos tanques se llenan cada mes** y agua guardada al final del mes; gráfica del nivel del tanque.
+- **Volumen que se decide usar** (por ejemplo, 10 m³): la simulación, los tanques y la cisterna se recalculan; se muestra su equivalencia en **barriles de 55 galones (208 L)** con el dibujo de un barril con agua celeste y el número de unidades adentro (por ejemplo, 15 m³ = 72 barriles). El volumen elegido se guarda con el proyecto.
+- **Opción 1: tanques de polietileno tipo tinaco** (450 a 10,000 L, medidas de 450 a 2,500 L de Rotoplas Centroamérica) con número de tanques y dibujo.
+- **Opción 2: cisterna de block y cemento:** medidas interiores sugeridas (base cuadrada, alto útil editable, 0.30 m de borde libre) o escritas por el usuario (largo × ancho × alto → m³), con dibujo en perspectiva.
+- **Carátula del informe:** logotipo del ICC, "Informe técnico. Proyecto: Diseño y cálculo de Sistema de Captación de Agua de Lluvia – SCALL", lugar (institución, escuela o vivienda) y ubicación (comunidad, municipio, departamento).
+- Paso 1: campos de comunidad, municipio y departamento, con botón para completarlos desde el punto del mapa (Nominatim, punto redondeado a ~100 m).
+- **Diagramación del informe:** títulos, tablas, gráficas y dibujos se mantienen juntos en la misma hoja; figuras centradas; gráfica del tanque con letras legibles al imprimir.
+- **Formato del informe:** Calibri, texto en negro, títulos 16 pt, subtítulos 14 pt y texto 12 pt; gráficas y dibujos en azul.
+- **Autores:** Alfaro, German & Fuentes, Francisco; cita en formato APA 7: Alfaro, G., & Fuentes, F. (2026).
+- **Elaborado por:** nombre del técnico o responsables del cálculo e institución, en la carátula.
+- **Descargo de responsabilidad** de los autores y del ICC (docs/DESCARGO.md): en Acerca de, en el paso 8, en la carátula (versión corta) y al final del informe.
+- **Informe PDF renovado:** encabezado con logotipos (CaptaLluvia y, opcionalmente, los de la organización en `public/logos/`), ficha del proyecto, **introducción**, secciones numeradas, **cuadro resumen del diseño** (sitio y lluvia, techo, demanda, canaletas y bajantes), **conclusiones y recomendaciones** automáticas y **bibliografía**.
+- El cuadro resumen y las conclusiones también se ven en el paso 7.
+- **Techo existente por ancho × largo:** el paso 3 pide las medidas en planta y calcula los m²; el paso 5 compara con los m² necesarios y el paso 6 drena ese techo por defecto.
+- **Intensidad de diseño desde curvas IDF:** la app busca la estación más cercana al punto marcado entre las 22 estaciones de *Curvas de intensidad, duración y frecuencia (IDF) para la vertiente del Pacífico de Guatemala* (INSIVUMEH e ICC, 2025) y calcula I = A / (D + B)^n para un aguacero de 5 minutos y el periodo de retorno elegido (10 años sugerido). Si la estación está a más de 25 km, se pide escribir el dato.
+- Enlace a la app **IDF Guatemala (Sherman) de Walter Bardales** en Google Earth Engine para consultar la curva del punto y escribir el valor; citada en las fuentes.
+- **Simulador "¿qué pasa si llueve más fuerte?":** barra de intensidad con marcas de los periodos de retorno de la estación, dibujo del canal con el nivel del agua (dentro del diseño, al límite o rebalsa), uso de la bajante y las intensidades a las que el canal rebalsa y la bajante se satura; indica qué falla primero.
+- **Tabla de aguaceros cortos** de la estación (5 a 60 minutos × 2 a 100 años) coloreada según cómo responde el canal.
+- **Análisis hidráulico del canal y la bajante** (pantalla e informe): capacidad del canal con borde libre y lleno, capacidad de la bajante y capacidad máxima del tramo en L/s y **L/min**, elemento que controla, intensidad máxima que soporta y, con la curva IDF, por periodo de retorno (2 a 100 años): intensidad de 5 min, caudal, % de la capacidad y **duración de los aguaceros que rebalsan** (D* = (A/i)^(1/n) − B).
+- 46 pruebas nuevas (107 en total).
+
+- **Sección 2 del informe · Ubicación y generalidades del proyecto:** mapas de macrolocalización y microlocalización con el punto marcado en el paso 1, norte y barra de escala; tabla con lugar, comunidad, municipio, departamento, coordenadas, tipo de infraestructura y cantidad de usuarios.
+
+### Cambiado
+- Tablas del análisis hidráulico y de generalidades con líneas (cuadrícula).
+- Distribución del informe: "Lluvia del lugar", "Techo y lluvia neta", "Tanque de almacenamiento", "Cuadro resumen", "Conclusiones" (seguidas de la bibliografía) y "Acerca de CaptaLluvia" con el descargo empiezan en hoja nueva; los canales de PVC del mercado y el análisis hidráulico siguen de forma continua; la ilustración "1 mm = 1 L" ya no se imprime.
+- Mapas de ubicación con imagen satelital cuando hay una clave de mapas configurada (OpenStreetMap como respaldo).
+- El informe deja solo la información técnica que justifica el diseño: se ocultan las instrucciones y explicaciones de uso de la app y el simulador interactivo (se reemplaza por el análisis hidráulico).
+- Cuadro resumen y conclusiones con la capacidad por tramo en L/min, la intensidad que soporta y los aguaceros que rebalsan según la curva IDF.
+
 ## [0.3.0] — 2026-11-08 — Asistente por pasos y mapa
 
 ### Agregado

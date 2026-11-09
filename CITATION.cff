@@ -1,15 +1,17 @@
 cff-version: 1.2.0
 message: "Si usas CaptaLluvia en un informe, taller o publicación, cítala así."
 title: "CaptaLluvia: Diseño de sistemas de cosecha de agua de lluvia (SCALL)"
-version: 0.3.0
+version: 0.4.0
 date-released: 2026-11-07
 authors:
   - family-names: Alfaro
-    given-names: G.
+    given-names: German
     email: galfaro@icc.org.gt
     affiliation: "Programa de Gestión de Riesgo de Desastres (GdR), Instituto Privado de Investigación sobre Cambio Climático (ICC)"
+  - family-names: Fuentes
+    given-names: Francisco
 repository-code: "https://github.com/germanruiz7-25/captalluvia"
-url: "https://captalluvia.org"
+url: "https://germanruiz7-25.github.io/captalluvia/"
 license-url: "https://polyformproject.org/licenses/noncommercial/1.0.0/"
 keywords:
   - cosecha de agua de lluvia

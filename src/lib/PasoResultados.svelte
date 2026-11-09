@@ -8,10 +8,12 @@
     oferta,
     demanda,
     aguas,
+    techoExistente = null,
   }: {
     oferta: ResumenOferta | null;
     demanda: ResumenDemanda;
     aguas: NumeroAguas;
+    techoExistente?: { ancho: number; largo: number } | null;
   } = $props();
 
   const exacta = $derived(oferta ? areaMinimaM2(demanda.m3Anual, oferta.netaAnualMm) : null);
@@ -23,10 +25,11 @@
 
   const n0 = (v: number) => Math.round(v).toLocaleString('es-GT');
   const n1 = (v: number) => v.toLocaleString('es-GT', { maximumFractionDigits: 1 });
+  const medidas = $derived(techoExistente ? ` (${n1(techoExistente.ancho)} × ${n1(techoExistente.largo)} m)` : '');
 </script>
 
 <section class="tarjeta paso">
-  <p class="numero-paso">Paso 5 de 7</p>
+  <p class="numero-paso">Paso 5 de 8</p>
   <h2>Área de techo necesaria</h2>
 
   {#if !oferta}
@@ -47,23 +50,24 @@
     {#if cobertura !== null && oferta.areaM2 !== null && oferta.m3NetosAnual !== null}
       <p class:alerta={cobertura < 1} class:ok={cobertura >= 1}>
         {#if cobertura >= 1}
-          El techo existente de {n0(oferta.areaM2)} m² alcanza: capta {n1(oferta.m3NetosAnual)} m³ netos al año,
+          El techo existente de {n1(oferta.areaM2)} m²{medidas} alcanza: capta {n1(oferta.m3NetosAnual)} m³ netos al año,
           {Math.round(cobertura * 100)} % de lo que se necesita.
         {:else}
-          El techo existente de {n0(oferta.areaM2)} m² cubre {Math.round(cobertura * 100)} % de la demanda anual
-          ({n1(oferta.m3NetosAnual)} de {n1(demanda.m3Anual)} m³). Faltan {n0(area - oferta.areaM2)} m² de techo,
+          El techo existente de {n1(oferta.areaM2)} m²{medidas} cubre {Math.round(cobertura * 100)} % de la demanda anual
+          ({n1(oferta.m3NetosAnual)} de {n1(demanda.m3Anual)} m³). Faltan {n0(Math.ceil(area - oferta.areaM2))} m² de techo,
           o reducir los litros por usuario.
         {/if}
       </p>
     {/if}
 
+<div class="bloque">
     <h3>Medidas sugeridas del techo</h3>
     <DibujoTecho {opciones} {aguas} />
+</div>
 
     <p class="nota">
-      Este es el balance anual: el agua que cae en la época de lluvia debe guardarse para la época seca.
-      En la siguiente versión se agregan la simulación mes a mes del tanque, el área recomendada para la
-      época seca, el tanque comercial, los materiales y el presupuesto.
+      Este es el balance anual: el agua que cae en la época de lluvia debe guardarse para la época seca. El
+      tanque se calcula mes a mes en el paso 7.
     </p>
   {/if}
 </section>

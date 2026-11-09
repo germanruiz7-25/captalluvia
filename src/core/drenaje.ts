@@ -355,3 +355,95 @@ export function disenarDrenaje(e: EntradaDrenaje): ResultadoDrenaje {
     capacidadComercialLs: capacidadDe(tipoCanal),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Simulador: cómo responde el canal y la bajante cuando sube la intensidad.
+// ---------------------------------------------------------------------------
+
+/** Intensidad (mm/h) con la que un caudal dado se alcanza sobre un área: i = 3600·Q / (C·A). */
+export function intensidadParaCaudal(caudalLs: number, c: number, areaM2: number): number {
+  return c > 0 && areaM2 > 0 ? (caudalLs * 3600) / (c * areaM2) : Infinity;
+}
+
+/**
+ * Llenado del canal rectangular (fracción de la altura del lado bajo) para un caudal.
+ * Devuelve un valor mayor que 1 cuando el canal rebalsa (caudal / capacidad a sección llena).
+ */
+export function llenadoCanalRectangular(anchoM: number, altoM: number, pendiente: number, n: number, caudalLs: number): number {
+  if (caudalLs <= 0) return 0;
+  const lleno = capacidadCanalRectangularLs(anchoM, altoM, pendiente, n, 1);
+  if (lleno <= 0) return Infinity;
+  if (caudalLs >= lleno) return caudalLs / lleno;
+  let bajo = 0;
+  let alto = 1;
+  for (let k = 0; k < 60; k++) {
+    const medio = (bajo + alto) / 2;
+    if (capacidadCanalRectangularLs(anchoM, altoM, pendiente, n, medio) < caudalLs) bajo = medio;
+    else alto = medio;
+  }
+  return (bajo + alto) / 2;
+}
+
+export type EstadoCanal = 'holgado' | 'borde' | 'rebalsa';
+
+export interface EntradaSimulacion {
+  /** m² de techo que llegan a cada tramo (a cada bajante). */
+  areaTramoM2: number;
+  c: number;
+  seccion: Pick<SeccionRectangular, 'anchoMm' | 'altoBajoMm'>;
+  pendientePct: number;
+  material: MaterialCanaleta;
+  /** Capacidad de la bajante elegida (L/s). */
+  capacidadBajanteLs: number;
+}
+
+export interface Simulacion {
+  intensidadMmH: number;
+  caudalTramoLs: number;
+  /** Fracción de la altura del lado bajo (>1 = rebalsa). */
+  llenado: number;
+  estadoCanal: EstadoCanal;
+  /** Caudal / capacidad de la bajante. */
+  usoBajante: number;
+}
+
+export interface LimitesSimulacion {
+  /** Intensidad hasta la que el canal trabaja dentro del diseño (3/4 del lado bajo). */
+  canalDisenoMmH: number;
+  /** Intensidad a partir de la cual el canal rebalsa (lleno hasta el lado bajo). */
+  canalRebalsaMmH: number;
+  /** Intensidad a partir de la cual la bajante se satura. */
+  bajanteMmH: number;
+  /** Qué falla primero. */
+  fallaPrimero: 'canal' | 'bajante';
+}
+
+export function limitesSimulacion(e: EntradaSimulacion): LimitesSimulacion {
+  const b = e.seccion.anchoMm / 1000;
+  const h = e.seccion.altoBajoMm / 1000;
+  const s = Math.max(0, e.pendientePct) / 100;
+  const n = MATERIALES_CANALETA[e.material].n;
+  const canalDisenoMmH = intensidadParaCaudal(capacidadCanalRectangularLs(b, h, s, n, 0.75), e.c, e.areaTramoM2);
+  const canalRebalsaMmH = intensidadParaCaudal(capacidadCanalRectangularLs(b, h, s, n, 1), e.c, e.areaTramoM2);
+  const bajanteMmH = intensidadParaCaudal(e.capacidadBajanteLs, e.c, e.areaTramoM2);
+  return { canalDisenoMmH, canalRebalsaMmH, bajanteMmH, fallaPrimero: bajanteMmH < canalRebalsaMmH ? 'bajante' : 'canal' };
+}
+
+export function simularIntensidad(e: EntradaSimulacion, intensidadMmH: number): Simulacion {
+  const caudalTramoLs = caudalRacionalLs(e.c, Math.max(0, intensidadMmH), e.areaTramoM2);
+  const llenado = llenadoCanalRectangular(
+    e.seccion.anchoMm / 1000,
+    e.seccion.altoBajoMm / 1000,
+    Math.max(0, e.pendientePct) / 100,
+    MATERIALES_CANALETA[e.material].n,
+    caudalTramoLs,
+  );
+  const estadoCanal: EstadoCanal = llenado > 1 + 1e-9 ? 'rebalsa' : llenado > 0.75 + 1e-9 ? 'borde' : 'holgado';
+  return {
+    intensidadMmH,
+    caudalTramoLs,
+    llenado,
+    estadoCanal,
+    usoBajante: e.capacidadBajanteLs > 0 ? caudalTramoLs / e.capacidadBajanteLs : Infinity,
+  };
+}

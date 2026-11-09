@@ -2,6 +2,7 @@
   import type { ResumenLluvia } from '../core/lluvia';
   import type { TipoEdificio } from '../core/demanda';
   import { redondearCoordenada } from '../core/openmeteo';
+  import { FUENTE_IDF_BARDALES, FUENTE_IDF_ICC } from '../core/idf';
 
   let {
     lluvia,
@@ -9,19 +10,21 @@
     lon,
     edificio,
     umbralMm,
+    fuenteIntensidad = '',
   }: {
     lluvia: ResumenLluvia | null;
     lat: string;
     lon: string;
     edificio: TipoEdificio;
     umbralMm: number;
+    fuenteIntensidad?: string;
   } = $props();
 
   const deOpenMeteo = $derived(!!lluvia && lluvia.fuente.includes('Open-Meteo'));
 </script>
 
-<section class="tarjeta" id="fuentes">
-  <h2>Fuentes de consulta</h2>
+<section class="tarjeta paso" id="fuentes">
+  <h2>Bibliografía y fuentes de consulta</h2>
 
   <h3>Datos de lluvia</h3>
   <ul>
@@ -70,6 +73,26 @@
     <li>
       Caudal de diseño de canaletas y bajantes: método racional, Q = C × i × A / 3600 (Kuichling, 1889), con la
       intensidad de diseño indicada por el usuario (se recomienda la curva IDF local de INSIVUMEH).
+    </li>
+    <li>
+      Volumen del tanque: balance mensual con el método del pico secuente (diferencias acumuladas). Rippl, W. (1883).
+      The capacity of storage-reservoirs for water-supply. <em>Minutes of Proceedings of the Institution of Civil
+      Engineers</em>, 71, 270–278.
+    </li>
+    <li>
+      Capacidades y medidas de tanques de polietileno (450 a 2,500 L): Rotoplas Centroamérica. <em>Manual de
+      instalación del tinaco</em>.
+    </li>
+    <li>
+      Intensidad de diseño usada: {fuenteIntensidad || 'escrita por el usuario'}.
+    </li>
+    <li>
+      Curvas IDF: {FUENTE_IDF_ICC.cita} Elaborado por {FUENTE_IDF_ICC.autores}.
+      <a href={FUENTE_IDF_ICC.url}>{FUENTE_IDF_ICC.url}</a>. Ecuación I = A / (D + B)^n con parámetros de Gumbel.
+    </li>
+    <li>
+      Consulta de curvas IDF por punto: {FUENTE_IDF_BARDALES.cita} <a href={FUENTE_IDF_BARDALES.url}>{FUENTE_IDF_BARDALES.url}</a>.
+      Ecuación de Sherman I = K · T^m / (D + B)^n.
     </li>
     <li>
       Capacidad de canaletas: ecuación de Manning con rugosidad n de PVC (0.011) o lámina galvanizada (0.013).

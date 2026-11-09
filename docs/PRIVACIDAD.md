@@ -19,6 +19,7 @@
 | Dato | Dónde se guarda | Para qué |
 | --- | --- | --- |
 | Proyecto en curso: punto marcado en el mapa, lluvia, techo, usuarios y consumo | Solo en tu dispositivo (almacenamiento del navegador, `localStorage`) | Continuar el proyecto después y hacer el informe PDF |
+| Mapa de ubicación del informe (punto exacto marcado y coordenadas) | Se dibuja en tu dispositivo con teselas del proveedor de mapas; queda dentro del PDF que generas | Ubicar el proyecto en el informe. Si compartes el PDF, compartes esa ubicación |
 | Archivos Excel/CSV de lluvia que importes y claves de APIs de estaciones | Solo en tu dispositivo | Usar tus propios datos de lluvia |
 | Registro de la organización: nombre, tipo, país, departamento, aceptación de esta política | Servidor (Cloudflare D1) | Saber qué organizaciones usan la app y desde dónde (impacto) |
 | Correo electrónico (opcional) | Servidor (Cloudflare D1) | Avisarte de versiones nuevas |
@@ -40,7 +41,7 @@ CaptaLluvia **no usa inteligencia artificial** para calcular: los resultados sal
 | Cloudflare (Workers y D1) | Registro de la organización, eventos de uso y consultas a estaciones | Base de datos y puente de estaciones |
 | Open-Meteo, NASA POWER, Climate Hazards Center | Coordenadas redondeadas | Obtener la lluvia histórica |
 | OpenStreetMap (servidores de teselas) | La zona del mapa que estás viendo (como cualquier mapa en línea) y datos técnicos de la conexión | Mostrar el mapa para ubicar la vivienda |
-| Nominatim (OpenStreetMap) | El texto que escribes en "Buscar" | Encontrar el municipio o la dirección |
+| Nominatim (OpenStreetMap) | El texto que escribes en "Buscar" y, solo si pulsas "Completar con el punto del mapa", el punto redondeado a ~100 m | Encontrar el lugar y completar comunidad, municipio y departamento |
 | Esri, Mapbox o MapTiler (solo si eliges su mapa satelital) | La zona del mapa que estás viendo y datos técnicos de la conexión | Mostrar la imagen satelital |
 | APIs de estaciones que tú conectes | Lo que exija cada API (por ejemplo tu clave) | Traer datos de tus estaciones |
 

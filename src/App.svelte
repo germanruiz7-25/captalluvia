@@ -3,7 +3,7 @@
   import type { ResumenLluvia } from './core/lluvia';
   import { calcularOferta, UMBRAL_CAPTACION_MM } from './core/oferta';
   import { calcularDemanda, DOTACIONES, EDIFICIOS, USOS_INICIALES, litrosDeUsos, type TipoEdificio, type UsoAgua } from './core/demanda';
-  import { COEFICIENTES_ESCORRENTIA, areaMinimaM2, opcionesDeTecho, type NumeroAguas, type TipoTecho } from './core/techo';
+  import { COEFICIENTES_ESCORRENTIA, NOMBRES_TECHO, areaMinimaM2, opcionesDeTecho, type NumeroAguas, type TipoTecho } from './core/techo';
   import { onMount } from 'svelte';
   import { borrarProyecto, cargarProyecto, guardarProyecto } from './core/proyecto';
   import PasoUbicacion from './lib/PasoUbicacion.svelte';
@@ -12,8 +12,13 @@
   import PasoUsuarios from './lib/PasoUsuarios.svelte';
   import PasoResultados from './lib/PasoResultados.svelte';
   import PasoDrenaje from './lib/PasoDrenaje.svelte';
+  import PasoTanque from './lib/PasoTanque.svelte';
   import Acerca from './lib/Acerca.svelte';
   import Fuentes from './lib/Fuentes.svelte';
+  import UbicacionProyecto from './lib/UbicacionProyecto.svelte';
+  import InformeResumen from './lib/InformeResumen.svelte';
+  import { redondearCoordenada } from './core/openmeteo';
+  import type { DatosDrenajeInforme, DatosInforme, DatosTanqueInforme } from './core/informe';
 
   const version = __APP_VERSION__;
   const privacidad = `${acerca.repositorio}/blob/main/docs/PRIVACIDAD.md`;
@@ -23,6 +28,12 @@
   const edificioInicial = (g?.edificio && g.edificio in EDIFICIOS ? g.edificio : 'vivienda') as TipoEdificio;
 
   let nombreProyecto = $state(g?.nombreProyecto ?? '');
+  let comunidad = $state(g?.comunidad ?? '');
+  let elaboradoPor = $state(g?.elaboradoPor ?? '');
+  let volumenTanque: number | null = $state(g?.volumenTanque ?? null);
+  let institucionTecnico = $state(g?.institucionTecnico ?? '');
+  let municipio = $state(g?.municipio ?? '');
+  let departamento = $state(g?.departamento ?? '');
   let lat = $state(g?.lat ?? '');
   let lon = $state(g?.lon ?? '');
   let lluvia: ResumenLluvia | null = $state(g?.lluvia ?? null);
@@ -33,7 +44,18 @@
   let aguas: NumeroAguas = $state(g?.aguas === 1 ? 1 : 2);
   let descarteMm = $state(g?.descarteMm ?? 1);
   let umbralMm = $state(g?.umbralMm ?? UMBRAL_CAPTACION_MM);
-  let areaDisponible: number | null = $state(g?.areaDisponible ?? null);
+  // Techo existente: ancho × largo en planta (m). El área sale del producto.
+  let anchoTecho: number | null = $state(g?.anchoTecho ?? null);
+  let largoTecho: number | null = $state(g?.largoTecho ?? null);
+  const techoExistente = $derived(
+    Number(anchoTecho) > 0 && Number(largoTecho) > 0
+      ? {
+          ancho: Math.min(Number(anchoTecho), Number(largoTecho)),
+          largo: Math.max(Number(anchoTecho), Number(largoTecho)),
+        }
+      : null,
+  );
+  const areaDisponible = $derived(techoExistente ? Math.round(techoExistente.ancho * techoExistente.largo * 100) / 100 : null);
 
   let edificio: TipoEdificio = $state(edificioInicial);
   let usuarios = $state(g?.usuarios ?? 5);
@@ -49,6 +71,7 @@
     { icono: '👥', nombre: 'Usuarios' },
     { icono: '📐', nombre: 'Área' },
     { icono: '🔽', nombre: 'Canaletas' },
+    { icono: '🛢️', nombre: 'Tanque' },
     { icono: '📄', nombre: 'Informe' },
   ];
   const leerPasoDeUrl = () => {
@@ -70,6 +93,9 @@
   }
 
   let resumenDrenaje = $state('');
+  let fuenteIntensidad = $state('');
+  let datosDrenaje: DatosDrenajeInforme | null = $state(null);
+  let datosTanque: DatosTanqueInforme | null = $state(null);
   let confirmarBorrado = $state(false);
 
   function borrarTodo() {
@@ -103,6 +129,7 @@
       demanda.m3Anual > 0,
       areaNecesaria !== null,
       opcionesTecho.length > 0,
+      datosTanque !== null,
       false,
     ].map((ok, i) => ok && visitados.includes(i + 1)),
   );
@@ -110,8 +137,8 @@
   // Guardar en el dispositivo cada vez que cambia algo.
   $effect(() => {
     guardarProyecto({
-      paso, nombreProyecto, lat, lon, lluvia, tipoTecho, aguas,
-      descarteMm: Number(descarteMm) || 0, umbralMm: Number(umbralMm) || 0, areaDisponible,
+      paso, nombreProyecto, elaboradoPor, volumenTanque, institucionTecnico, comunidad, municipio, departamento, lat, lon, lluvia, tipoTecho, aguas,
+      descarteMm: Number(descarteMm) || 0, umbralMm: Number(umbralMm) || 0, areaDisponible, anchoTecho, largoTecho,
       edificio, usuarios, dotacionId, usos: $state.snapshot(usos), diasUso,
     });
   });
@@ -144,6 +171,43 @@
   const n0 = (v: number) => Math.round(v).toLocaleString('es-GT');
   const n1 = (v: number) => v.toLocaleString('es-GT', { maximumFractionDigits: 1 });
 
+  const coordenadas = $derived(
+    lat !== '' && lon !== '' && Number.isFinite(Number(lat)) && Number.isFinite(Number(lon))
+      ? `${redondearCoordenada(Number(lat))}, ${redondearCoordenada(Number(lon))}`
+      : null,
+  );
+  const datosInforme: DatosInforme = $derived({
+    nombreProyecto,
+    edificio: EDIFICIOS[edificio].nombre,
+    coordenadas,
+    lluvia: lluvia
+      ? { anualMm: lluvia.anualMm, diasLluvia: lluvia.diasLluviaAnual, anios: lluvia.anios, fuente: lluvia.fuente }
+      : null,
+    techo: {
+      material: NOMBRES_TECHO[tipoTecho],
+      ce: COEFICIENTES_ESCORRENTIA[tipoTecho],
+      aguas,
+      descarteMm: Number(descarteMm) || 0,
+      umbralMm: Number(umbralMm) || 0,
+      existente: techoExistente && areaDisponible ? { ...techoExistente, area: areaDisponible } : null,
+    },
+    oferta: oferta
+      ? { netaAnualMm: oferta.netaAnualMm, eficiencia: oferta.eficiencia, mesesCaptados: oferta.mesesCaptados, m3NetosAnual: oferta.m3NetosAnual }
+      : null,
+    demanda: {
+      usuarios: demanda.usuarios,
+      litrosPorUsuarioDia: demanda.litrosPorUsuarioDia,
+      diasUso: demanda.diasUso,
+      m3Anual: demanda.m3Anual,
+    },
+    areaNecesariaM2: areaNecesaria,
+    drenaje: datosDrenaje,
+    tanque: datosTanque,
+  });
+  const ubicacionTexto = $derived([comunidad, municipio, departamento].map((x) => x.trim()).filter(Boolean).join(', '));
+  const logos: { archivo: string; nombre: string }[] = (acerca as { logos?: { archivo: string; nombre: string }[] }).logos ?? [];
+  const base = import.meta.env.BASE_URL;
+
   const fecha = new Date().toLocaleDateString('es-GT', { year: 'numeric', month: 'long', day: 'numeric' });
 
   function descargarInforme() {
@@ -165,15 +229,68 @@
       <p>{acerca.subtitulo}</p>
     </div>
   </div>
-  <button class="enlace" onclick={() => irAPaso(7)}>Acerca de</button>
+  <button class="enlace" onclick={() => irAPaso(8)}>Acerca de</button>
 </header>
 
 <!-- Encabezado del informe (solo en el PDF) -->
-<div class="solo-impresion encabezado-informe">
-  <p class="marca-informe">{acerca.nombre} · {acerca.subtitulo}</p>
-  <h1>Informe de diseño de cosecha de agua de lluvia</h1>
-  {#if nombreProyecto}<p class="proyecto">{nombreProyecto}</p>{/if}
-  <p>Fecha: {fecha} · {EDIFICIOS[edificio].nombre} · Versión de la app: v{version}</p>
+<!-- Carátula e introducción (solo en el PDF) -->
+<div class="solo-impresion caratula">
+  <div class="logos">
+    <div class="logo-app">
+      <svg viewBox="0 0 32 32" width="48" height="48" aria-hidden="true">
+        <path d="M16 3c5 7 9 12 9 17a9 9 0 0 1-18 0c0-5 4-10 9-17z" fill="#0b63b6" />
+        <path d="M11 21a5 5 0 0 0 5 5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" />
+      </svg>
+      <span><strong>{acerca.nombre}</strong><br />{acerca.subtitulo}</span>
+    </div>
+    {#each logos as l (l.archivo)}
+      <img src={`${base}${l.archivo}`} alt={l.nombre} />
+    {/each}
+  </div>
+
+  <div class="caratula-centro">
+    <p class="caratula-tipo">INFORME TÉCNICO</p>
+    <h1>Proyecto: Diseño y cálculo de Sistema de Captación de Agua de Lluvia – SCALL</h1>
+    <p class="caratula-lugar"><strong>Lugar:</strong> {nombreProyecto || `${EDIFICIOS[edificio].nombre} (sin nombre)`}</p>
+    {#if ubicacionTexto}<p class="caratula-lugar"><strong>Ubicación:</strong> {ubicacionTexto}</p>{/if}
+    {#if elaboradoPor}<p class="caratula-lugar"><strong>Elaborado por:</strong> {elaboradoPor}{institucionTecnico ? `, ${institucionTecnico}` : ''}</p>{/if}
+  </div>
+
+  <table class="ficha-informe">
+    <tbody>
+      <tr><td>Tipo de edificio</td><td>{EDIFICIOS[edificio].nombre} · {demanda.usuarios} usuarios</td></tr>
+      <tr><td>Coordenadas aproximadas</td><td>{coordenadas ? `${coordenadas} (latitud, longitud; ~1 km)` : 'No indicadas (lluvia ingresada a mano)'}</td></tr>
+      <tr><td>Fecha</td><td>{fecha}</td></tr>
+      <tr><td>Herramienta</td><td>{acerca.nombre} v{version} {acerca.citaEnTexto.replace('{anio}', String(new Date().getFullYear()))}</td></tr>
+      <tr><td>Autores de la herramienta</td><td>{acerca.autoresTexto} · {acerca.organizacion}</td></tr>
+    </tbody>
+  </table>
+  <p class="caratula-descargo">{acerca.descargoCorto}</p>
+</div>
+
+<div class="solo-impresion">
+  <section class="paso introduccion">
+    <h2>Introducción</h2>
+    <p>
+      Este informe presenta el análisis preliminar (prefactibilidad) de un sistema de captación de agua de lluvia
+      (SCALL) para {nombreProyecto || 'el proyecto'}{ubicacionTexto ? `, ubicado en ${ubicacionTexto}` : ''}:
+      {EDIFICIOS[edificio].nombre.toLowerCase()} con {demanda.usuarios} usuarios. Con base en
+      {lluvia && lluvia.anios > 0 ? `${lluvia.anios} años de registros diarios de lluvia (${lluvia.fuente})` : 'los datos de lluvia ingresados por el usuario'},
+      se estima la lluvia aprovechable del techo, se compara con la demanda de agua y se dimensionan el área de techo,
+      las canaletas, las bajantes y el tanque de almacenamiento. Al final se presentan el cuadro resumen del diseño,
+      las conclusiones y la bibliografía consultada.
+    </p>
+  </section>
+  <UbicacionProyecto
+    {lat}
+    {lon}
+    lugar={nombreProyecto}
+    {comunidad}
+    {municipio}
+    {departamento}
+    infraestructura={EDIFICIOS[edificio].nombre}
+    usuarios={demanda.usuarios}
+  />
 </div>
 
 <nav class="avance no-imprimir" aria-label="Pasos">
@@ -197,26 +314,37 @@
 
 <main>
   <div class="pantalla no-imprimir" class:activa={paso === 1}>
-    <PasoUbicacion bind:lluvia bind:lat bind:lon bind:nombreProyecto onListo={() => irAPaso(2)} />
+    <PasoUbicacion bind:lluvia bind:lat bind:lon bind:nombreProyecto bind:comunidad bind:municipio bind:departamento onListo={() => irAPaso(2)} />
   </div>
   <div class="pantalla" class:activa={paso === 2}>
     <PasoLluvia {lluvia} {lat} {lon} {oferta} {tipoTecho} descarteMm={Number(descarteMm) || 0} />
   </div>
   <div class="pantalla" class:activa={paso === 3}>
-    <PasoTecho {lluvia} {oferta} bind:tipoTecho bind:aguas bind:descarteMm bind:areaDisponible bind:umbralMm />
+    <PasoTecho {lluvia} {oferta} bind:tipoTecho bind:aguas bind:descarteMm bind:anchoTecho bind:largoTecho {areaDisponible} bind:umbralMm />
   </div>
   <div class="pantalla" class:activa={paso === 4}>
     <PasoUsuarios bind:edificio bind:usuarios bind:dotacionId bind:usos bind:diasUso {demanda} />
   </div>
   <div class="pantalla" class:activa={paso === 5}>
-    <PasoResultados {oferta} {demanda} {aguas} />
+    <PasoResultados {oferta} {demanda} {aguas} {techoExistente} />
   </div>
   <div class="pantalla" class:activa={paso === 6}>
-    <PasoDrenaje opciones={opcionesTecho} {aguas} {tipoTecho} bind:resumen={resumenDrenaje} />
+    <PasoDrenaje opciones={opcionesTecho} {techoExistente} {aguas} {tipoTecho} {lat} {lon} bind:resumen={resumenDrenaje} bind:fuenteIntensidad bind:datos={datosDrenaje} />
   </div>
   <div class="pantalla" class:activa={paso === 7}>
+    <PasoTanque
+      {lluvia}
+      {oferta}
+      demandaAnualM3={demanda.m3Anual}
+      areaTechoM2={areaDisponible ?? areaNecesaria}
+      origenArea={areaDisponible ? 'existente' : 'necesaria'}
+      bind:datos={datosTanque}
+      bind:volumenElegido={volumenTanque}
+    />
+  </div>
+  <div class="pantalla" class:activa={paso === 8}>
     <section class="tarjeta paso no-imprimir">
-      <p class="numero-paso">Paso 7 de 7</p>
+      <p class="numero-paso">Paso 8 de 8</p>
       <h2>Resumen e informe</h2>
       {#if !oferta}
         <p class="nota">Completa al menos los pasos 1 y 2 para generar el informe.</p>
@@ -234,9 +362,20 @@
         <button class="ficha" onclick={() => irAPaso(5)}>
           <span class="icono">🏠</span><span class="valor">{areaNecesaria !== null ? `${n0(areaNecesaria)} m²` : '—'}</span><span>de techo como mínimo</span>
         </button>
+        <button class="ficha" onclick={() => irAPaso(7)}>
+          <span class="icono">🛢️</span><span class="valor">{datosTanque ? `${datosTanque.volumenM3.toLocaleString('es-GT', { maximumFractionDigits: 1 })} m³` : '—'}</span><span>de tanque{datosTanque ? ` (${datosTanque.tanque})` : ''}</span>
+        </button>
         <button class="ficha ancha" onclick={() => irAPaso(6)}>
           <span class="icono">🔽</span><span class="valor chico">{resumenDrenaje || '—'}</span><span>canaletas y bajantes</span>
         </button>
+      </div>
+      <div class="campos tecnico">
+        <label>Elaborado por (técnico o personas que hacen el cálculo)
+          <input bind:value={elaboradoPor} placeholder="Ej. Ing. Ana López, Téc. Juan Pérez" />
+        </label>
+        <label>Institución o cargo (opcional)
+          <input bind:value={institucionTecnico} placeholder="Ej. COMRED de Masagua" />
+        </label>
       </div>
       <div class="acciones">
         <button class="principal grande" onclick={descargarInforme} disabled={!oferta}>📄 Descargar informe en PDF</button>
@@ -262,7 +401,8 @@
         {/if}
       </details>
     </section>
-    <Fuentes {lluvia} {lat} {lon} {edificio} umbralMm={Number(umbralMm) || 0} />
+    <InformeResumen datos={datosInforme} />
+    <Fuentes {lluvia} {lat} {lon} {edificio} umbralMm={Number(umbralMm) || 0} {fuenteIntensidad} />
     <Acerca />
   </div>
 
@@ -344,14 +484,26 @@
   .peligro-lleno { background: var(--alerta); }
 
   @media print {
-    .pantalla { display: grid !important; gap: 0.6rem; }
+    .pantalla { display: block !important; }
+    .pantalla > :global(* + *) { margin-top: 0.6rem; }
     .pantalla.no-imprimir { display: none !important; }
   }
   main { max-width: 60rem; margin: 0 auto; padding: 1.5rem clamp(1rem, 4vw, 2rem); display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
   footer { text-align: center; color: var(--texto-suave); font-size: 0.85rem; padding: 2rem 1rem; }
-  .encabezado-informe { padding: 0 0 0.5rem; border-bottom: 2px solid var(--acento); margin-bottom: 0.75rem; }
-  .encabezado-informe h1 { font-size: 1.4rem; margin: 0.15rem 0; }
-  .encabezado-informe p { margin: 0.1rem 0; }
-  .marca-informe { color: var(--acento); font-weight: 700; }
-  .proyecto { font-size: 1.1rem; font-weight: 600; }
+  @media print {
+    .caratula { break-after: page; min-height: 23cm; display: flex !important; flex-direction: column; }
+  }
+  .caratula-centro { margin: auto 0; padding: 2cm 0; text-align: center; }
+  .caratula-tipo { letter-spacing: 0.15em; font-weight: 700; margin: 0 0 0.5cm; }
+  .caratula h1 { margin: 0 0 1cm; line-height: 1.3; }
+  .caratula-lugar { margin: 0.2cm 0; }
+  .caratula-descargo { margin-top: 0.4cm; font-style: italic; }
+  .tecnico { margin: 0.5rem 0 0.75rem; }
+  .logos { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; padding-bottom: 0.5rem; border-bottom: 2px solid var(--acento); margin-bottom: 0.75rem; }
+  .logo-app { display: flex; align-items: center; gap: 0.5rem; margin-right: auto; font-size: 0.85rem; line-height: 1.25; }
+  .logos img { max-height: 3.2rem; max-width: 10rem; object-fit: contain; }
+  .ficha-informe { border-collapse: collapse; margin: 0.5rem auto 1rem; font-size: 0.85rem; }
+  .ficha-informe td { padding: 0.15rem 0.75rem 0.15rem 0; vertical-align: top; }
+  .ficha-informe td:first-child { color: var(--texto-suave); white-space: nowrap; }
+  .introduccion p { text-align: justify; }
 </style>

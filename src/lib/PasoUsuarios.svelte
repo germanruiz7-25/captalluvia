@@ -41,7 +41,7 @@
 </script>
 
 <section class="tarjeta paso">
-  <p class="numero-paso">Paso 4 de 7</p>
+  <p class="numero-paso">Paso 4 de 8</p>
   <h2>Usuarios y consumo</h2>
 
   <div class="no-imprimir">
@@ -69,7 +69,7 @@
         <input type="number" min="1" max="366" bind:value={diasUso} />
       </label>
     </div>
-    <p class="nota">{EDIFICIOS[edificio].notaDias}
+    <p class="nota informe">{EDIFICIOS[edificio].notaDias}
       {#if dotacionId !== 'personalizada'}{opciones.find((d) => d.id === dotacionId)?.descripcion}{/if}
     </p>
 

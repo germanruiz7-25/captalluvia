@@ -1,7 +1,7 @@
 {
   "nombre": "CaptaLluvia",
   "subtitulo": "Diseño de sistemas de cosecha de agua de lluvia (SCALL)",
-  "autor": "Alfaro, G.",
+  "autor": "Alfaro, G. & Fuentes, F.",
   "organizacion": "Programa de Gestión de Riesgo de Desastres (GdR), Instituto Privado de Investigación sobre Cambio Climático (ICC)",
   "objetivo": "Herramienta gratuita para ubicar una vivienda, analizar la lluvia histórica del lugar y dimensionar un sistema de cosecha de agua de lluvia (área de techo, canaletas, tubería, tanque, tratamiento y presupuesto) en cualquier parte del mundo.",
   "contacto": "galfaro@icc.org.gt",
@@ -10,7 +10,27 @@
   "licencia": "PolyForm Noncommercial 1.0.0 (uso no comercial)",
   "licenciaUrl": "https://polyformproject.org/licenses/noncommercial/1.0.0/",
   "fuentesDatos": "Open-Meteo (reanálisis ERA5), mapa y búsqueda de OpenStreetMap (Nominatim), y datos de lluvia ingresados por el usuario",
-  "citaPlantilla": "Alfaro, G. ({anio}). CaptaLluvia v{version}. Programa de Gestión de Riesgo de Desastres, ICC. https://captalluvia.org",
+  "citaPlantilla": "Alfaro, G., & Fuentes, F. ({anio}). CaptaLluvia (versión {version}) [Software]. Programa de Gestión de Riesgo de Desastres, Instituto Privado de Investigación sobre Cambio Climático. https://germanruiz7-25.github.io/captalluvia/",
   "aviso": "Resultados estimados para prefactibilidad; no reemplazan el diseño firmado por un profesional.",
-  "avisoIA": "CaptaLluvia no usa inteligencia artificial para calcular: los resultados salen de fórmulas documentadas. El código se desarrolla con asistencia de IA y revisión humana."
+  "avisoIA": "CaptaLluvia no usa inteligencia artificial para calcular: los resultados salen de fórmulas documentadas. El código se desarrolla con asistencia de IA y revisión humana.",
+  "logos": [
+    {
+      "archivo": "logos/icc.png",
+      "nombre": "Instituto Privado de Investigación sobre Cambio Climático (ICC)"
+    }
+  ],
+  "_logos": "Logotipos de organizaciones para el informe: archivos en public/logos/, por ejemplo {\"archivo\": \"logos/icc.png\", \"nombre\": \"ICC\"}",
+  "autores": [
+    "German Alfaro",
+    "Francisco Fuentes"
+  ],
+  "citaEnTexto": "(Alfaro & Fuentes, {anio})",
+  "descargo": [
+    "CaptaLluvia es una herramienta gratuita de apoyo para el cálculo preliminar y el prediseño de sistemas de captación de agua de lluvia. Sus resultados son estimaciones basadas en datos públicos, en fórmulas de referencia y en la información que ingresa el usuario; pueden contener errores y no sustituyen el estudio del sitio, el criterio técnico ni la revisión y firma de un profesional colegiado.",
+    "El diseño definitivo, la selección de materiales, la construcción, la instalación, la operación, el mantenimiento del sistema y la calidad del agua son responsabilidad exclusiva de quien los realiza, contrata o supervisa. El agua de lluvia debe tratarse antes de usarse para beber o cocinar.",
+    "La herramienta se ofrece \"tal cual\", sin garantía de ningún tipo. Los autores (Alfaro, German & Fuentes, Francisco) y el Instituto Privado de Investigación sobre Cambio Climático (ICC) no garantizan la exactitud de los resultados ni su idoneidad para un proyecto concreto, y no asumen responsabilidad por daños, pérdidas, fallas o perjuicios derivados del uso de la herramienta, de sus resultados o de las obras construidas con base en ellos.",
+    "Usar CaptaLluvia implica aceptar estas condiciones."
+  ],
+  "descargoCorto": "Herramienta de apoyo para prediseño: no sustituye la revisión de un profesional. Ver descargo de responsabilidad.",
+  "autoresTexto": "Alfaro, German & Fuentes, Francisco"
 }

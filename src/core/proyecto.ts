@@ -10,6 +10,12 @@ export const CLAVE_PROYECTO = 'captalluvia.proyecto.v1';
 export interface ProyectoGuardado {
   paso: number;
   nombreProyecto: string;
+  elaboradoPor?: string;
+  volumenTanque?: number | null;
+  institucionTecnico?: string;
+  comunidad?: string;
+  municipio?: string;
+  departamento?: string;
   lat: string;
   lon: string;
   lluvia: ResumenLluvia | null;
@@ -18,6 +24,9 @@ export interface ProyectoGuardado {
   descarteMm: number;
   umbralMm: number;
   areaDisponible: number | null;
+  /** Medidas en planta del techo existente (m). */
+  anchoTecho?: number | null;
+  largoTecho?: number | null;
   edificio: string;
   usuarios: number;
   dotacionId: string;

@@ -4,6 +4,10 @@ import {
   CANAL_COLONIAL_WAVIN,
   capacidadCanalRectangularLs,
   evaluarCanalRectangular,
+  intensidadParaCaudal,
+  limitesSimulacion,
+  llenadoCanalRectangular,
+  simularIntensidad,
   areaParaCaudalM2,
   capacidadBajanteLs,
   capacidadCanaletaLs,
@@ -142,5 +146,46 @@ describe('canal rectangular (opción 2)', () => {
     const plano = disenarDrenaje({ ...base, pendientePct: 0.05, areaM2: 220, largoM: 20, aguas: 2 });
     expect(plano.tipoCanal).toBe('alto');
     expect(plano.capacidadComercialLs).toBeGreaterThanOrEqual(plano.caudalPorTramoLs - 1e-9);
+  });
+});
+
+describe('simulador de intensidad', () => {
+  const entrada = {
+    areaTramoM2: 36.75,
+    c: 0.9,
+    seccion: CANAL_COLONIAL_WAVIN,
+    pendientePct: 0.5,
+    material: 'pvc' as const,
+    capacidadBajanteLs: capacidadBajanteLs(82),
+  };
+
+  it('el llenado sube con la intensidad y pasa de holgado a borde y a rebalse', () => {
+    const l = limitesSimulacion(entrada);
+    expect(l.canalDisenoMmH).toBeLessThan(l.canalRebalsaMmH);
+    expect(simularIntensidad(entrada, l.canalDisenoMmH * 0.9).estadoCanal).toBe('holgado');
+    expect(simularIntensidad(entrada, (l.canalDisenoMmH + l.canalRebalsaMmH) / 2).estadoCanal).toBe('borde');
+    expect(simularIntensidad(entrada, l.canalRebalsaMmH * 1.1).estadoCanal).toBe('rebalsa');
+    const a = simularIntensidad(entrada, 100).llenado;
+    const b = simularIntensidad(entrada, 200).llenado;
+    expect(b).toBeGreaterThan(a);
+  });
+
+  it('en el límite de diseño el llenado es 3/4 y el caudal coincide con la capacidad', () => {
+    const l = limitesSimulacion(entrada);
+    const s = simularIntensidad(entrada, l.canalDisenoMmH);
+    expect(s.llenado).toBeCloseTo(0.75, 4);
+    expect(s.caudalTramoLs).toBeCloseTo(capacidadCanalRectangularLs(0.1, 0.09, 0.005, 0.011), 6);
+  });
+
+  it('indica si falla primero el canal o la bajante', () => {
+    expect(limitesSimulacion(entrada).fallaPrimero).toBe('canal');
+    const bajanteChica = { ...entrada, capacidadBajanteLs: 0.5 };
+    expect(limitesSimulacion(bajanteChica).fallaPrimero).toBe('bajante');
+    expect(simularIntensidad(bajanteChica, 150).usoBajante).toBeGreaterThan(1);
+  });
+
+  it('i = 3600·Q / (C·A) es la inversa del método racional', () => {
+    expect(intensidadParaCaudal(caudalRacionalLs(0.9, 150, 50), 0.9, 50)).toBeCloseTo(150, 9);
+    expect(llenadoCanalRectangular(0.1, 0.09, 0.005, 0.011, 0)).toBe(0);
   });
 });

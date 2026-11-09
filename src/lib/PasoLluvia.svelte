@@ -30,8 +30,8 @@
   const n0 = (v: number) => Math.round(v).toLocaleString('es-GT');
 </script>
 
-<section class="tarjeta paso">
-  <p class="numero-paso">Paso 2 de 7</p>
+<section class="tarjeta paso salto-impresion">
+  <p class="numero-paso">Paso 2 de 8</p>
   <h2>Lluvia del lugar</h2>
 
   {#if !lluvia}
@@ -44,7 +44,8 @@
         <div><span class="cifra">{n0(lluvia.diasLluviaAnual)}</span><span>días con lluvia al año</span></div>
         <div><span class="cifra">{n0(lluvia.anualMm)} L</span><span>caen al año sobre cada m² de techo</span></div>
       </div>
-      <IlustracionLitro anualMm={lluvia.anualMm} />
+      <div class="no-imprimir"><IlustracionLitro anualMm={lluvia.anualMm} /></div>
+<div class="bloque">
       <h3>Precipitación promedio mensual y precipitación neta (PN) a cosechar (mm)</h3>
       <GraficoMensual
         brutaMm={lluvia.mensualMm}
@@ -60,10 +61,11 @@
           <span class="item"><span class="linea-umbral"></span> {umbralMm} mm de PN: inicio de captación</span>
         {/if}
       </p>
-      <p class="nota">
+      <p class="nota informe">
         PN = precipitación × Ce − primer descarte, con el techo del paso 3
         ({NOMBRES_TECHO[tipoTecho].toLowerCase()}, Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}, descarte de {descarteMm} mm por lluvia).
       </p>
+</div>
       {#if umbralMm > 0}
         <p class="recomendacion">
           Recomendación: captar la lluvia en los meses con {umbralMm} mm o más de precipitación neta (PN), sobre la línea roja punteada.
@@ -86,7 +88,7 @@
           {/if}
         </tbody>
       </table>
-      <p class="nota">
+      <p class="nota informe">
         Fuente: {lluvia.fuente}{#if lluvia.anios}, promedio de {lluvia.anios} años ({lluvia.anioInicio}–{lluvia.anioFin}){/if}.
         {#if lluvia.fuente.includes('Open-Meteo')}{ATRIBUCION_OPEN_METEO}.{/if}
         {#if lat && lon && lluvia.anios}Punto consultado: {redondearCoordenada(Number(lat))}, {redondearCoordenada(Number(lon))}.{/if}

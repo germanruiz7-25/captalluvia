@@ -1,10 +1,26 @@
 <script lang="ts">
   import DibujosDrenaje from './DibujosDrenaje.svelte';
+  import SimuladorLluvia from './SimuladorLluvia.svelte';
+  import ResultadoHidraulico from './ResultadoHidraulico.svelte';
+  import { analizarTramo } from '../core/analisisHidraulico';
+  import {
+    DURACION_DISENO_MIN,
+    DISTANCIA_MAX_KM,
+    FUENTE_IDF_BARDALES,
+    FUENTE_IDF_ICC,
+    PERIODOS_RETORNO,
+    PERIODO_DISENO,
+    estacionMasCercana,
+    intensidadEstacion,
+    type PeriodoRetorno,
+  } from '../core/idf';
+  import type { DatosDrenajeInforme } from '../core/informe';
   import {
     BAJANTE_MINIMA_PRACTICA,
     CANALES_MERCADO,
     SECCIONES_COMERCIALES,
     evaluarCanalRectangular,
+    limitesSimulacion,
     MATERIALES_CANALETA,
     NOMBRES_TIPO_CANAL,
     disenarDrenaje,
@@ -16,14 +32,44 @@
     opciones,
     aguas,
     tipoTecho,
+    techoExistente = null,
+    lat = '',
+    lon = '',
     resumen = $bindable(''),
-  }: { opciones: OpcionTecho[]; aguas: NumeroAguas; tipoTecho: TipoTecho; resumen?: string } = $props();
+    fuenteIntensidad = $bindable(''),
+    datos = $bindable(null),
+  }: {
+    opciones: OpcionTecho[];
+    aguas: NumeroAguas;
+    tipoTecho: TipoTecho;
+    techoExistente?: { ancho: number; largo: number } | null;
+    lat?: string;
+    lon?: string;
+    resumen?: string;
+    fuenteIntensidad?: string;
+    datos?: DatosDrenajeInforme | null;
+  } = $props();
 
   // Parámetros de diseño (editables por el diseñador)
-  let techoElegido = $state('rectangular');
+  // 'auto' = el techo existente si se escribieron sus medidas; si no, la forma rectangular sugerida
+  let techoElegido = $state('auto');
   let largoPropio: number | null = $state(null);
   let anchoPropio: number | null = $state(null);
-  let intensidad = $state(150);
+  // Intensidad de diseño: de la curva IDF de la estación más cercana o escrita a mano
+  let intensidadManual = $state(150);
+  let periodo: PeriodoRetorno = $state(PERIODO_DISENO);
+  const cercana = $derived(lat !== '' && lon !== '' ? estacionMasCercana(Number(lat), Number(lon)) : null);
+  let origen = $state<'auto' | 'estacion' | 'manual'>('auto');
+  const usarEstacion = $derived(cercana !== null && (origen === 'estacion' || (origen === 'auto' && cercana.util)));
+  const intensidad = $derived(
+    usarEstacion && cercana ? Math.round(intensidadEstacion(cercana.estacion, periodo, DURACION_DISENO_MIN)) : Number(intensidadManual) || 0,
+  );
+  $effect(() => {
+    fuenteIntensidad =
+      usarEstacion && cercana
+        ? `${FUENTE_IDF_ICC.corta}, estación ${cercana.estacion.nombre}, ${DURACION_DISENO_MIN} min, T = ${periodo} años`
+        : 'Escrita por el usuario';
+  });
   let pendientePct = $state(0.5);
   let material: MaterialCanaleta = $state('pvc');
   // Opción 2: canal comercial (colonial o alto caudal) o medidas propias
@@ -33,6 +79,9 @@
   let altoAltoPropio: number | null = $state(null);
 
   const techo = $derived.by(() => {
+    if ((techoElegido === 'auto' || techoElegido === 'existente') && techoExistente) {
+      return { largo: techoExistente.largo, ancho: techoExistente.ancho, nombre: 'Techo existente' };
+    }
     if (techoElegido === 'propio') {
       const l = Number(largoPropio) || 0;
       const a = Number(anchoPropio) || 0;
@@ -77,6 +126,60 @@
       : null,
   );
 
+  // Entrada del simulador y datos para el cuadro resumen del informe
+  const entradaSim = $derived(
+    r && b && techo && seccion && seccion.anchoMm > 0 && seccion.altoBajoMm > 0
+      ? {
+          areaTramoM2: (techo.largo * techo.ancho) / r.numeroCanaletas / b.porCanaleta,
+          c: ce,
+          seccion,
+          pendientePct: Number(pendientePct) || 0,
+          material,
+          capacidadBajanteLs: b.capacidadLs,
+        }
+      : null,
+  );
+  const analisis = $derived(
+    entradaSim ? analizarTramo(entradaSim, Number(intensidad) || 0, usarEstacion && cercana ? cercana.estacion : null) : null,
+  );
+  $effect(() => {
+    if (!r || !b || !techo || !seccion || !rect || !entradaSim || !analisis) {
+      datos = null;
+      return;
+    }
+    const lim = limitesSimulacion(entradaSim);
+    datos = {
+      techoAncho: techo.ancho,
+      techoLargo: techo.largo,
+      techoNombre: techo.nombre,
+      intensidadMmH: intensidad,
+      fuenteIntensidad,
+      tipoCanal: NOMBRES_TIPO_CANAL[r.tipoCanal],
+      lineasCanal: r.lineasSugeridas.map((l) => `${l.marca}: ${l.modelo}`).join('; '),
+      canalRevisado: seccion.nombre,
+      capacidadCanalLs: rect.capacidadLs,
+      caudalTramoLs: r.caudalPorTramoLs,
+      cumpleCanal: rect.cumple,
+      bajanteNombre: b.nombre,
+      bajantesPorCanaleta: b.porCanaleta,
+      bajantesTotal: b.total,
+      numeroCanaletas: r.numeroCanaletas,
+      longitudCanaletaM: r.longitudTotalCanaletaM,
+      pendientePct: Number(pendientePct) || 0,
+      material: MATERIALES_CANALETA[material].nombre,
+      canaletaEquivalente: c ? c.nombre : null,
+      rebalsaMmH: lim.canalRebalsaMmH,
+      bajanteSaturaMmH: lim.bajanteMmH,
+      fallaPrimero: lim.fallaPrimero,
+      capacidadSistemaLs: analisis.sistemaLs,
+      periodoCritico: (() => {
+        const p = analisis.periodos.find((x) => x.duracionCriticaMin !== null);
+        return p ? { tr: p.tr, minutos: Math.floor(p.duracionCriticaMin ?? 0) } : null;
+      })(),
+      estacionIdf: usarEstacion && cercana ? cercana.estacion.nombre : null,
+    };
+  });
+
   $effect(() => {
     resumen = r && b ? `${NOMBRES_TIPO_CANAL[r.tipoCanal]} · ${b.total} bajante${b.total > 1 ? 's' : ''} de ${b.nombre}` : '';
   });
@@ -87,15 +190,20 @@
 </script>
 
 <section class="tarjeta paso">
-  <p class="numero-paso">Paso 6 de 7</p>
+  <p class="numero-paso">Paso 6 de 8</p>
   <h2>Canaletas y bajantes</h2>
 
-  {#if opciones.length === 0}
+  {#if opciones.length === 0 && !techoExistente}
     <p class="nota">Completa los pasos anteriores para dimensionar canaletas y bajantes.</p>
   {:else}
     <div class="campos no-imprimir">
       <label>Techo a drenar
         <select bind:value={techoElegido}>
+          {#if techoExistente}
+            <option value="auto">Techo existente: {n1(techoExistente.ancho)} × {n1(techoExistente.largo)} m</option>
+          {:else}
+            <option value="auto">Sugerido (rectangular)</option>
+          {/if}
           {#each opciones as o (o.forma)}
             <option value={o.forma}>{o.nombre}: {n1(o.ancho)} × {n1(o.largo)} m</option>
           {/each}
@@ -110,9 +218,6 @@
           <input type="number" min="1" step="0.5" bind:value={anchoPropio} />
         </label>
       {/if}
-      <label>Intensidad de lluvia de diseño (mm/h)
-        <input type="number" min="10" max="400" step="5" bind:value={intensidad} />
-      </label>
       <label>Pendiente de la canaleta (%)
         <input type="number" min="0.1" max="5" step="0.1" bind:value={pendientePct} />
       </label>
@@ -124,17 +229,73 @@
         </select>
       </label>
     </div>
-    <p class="nota no-imprimir">
-      La intensidad de diseño debe tomarse de la curva intensidad-duración-frecuencia (IDF) de la estación más
-      cercana (INSIVUMEH en Guatemala), para una lluvia de 5 minutos y un periodo de retorno de 5 a 10 años.
-      150 mm/h es solo un valor de partida.
-    </p>
+    <div class="intensidad-caja">
+      <h3>¿Qué tan fuerte llueve aquí?</h3>
+      <p class="nota informe">
+        La canaleta se calcula para un aguacero corto e intenso ({DURACION_DISENO_MIN} minutos), no para la lluvia
+        promedio. Ese dato sale de la curva intensidad-duración-frecuencia (IDF).
+      </p>
+      <div class="campos no-imprimir">
+        <label>De dónde sale la intensidad
+          <select bind:value={origen}>
+            <option value="auto">Automático</option>
+            <option value="estacion" disabled={!cercana}>Estación con curva IDF más cercana</option>
+            <option value="manual">Escribirla yo</option>
+          </select>
+        </label>
+        {#if usarEstacion}
+          <label>Periodo de retorno (cada cuántos años)
+            <select bind:value={periodo}>
+              {#each PERIODOS_RETORNO as tr (tr)}
+                <option value={tr}>{tr} años{tr === PERIODO_DISENO ? ' (sugerido)' : ''}</option>
+              {/each}
+            </select>
+          </label>
+        {:else}
+          <label>Intensidad de lluvia de diseño (mm/h)
+            <input type="number" min="10" max="500" step="5" bind:value={intensidadManual} />
+          </label>
+        {/if}
+      </div>
+      {#if usarEstacion && cercana}
+        <div class="destacado">
+          <span class="cifra">{n0(intensidad)} mm/h</span>
+          <span>
+            Estación <strong>{cercana.estacion.nombre}</strong> ({cercana.estacion.municipio}, {cercana.estacion.departamento}),
+            a {n0(cercana.km)} km: aguacero de {DURACION_DISENO_MIN} minutos que se repite cada {periodo} años.
+            Fuente: {FUENTE_IDF_ICC.corta}.
+          </span>
+        </div>
+        {#if !cercana.util}
+          <p class="alerta">
+            La estación está a más de {DISTANCIA_MAX_KM} km: úsala solo como referencia y, si puedes, escribe el dato de
+            tu punto.
+          </p>
+        {/if}
+      {:else}
+        <p class="nota informe">
+          {#if cercana && !cercana.util}
+            Las curvas IDF incluidas son de la vertiente del Pacífico (22 estaciones) y la más cercana,
+            {cercana.estacion.nombre}, está a {n0(cercana.km)} km.
+          {:else if !cercana}
+            Marca la vivienda en el mapa (paso 1) para buscar la estación con curva IDF más cercana.
+          {/if}
+          <span class="no-imprimir">
+            Puedes consultar la curva IDF de tu punto en la
+            <a href={FUENTE_IDF_BARDALES.url} target="_blank" rel="noopener">app IDF Guatemala de Walter Bardales</a>
+            {#if lat && lon}(escribe allí {lat}, {lon}){/if}: busca la línea de {PERIODO_DISENO} años en {DURACION_DISENO_MIN} minutos y
+            escribe ese valor aquí.
+          </span>
+          Valor usado: {n0(intensidad)} mm/h.
+        </p>
+      {/if}
+    </div>
 
     {#if !techo || !r || !b}
       <p class="nota">Escribe el largo y el ancho del techo.</p>
     {:else}
       <p class="solo-impresion">
-        Parámetros: techo {techo.nombre.toLowerCase()} de {n1(techo.ancho)} × {n1(techo.largo)} m, intensidad de diseño
+        Parámetros: {techo.nombre === 'Techo existente' ? 'techo existente' : `techo ${techo.nombre.toLowerCase()}`} de {n1(techo.ancho)} × {n1(techo.largo)} m, intensidad de diseño
         {n0(Number(intensidad))} mm/h, C = {ce}, canaleta de {MATERIALES_CANALETA[material].nombre} con
         pendiente de {n1(Number(pendientePct))} %.
       </p>
@@ -161,7 +322,7 @@
           {/if}
         </span>
       </div>
-      <p class="nota">
+      <p class="nota informe">
         Son dimensiones mínimas: el diseñador decide si las toma como base o las aumenta (por ejemplo, por hojas,
         granizo o mantenimiento). Verifica existencias y medidas con el distribuidor.
       </p>
@@ -180,6 +341,7 @@
 
       <details class="detalle">
         <summary>Ver los canales de PVC del mercado de Guatemala</summary>
+<div class="bloque">
       <h3>Canales de PVC en el mercado de Guatemala</h3>
       <div class="tabla-desplazable">
         <table class="tabla mercado">
@@ -198,7 +360,8 @@
           </tbody>
         </table>
       </div>
-      <p class="nota">
+</div>
+      <p class="nota informe">
         Criterio: se sugiere canal tipo colonial cuando bastan 1 o 2 bajantes de 3" por canaleta y la sección del Canal
         Colonial (100 × 90 mm útiles) lleva el caudal de cada tramo; si no, canal de alto caudal con bajantes de 4"
         (se agregan bajantes si hace falta). Se usan las medidas de Amanco Wavin; si eliges Durman, verifica que su
@@ -206,8 +369,30 @@
       </p>
       </details>
 
+      {#if seccion && analisis && r && b}
+        <ResultadoHidraulico
+          a={analisis}
+          bajanteNombre={b.nombre}
+          canalNombre={seccion.nombre}
+          estacionNombre={usarEstacion && cercana ? cercana.estacion.nombre : null}
+          tramoM={r.tramoM}
+          tramosTotales={b.total}
+        />
+      {/if}
+
+      {#if seccion && entradaSim}
+        <SimuladorLluvia
+          entrada={entradaSim}
+          nombreCanal={seccion.nombre}
+          altoAltoMm={seccion.altoAltoMm}
+          intensidadDiseno={intensidad}
+          estacion={usarEstacion && cercana ? cercana.estacion : null}
+        />
+      {/if}
+
       <details class="detalle">
         <summary>Ver cómo se calcularon las bajantes y la canaleta</summary>
+<div class="bloque">
       <h3>Bajantes: m² de techo que evacua cada diámetro</h3>
       <div class="tabla-desplazable">
         <table class="tabla">
@@ -229,12 +414,14 @@
           </tbody>
         </table>
       </div>
-      <p class="nota">
+      <p class="nota informe">
         Cálculo con una lluvia de {n0(Number(intensidad))} mm/h y C = {ce}; fabricante según las tablas de Durman y Amanco
         Wavin. «Por canaleta» usa el valor más exigente de los dos. Diámetros menores a {BAJANTE_MINIMA_PRACTICA} (en gris) se
         tapan con facilidad y no se sugieren como mínimo.
       </p>
+</div>
 
+<div class="bloque">
       <h3>Opción 1 · canaleta semicircular: tramo de {n1(r.tramoM)} m con {n2(r.caudalPorTramoLs)} L/s</h3>
       <div class="tabla-desplazable">
         <table class="tabla">
@@ -253,10 +440,11 @@
           </tbody>
         </table>
       </div>
-      <p class="nota">
+      <p class="nota informe">
         Capacidad con la ecuación de Manning, llenando la canaleta hasta 3/4 de su radio (25 % de borde libre).
         Reparte las bajantes a lo largo de la canaleta para que cada una reciba un tramo igual.
       </p>
+</div>
       </details>
 
       <h3>Opción 2 · canal comercial: {seccion?.nombre}</h3>
@@ -291,7 +479,7 @@
             <tr class="total"><td>Caudal del tramo: {n2(r.caudalPorTramoLs)} L/s</td><td>{rect.cumple ? 'Cumple' : 'No cumple'}</td></tr>
           </tbody>
         </table>
-        <p class="nota">
+        <p class="nota informe">
           Medidas de las fichas técnicas de Amanco Wavin. El canal se calcula como un rectángulo y el agua se limita a
           3/4 del lado más bajo (25 % de borde libre). En el canal colonial, la curva decorativa da un poco más de área,
           así que el resultado queda del lado seguro.
@@ -325,5 +513,7 @@
   .destacado .cifra { white-space: nowrap; }
   .tabla.mercado td { white-space: normal; text-align: left; }
   .tabla.mercado th { text-align: left; }
+  .intensidad-caja { border: 1px solid var(--borde); border-radius: 0.75rem; padding: 0.25rem 1rem 0.75rem; margin: 1rem 0; background: var(--fondo); }
+  .intensidad-caja h3 { margin-top: 0.75rem; }
   .tabla.mercado td.largos { white-space: nowrap; }
 </style>

@@ -13,6 +13,9 @@ CaptaLluvia usa fuentes de datos gratuitas. Cada una se cita en la app y en los 
 | [Esri World Imagery](https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9) (ArcGIS Location Platform) | Mapa satelital (opcional, con clave) | "Powered by Esri" y proveedores (Esri, Maxar, Earthstar Geographics, GIS User Community) visibles en el mapa |
 | [Mapbox Satellite Streets](https://www.mapbox.com/about/maps/) | Mapa satelital (opcional, con clave) | © Mapbox © OpenStreetMap y enlace "Mejorar este mapa"; revisar el requisito del logotipo de Mapbox |
 | [MapTiler Hybrid](https://www.maptiler.com/copyright/) | Mapa satelital (opcional, con clave) | © MapTiler © colaboradores de OpenStreetMap; el plan gratuito es para uso no comercial y puede exigir el logotipo |
+| [INSIVUMEH e ICC (2025)](https://icc.org.gt/wp-content/uploads/2023/03/265.pdf) — Curvas IDF de la vertiente del Pacífico | Intensidad de diseño de canaletas (22 estaciones, parámetros Gumbel) | Citar el documento; uso confirmado por los autores de CaptaLluvia (8 nov 2026) |
+| [IDF Guatemala (Sherman)](https://ee-bardaleswa.projects.earthengine.app/view/idfguatemalasherman) — Walter Bardales | Consulta de la curva IDF del punto (enlace) | Citar al autor (uso confirmado, 8 nov 2026); los datos no se copian en la app |
+| [Rotoplas Centroamérica](https://rotoplascentroamerica.com/) — Manual de instalación del tinaco | Capacidades y medidas de tanques de 450 a 2,500 L (referencia; dibujo genérico sin marca) | Citar la fuente |
 | [Meteostat](https://meteostat.net/) | Datos de estaciones (fase 3) | CC BY 4.0 |
 | [RedMet del ICC](https://icc.org.gt/) | Estaciones de la vertiente del Pacífico (fase 3) | Según acuerdo con el ICC |
 
