@@ -4,7 +4,7 @@ CaptaLluvia es una herramienta gratuita de apoyo para el cálculo preliminar y e
 
 El diseño definitivo, la selección de materiales, la construcción, la instalación, la operación, el mantenimiento del sistema y la calidad del agua son responsabilidad exclusiva de quien los realiza, contrata o supervisa. El agua de lluvia debe tratarse antes de usarse para beber o cocinar.
 
-La herramienta se ofrece "tal cual", sin garantía de ningún tipo. Los autores (German Alfaro y Francisco Fuentes) y el Instituto Privado de Investigación sobre Cambio Climático (ICC) no garantizan la exactitud de los resultados ni su idoneidad para un proyecto concreto, y no asumen responsabilidad por daños, pérdidas, fallas o perjuicios derivados del uso de la herramienta, de sus resultados o de las obras construidas con base en ellos.
+La herramienta se ofrece "tal cual", sin garantía de ningún tipo. Los autores (Alfaro, German & Fuentes, Francisco) y el Instituto Privado de Investigación sobre Cambio Climático (ICC) no garantizan la exactitud de los resultados ni su idoneidad para un proyecto concreto, y no asumen responsabilidad por daños, pérdidas, fallas o perjuicios derivados del uso de la herramienta, de sus resultados o de las obras construidas con base en ellos.
 
 Usar CaptaLluvia implica aceptar estas condiciones.
 

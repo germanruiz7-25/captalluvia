@@ -1,6 +1,8 @@
 <script lang="ts">
   import DibujosDrenaje from './DibujosDrenaje.svelte';
   import SimuladorLluvia from './SimuladorLluvia.svelte';
+  import ResultadoHidraulico from './ResultadoHidraulico.svelte';
+  import { analizarTramo } from '../core/analisisHidraulico';
   import {
     DURACION_DISENO_MIN,
     DISTANCIA_MAX_KM,
@@ -137,8 +139,11 @@
         }
       : null,
   );
+  const analisis = $derived(
+    entradaSim ? analizarTramo(entradaSim, Number(intensidad) || 0, usarEstacion && cercana ? cercana.estacion : null) : null,
+  );
   $effect(() => {
-    if (!r || !b || !techo || !seccion || !rect || !entradaSim) {
+    if (!r || !b || !techo || !seccion || !rect || !entradaSim || !analisis) {
       datos = null;
       return;
     }
@@ -166,6 +171,12 @@
       rebalsaMmH: lim.canalRebalsaMmH,
       bajanteSaturaMmH: lim.bajanteMmH,
       fallaPrimero: lim.fallaPrimero,
+      capacidadSistemaLs: analisis.sistemaLs,
+      periodoCritico: (() => {
+        const p = analisis.periodos.find((x) => x.duracionCriticaMin !== null);
+        return p ? { tr: p.tr, minutos: Math.floor(p.duracionCriticaMin ?? 0) } : null;
+      })(),
+      estacionIdf: usarEstacion && cercana ? cercana.estacion.nombre : null,
     };
   });
 
@@ -220,7 +231,7 @@
     </div>
     <div class="intensidad-caja">
       <h3>¿Qué tan fuerte llueve aquí?</h3>
-      <p class="nota">
+      <p class="nota informe">
         La canaleta se calcula para un aguacero corto e intenso ({DURACION_DISENO_MIN} minutos), no para la lluvia
         promedio. Ese dato sale de la curva intensidad-duración-frecuencia (IDF).
       </p>
@@ -262,7 +273,7 @@
           </p>
         {/if}
       {:else}
-        <p class="nota">
+        <p class="nota informe">
           {#if cercana && !cercana.util}
             Las curvas IDF incluidas son de la vertiente del Pacífico (22 estaciones) y la más cercana,
             {cercana.estacion.nombre}, está a {n0(cercana.km)} km.
@@ -311,7 +322,7 @@
           {/if}
         </span>
       </div>
-      <p class="nota">
+      <p class="nota informe">
         Son dimensiones mínimas: el diseñador decide si las toma como base o las aumenta (por ejemplo, por hojas,
         granizo o mantenimiento). Verifica existencias y medidas con el distribuidor.
       </p>
@@ -349,7 +360,7 @@
           </tbody>
         </table>
       </div>
-      <p class="nota">
+      <p class="nota informe">
         Criterio: se sugiere canal tipo colonial cuando bastan 1 o 2 bajantes de 3" por canaleta y la sección del Canal
         Colonial (100 × 90 mm útiles) lleva el caudal de cada tramo; si no, canal de alto caudal con bajantes de 4"
         (se agregan bajantes si hace falta). Se usan las medidas de Amanco Wavin; si eliges Durman, verifica que su
@@ -357,6 +368,17 @@
       </p>
 </div>
       </details>
+
+      {#if seccion && analisis && r && b}
+        <ResultadoHidraulico
+          a={analisis}
+          bajanteNombre={b.nombre}
+          canalNombre={seccion.nombre}
+          estacionNombre={usarEstacion && cercana ? cercana.estacion.nombre : null}
+          tramoM={r.tramoM}
+          tramosTotales={b.total}
+        />
+      {/if}
 
       {#if seccion && entradaSim}
         <SimuladorLluvia
@@ -392,7 +414,7 @@
           </tbody>
         </table>
       </div>
-      <p class="nota">
+      <p class="nota informe">
         Cálculo con una lluvia de {n0(Number(intensidad))} mm/h y C = {ce}; fabricante según las tablas de Durman y Amanco
         Wavin. «Por canaleta» usa el valor más exigente de los dos. Diámetros menores a {BAJANTE_MINIMA_PRACTICA} (en gris) se
         tapan con facilidad y no se sugieren como mínimo.
@@ -418,7 +440,7 @@
           </tbody>
         </table>
       </div>
-      <p class="nota">
+      <p class="nota informe">
         Capacidad con la ecuación de Manning, llenando la canaleta hasta 3/4 de su radio (25 % de borde libre).
         Reparte las bajantes a lo largo de la canaleta para que cada una reciba un tramo igual.
       </p>
@@ -457,7 +479,7 @@
             <tr class="total"><td>Caudal del tramo: {n2(r.caudalPorTramoLs)} L/s</td><td>{rect.cumple ? 'Cumple' : 'No cumple'}</td></tr>
           </tbody>
         </table>
-        <p class="nota">
+        <p class="nota informe">
           Medidas de las fichas técnicas de Amanco Wavin. El canal se calcula como un rectángulo y el agua se limita a
           3/4 del lado más bajo (25 % de borde libre). En el canal colonial, la curva decorativa da un poco más de área,
           así que el resultado queda del lado seguro.

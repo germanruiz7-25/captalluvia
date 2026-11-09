@@ -80,6 +80,7 @@ Todas son **dimensiones mínimas**; el diseñador decide si las adopta o las aum
 2. **Diseño:** D = 5 minutos (techos con tiempo de concentración muy corto) y T = 10 años por defecto (editable).
 3. **Forma de Sherman con periodo de retorno** (app de W. Bardales en Google Earth Engine, rejilla de 1 km para Guatemala): I = K · T^m / (D + B)^n. La app enlaza a esa herramienta; el valor se escribe a mano.
 4. **Simulador:** para cada intensidad, Q del tramo = C · i · A_tramo / 3600, con A_tramo = área del techo / canaletas / bajantes por canaleta. El nivel del agua en el canal rectangular se obtiene resolviendo Manning por bisección. Estados: dentro del diseño (≤ 3/4 del lado bajo), al límite (entre 3/4 y el lado bajo) y rebalsa (> lado bajo). La bajante se satura cuando Q supera su capacidad (Wyly y Eaton, llenado 1/3). Las intensidades límite salen de i = 3600 · Q / (C · A_tramo).
+5. **Análisis hidráulico del tramo** (`analisisHidraulico.ts`): capacidad máxima del tramo Q_max = mín(Q canal lleno hasta el lado bajo, Q bajante), expresada en L/s y L/min (× 60); controla el menor. Intensidad límite i_lim = 3600 · Q_max / (C · A_tramo). Con la curva IDF de la estación, para cada T se calcula I(5 min), el caudal del tramo y el uso Q/Q_max; los aguaceros de duración D ≤ D* = (A / i_lim)^(1/n) − B tienen intensidad media mayor que i_lim y hacen rebalsar el tramo (se informa D* si es ≥ 5 min). Supuesto conservador: flujo uniforme (Manning) sin almacenamiento en el canal ni carga sobre la bajante.
 
 ## 8. Tanque de almacenamiento (`tanque.ts`)
 

@@ -261,7 +261,7 @@
       <tr><td>Coordenadas aproximadas</td><td>{coordenadas ? `${coordenadas} (latitud, longitud; ~1 km)` : 'No indicadas (lluvia ingresada a mano)'}</td></tr>
       <tr><td>Fecha</td><td>{fecha}</td></tr>
       <tr><td>Herramienta</td><td>{acerca.nombre} v{version} {acerca.citaEnTexto.replace('{anio}', String(new Date().getFullYear()))}</td></tr>
-      <tr><td>Autores de la herramienta</td><td>{acerca.autores.join(' y ')} · {acerca.organizacion}</td></tr>
+      <tr><td>Autores de la herramienta</td><td>{acerca.autoresTexto} · {acerca.organizacion}</td></tr>
     </tbody>
   </table>
   <p class="caratula-descargo">{acerca.descargoCorto}</p>
@@ -276,7 +276,7 @@
       {EDIFICIOS[edificio].nombre.toLowerCase()} con {demanda.usuarios} usuarios. Con base en
       {lluvia && lluvia.anios > 0 ? `${lluvia.anios} años de registros diarios de lluvia (${lluvia.fuente})` : 'los datos de lluvia ingresados por el usuario'},
       se estima la lluvia aprovechable del techo, se compara con la demanda de agua y se dimensionan el área de techo,
-      las canaletas, las bajantes y el tanque de almacenamiento. Al final se presentan un cuadro resumen del diseño,
+      las canaletas, las bajantes y el tanque de almacenamiento. Al final se presentan el cuadro resumen del diseño,
       las conclusiones y la bibliografía consultada.
     </p>
   </section>

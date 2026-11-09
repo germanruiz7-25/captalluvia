@@ -69,7 +69,7 @@
         <input type="number" min="1" max="366" bind:value={diasUso} />
       </label>
     </div>
-    <p class="nota">{EDIFICIOS[edificio].notaDias}
+    <p class="nota informe">{EDIFICIOS[edificio].notaDias}
       {#if dotacionId !== 'personalizada'}{opciones.find((d) => d.id === dotacionId)?.descripcion}{/if}
     </p>
 

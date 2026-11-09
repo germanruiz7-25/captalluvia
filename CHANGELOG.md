@@ -9,11 +9,11 @@ Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado 
 - **Volumen que se decide usar** (por ejemplo, 10 m³): la simulación, los tanques y la cisterna se recalculan; se muestra su equivalencia en **barriles de 55 galones (208 L)** con el dibujo de un barril con agua celeste y el número de unidades adentro (por ejemplo, 15 m³ = 72 barriles). El volumen elegido se guarda con el proyecto.
 - **Opción 1: tanques de polietileno tipo tinaco** (450 a 10,000 L, medidas de 450 a 2,500 L de Rotoplas Centroamérica) con número de tanques y dibujo.
 - **Opción 2: cisterna de block y cemento:** medidas interiores sugeridas (base cuadrada, alto útil editable, 0.30 m de borde libre) o escritas por el usuario (largo × ancho × alto → m³), con dibujo en perspectiva.
-- **Carátula del informe:** "Informe técnico. Proyecto: Diseño y cálculo de Sistema de Captación de Agua de Lluvia – SCALL", lugar (institución, escuela o vivienda) y ubicación (comunidad, municipio, departamento).
+- **Carátula del informe:** logotipo del ICC, "Informe técnico. Proyecto: Diseño y cálculo de Sistema de Captación de Agua de Lluvia – SCALL", lugar (institución, escuela o vivienda) y ubicación (comunidad, municipio, departamento).
 - Paso 1: campos de comunidad, municipio y departamento, con botón para completarlos desde el punto del mapa (Nominatim, punto redondeado a ~100 m).
 - **Diagramación del informe:** títulos, tablas, gráficas y dibujos se mantienen juntos en la misma hoja; figuras centradas; gráfica del tanque con letras legibles al imprimir.
 - **Formato del informe:** Calibri, texto en negro, títulos 16 pt, subtítulos 14 pt y texto 12 pt; gráficas y dibujos en azul.
-- **Autores:** German Alfaro y Francisco Fuentes; cita en formato APA 7.
+- **Autores:** Alfaro, German & Fuentes, Francisco; cita en formato APA 7: Alfaro, G., & Fuentes, F. (2026).
 - **Elaborado por:** nombre del técnico o responsables del cálculo e institución, en la carátula.
 - **Descargo de responsabilidad** de los autores y del ICC (docs/DESCARGO.md): en Acerca de, en el paso 8, en la carátula (versión corta) y al final del informe.
 - **Informe PDF renovado:** encabezado con logotipos (CaptaLluvia y, opcionalmente, los de la organización en `public/logos/`), ficha del proyecto, **introducción**, secciones numeradas, **cuadro resumen del diseño** (sitio y lluvia, techo, demanda, canaletas y bajantes), **conclusiones y recomendaciones** automáticas y **bibliografía**.
@@ -23,7 +23,12 @@ Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado 
 - Enlace a la app **IDF Guatemala (Sherman) de Walter Bardales** en Google Earth Engine para consultar la curva del punto y escribir el valor; citada en las fuentes.
 - **Simulador "¿qué pasa si llueve más fuerte?":** barra de intensidad con marcas de los periodos de retorno de la estación, dibujo del canal con el nivel del agua (dentro del diseño, al límite o rebalsa), uso de la bajante y las intensidades a las que el canal rebalsa y la bajante se satura; indica qué falla primero.
 - **Tabla de aguaceros cortos** de la estación (5 a 60 minutos × 2 a 100 años) coloreada según cómo responde el canal.
-- 37 pruebas nuevas (98 en total).
+- **Análisis hidráulico del canal y la bajante** (pantalla e informe): capacidad del canal con borde libre y lleno, capacidad de la bajante y capacidad máxima del tramo en L/s y **L/min**, elemento que controla, intensidad máxima que soporta y, con la curva IDF, por periodo de retorno (2 a 100 años): intensidad de 5 min, caudal, % de la capacidad y **duración de los aguaceros que rebalsan** (D* = (A/i)^(1/n) − B).
+- 41 pruebas nuevas (102 en total).
+
+### Cambiado
+- El informe deja solo la información técnica que justifica el diseño: se ocultan las instrucciones y explicaciones de uso de la app y el simulador interactivo (se reemplaza por el análisis hidráulico).
+- Cuadro resumen y conclusiones con la capacidad por tramo en L/min, la intensidad que soporta y los aguaceros que rebalsan según la curva IDF.
 
 ## [0.3.0] — 2026-11-08 — Asistente por pasos y mapa
 

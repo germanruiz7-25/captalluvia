@@ -61,7 +61,7 @@
           <span class="item"><span class="linea-umbral"></span> {umbralMm} mm de PN: inicio de captación</span>
         {/if}
       </p>
-      <p class="nota">
+      <p class="nota informe">
         PN = precipitación × Ce − primer descarte, con el techo del paso 3
         ({NOMBRES_TECHO[tipoTecho].toLowerCase()}, Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}, descarte de {descarteMm} mm por lluvia).
       </p>
@@ -88,7 +88,7 @@
           {/if}
         </tbody>
       </table>
-      <p class="nota">
+      <p class="nota informe">
         Fuente: {lluvia.fuente}{#if lluvia.anios}, promedio de {lluvia.anios} años ({lluvia.anioInicio}–{lluvia.anioFin}){/if}.
         {#if lluvia.fuente.includes('Open-Meteo')}{ATRIBUCION_OPEN_METEO}.{/if}
         {#if lat && lon && lluvia.anios}Punto consultado: {redondearCoordenada(Number(lat))}, {redondearCoordenada(Number(lon))}.{/if}

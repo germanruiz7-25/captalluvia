@@ -5,7 +5,7 @@
 CaptaLluvia es una herramienta web gratuita para ubicar una vivienda, analizar la lluvia histórica del lugar y dimensionar un sistema de cosecha de agua de lluvia: área de techo, canaletas, tubería, tanque, tratamiento y presupuesto. Funciona en cualquier parte del mundo; las primeras pruebas de campo se hacen en Guatemala.
 
 - **Sitio:** https://captalluvia.org (mientras se conecta el dominio: https://germanruiz7-25.github.io/captalluvia/)
-- **Autores:** German Alfaro y Francisco Fuentes
+- **Autores:** Alfaro, German & Fuentes, Francisco
 - **Organización:** Programa de Gestión de Riesgo de Desastres (GdR), Instituto Privado de Investigación sobre Cambio Climático (ICC)
 - **Contacto:** galfaro@icc.org.gt
 
@@ -40,9 +40,9 @@ docs/          privacidad, publicación, hoja de ruta y metodología
 
 ## Cómo citar
 
-> Alfaro, G. y Fuentes, F. (2026). *CaptaLluvia* (versión 0.4.0) [Software]. Programa de Gestión de Riesgo de Desastres, Instituto Privado de Investigación sobre Cambio Climático. https://germanruiz7-25.github.io/captalluvia/
+> Alfaro, G., & Fuentes, F. (2026). *CaptaLluvia* (versión 0.4.0) [Software]. Programa de Gestión de Riesgo de Desastres, Instituto Privado de Investigación sobre Cambio Climático. https://germanruiz7-25.github.io/captalluvia/
 >
-> En el texto: (Alfaro y Fuentes, 2026).
+> En el texto: (Alfaro & Fuentes, 2026).
 
 GitHub también ofrece la cita en el botón **"Cite this repository"** (archivo `CITATION.cff`).
 

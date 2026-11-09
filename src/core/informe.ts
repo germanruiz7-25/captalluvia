@@ -27,6 +27,12 @@ export interface DatosDrenajeInforme {
   rebalsaMmH: number;
   bajanteSaturaMmH: number;
   fallaPrimero: 'canal' | 'bajante';
+  /** Capacidad máxima de cada tramo (la menor entre canal lleno y bajante), L/s. */
+  capacidadSistemaLs?: number;
+  /** Primer periodo de retorno (años) cuyos aguaceros cortos rebalsan el tramo y su duración crítica (min). */
+  periodoCritico?: { tr: number; minutos: number } | null;
+  /** Estación IDF con la que se revisó el tramo; null si no hubo curva. */
+  estacionIdf?: string | null;
 }
 
 export interface DatosTanqueInforme {
@@ -171,7 +177,21 @@ export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
         ['Bajantes', `${r.bajantesTotal} de ${r.bajanteNombre} (${r.bajantesPorCanaleta} por canaleta)`],
         ['Caudal por tramo / capacidad del canal', `${n2(r.caudalTramoLs)} / ${n2(r.capacidadCanalLs)} L/s (${r.canalRevisado}) — ${r.cumpleCanal ? 'cumple' : 'no cumple'}`],
         ...(r.canaletaEquivalente ? ([['Sección mínima equivalente', `Canaleta semicircular de ${r.canaletaEquivalente}`]] as [string, string][]) : []),
-        ['Rebalsa con aguaceros de', `más de ${n0(r.rebalsaMmH)} mm/h (la bajante se satura desde ${n0(r.bajanteSaturaMmH)} mm/h)`],
+        ...(r.capacidadSistemaLs
+          ? ([[
+              'Capacidad máxima por tramo',
+              `${n2(r.capacidadSistemaLs)} L/s (${n0(r.capacidadSistemaLs * 60)} L/min); controla ${r.fallaPrimero === 'canal' ? 'el canal' : 'la bajante'}`,
+            ]] as [string, string][])
+          : []),
+        ['Intensidad que soporta', `hasta ${n0(Math.min(r.rebalsaMmH, r.bajanteSaturaMmH))} mm/h sin rebalsar`],
+        ...(r.estacionIdf
+          ? ([[
+              'Aguaceros que rebalsan (curva IDF)',
+              r.periodoCritico
+                ? `desde T = ${r.periodoCritico.tr} años, de hasta ${n0(r.periodoCritico.minutos)} min`
+                : 'ninguno hasta T = 100 años',
+            ]] as [string, string][])
+          : []),
       ],
     });
   }
@@ -238,10 +258,19 @@ export function conclusiones(d: DatosInforme): string[] {
         `${r.bajantesTotal} bajante${r.bajantesTotal === 1 ? '' : 's'} de ${r.bajanteNombre} ` +
         `(${r.bajantesPorCanaleta} por canaleta) y pendiente de ${n1(r.pendientePct)} %.`,
     );
-    if (r.cumpleCanal && r.rebalsaMmH > r.intensidadMmH) {
+    const limite = Math.min(r.rebalsaMmH, r.bajanteSaturaMmH);
+    if (r.cumpleCanal && limite > r.intensidadMmH) {
+      const cap = r.capacidadSistemaLs ? ` (${n0(r.capacidadSistemaLs * 60)} L/min por tramo)` : '';
+      let idf = '';
+      if (r.estacionIdf) {
+        idf = r.periodoCritico
+          ? ` Según la curva IDF de ${r.estacionIdf}, los aguaceros de hasta ${n0(r.periodoCritico.minutos)} minutos con periodo de retorno de ${r.periodoCritico.tr} años o más superan esa capacidad.`
+          : ` Según la curva IDF de ${r.estacionIdf}, ningún aguacero de 5 minutos o más hasta un periodo de retorno de 100 años la supera.`;
+      }
       c.push(
-        `El canal trabaja dentro del diseño; rebalsaría con aguaceros de más de ${n0(r.rebalsaMmH)} mm/h. ` +
-          `Si la lluvia fuera más intensa, fallaría primero ${r.fallaPrimero === 'canal' ? 'el canal' : 'la bajante'}.`,
+        `Cada tramo de canal y su bajante evacuan hasta ${n2(r.capacidadSistemaLs ?? r.capacidadCanalLs)} L/s${cap} y soportan ` +
+          `lluvias de hasta ${n0(limite)} mm/h; con más intensidad rebalsa primero ${r.fallaPrimero === 'canal' ? 'el canal' : 'la bajante'}.` +
+          idf,
       );
     } else {
       c.push(

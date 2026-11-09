@@ -171,7 +171,7 @@
       </p>
       <DibujoTinaco capacidadL={tanque.capacidadL} diametroM={tanque.diametroM} alturaM={tanque.alturaM} {cantidad} />
       {#if !tanque.diametroM}
-        <p class="nota">Las medidas de los tanques de {tanque.capacidadL.toLocaleString('es-GT')} L varían por fabricante: confírmalas con el proveedor.</p>
+        <p class="nota informe">Las medidas de los tanques de {tanque.capacidadL.toLocaleString('es-GT')} L varían por fabricante: confírmalas con el proveedor.</p>
       {/if}
     {/if}
 
@@ -275,7 +275,7 @@
 
     <details class="detalle">
       <summary>Ver cómo se calculó el tanque</summary>
-      <p class="nota">
+      <p class="nota informe">
         Agua captada por mes = PN del mes × área del techo. Demanda mensual = demanda anual ÷ 12. El volumen sale del
         método del pico secuente (diferencias acumuladas de Rippl): se acumula lo que falta mes a mes y el mayor
         faltante acumulado es el agua que hay que tener guardada al empezar la época seca. Se simulan dos años y se

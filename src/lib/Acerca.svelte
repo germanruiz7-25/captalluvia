@@ -12,7 +12,7 @@
   <dl>
     <dt>Nombre</dt><dd>{acerca.nombre} — {acerca.subtitulo}</dd>
     <dt>Versión</dt><dd>v{version}</dd>
-    <dt>Autores</dt><dd>{acerca.autores.join(' y ')}</dd>
+    <dt>Autores</dt><dd>{acerca.autoresTexto}</dd>
     <dt>Organización</dt><dd>{acerca.organizacion}</dd>
     <dt>Objetivo</dt><dd>{acerca.objetivo}</dd>
     <dt>Código y licencia</dt>

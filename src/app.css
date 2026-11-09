@@ -102,6 +102,10 @@ details.detalle[open] { padding-bottom: 0.75rem; }
 
 /* ---------- Informe PDF (impresión) ---------- */
 @media print {
+  /* En el informe solo van las notas técnicas (clase .informe); las instrucciones de uso se omiten */
+  p.nota { display: none !important; }
+  p.nota.informe { display: block !important; }
+
   /* Mantener juntos títulos, tablas, gráficas y dibujos; centrar figuras en la hoja */
   .bloque, .destacado, .intensidad-caja, figure, .resultado, .opciones, .dibujos { break-inside: avoid; page-break-inside: avoid; }
   figure svg, .bloque > svg { margin-left: auto !important; margin-right: auto !important; }

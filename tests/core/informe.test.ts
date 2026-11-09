@@ -69,12 +69,17 @@ describe('informe', () => {
         rebalsaMmH: 637,
         bajanteSaturaMmH: 696,
         fallaPrimero: 'canal',
+        capacidadSistemaLs: 3.2,
+        periodoCritico: { tr: 25, minutos: 12 },
+        estacionIdf: 'Retalhuleu',
       },
     };
     const c = conclusiones(d).join(' ');
     expect(c).toContain('2 bajantes de 3"');
-    expect(c).toContain('más de 637 mm/h');
-    expect(c).toContain('fallaría primero el canal');
+    expect(c).toContain('hasta 637 mm/h');
+    expect(c).toContain('rebalsa primero el canal');
+    expect(c).toContain('192 L/min');
+    expect(c).toContain('hasta 12 minutos con periodo de retorno de 25 años');
     const secciones = cuadroResumen(d);
     expect(secciones.map((s) => s.titulo)).toEqual(['Sitio y lluvia', 'Techo y lluvia neta', 'Demanda', 'Canaletas y bajantes']);
     const canal = secciones[3].filas;

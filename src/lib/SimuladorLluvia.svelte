@@ -73,7 +73,7 @@
   const n2 = (v: number) => v.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 </script>
 
-<div class="simulador">
+<div class="simulador no-imprimir">
   <h3>🌧️ Simulador: ¿qué pasa si llueve más fuerte?</h3>
   <p class="nota">
     Mueve la barra para cambiar la intensidad de la lluvia. Se revisa un tramo del canal ({nombreCanal}) que recibe
