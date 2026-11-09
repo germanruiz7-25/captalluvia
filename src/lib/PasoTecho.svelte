@@ -36,7 +36,7 @@
 </script>
 
 <section class="tarjeta paso">
-  <p class="numero-paso">Paso 3 de 7</p>
+  <p class="numero-paso">Paso 3 de 8</p>
   <h2>Techo y lluvia neta</h2>
 
   <div class="campos no-imprimir">

@@ -100,6 +100,18 @@ details.detalle[open] { padding-bottom: 0.75rem; }
 
 /* ---------- Informe PDF (impresión) ---------- */
 @media print {
+  /* Formato del informe: Calibri, todo el texto en negro; títulos 16 pt, subtítulos 14 pt, texto 12 pt.
+     Las gráficas y dibujos (SVG) conservan sus colores azules. */
+  html { font-size: 12pt; }
+  body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; font-size: 12pt; color: #000; background: #fff; }
+  body * { color: #000 !important; }
+  h1, h2 { font-size: 16pt !important; font-weight: 700; }
+  h3, h4, legend { font-size: 14pt !important; font-weight: 700; }
+  p, li, td, th, dt, dd, span, label, figcaption, strong, em, a, output { font-size: 12pt !important; }
+  .cifra { font-size: 14pt !important; font-weight: 700; }
+  .tarjeta { background: #fff !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+  a { text-decoration: none; }
+
   /* Secciones numeradas del informe: 1. Introducción, 2. Lluvia del lugar, … */
   body { counter-reset: seccion; }
   .paso > h2::before { counter-increment: seccion; content: counter(seccion) '. '; }

@@ -35,3 +35,33 @@ describe('búsqueda de lugares (Nominatim)', () => {
     expect(coordenadaTexto(-90.79)).toBe('-90.79');
   });
 });
+
+import { leerDireccion, urlDireccion } from '../../src/core/geocodificacion';
+
+describe('dirección del punto (Nominatim reverse)', () => {
+  it('arma la URL con lat, lon y detalles de dirección', () => {
+    const u = new URL(urlDireccion(14.3, -90.78));
+    expect(u.pathname).toBe('/reverse');
+    expect(u.searchParams.get('lat')).toBe('14.3');
+    expect(u.searchParams.get('addressdetails')).toBe('1');
+  });
+
+  it('toma aldea, municipio y departamento', () => {
+    expect(
+      leerDireccion({ address: { village: 'El Rodeo', county: 'Escuintla', state: 'Escuintla', country: 'Guatemala' } }),
+    ).toEqual({ comunidad: 'El Rodeo', municipio: 'Escuintla', departamento: 'Escuintla' });
+  });
+
+  it('si la comunidad es la cabecera, busca un nivel más fino', () => {
+    expect(leerDireccion({ address: { town: 'Masagua', suburb: 'Barrio El Centro', state: 'Escuintla' } })).toEqual({
+      comunidad: 'Barrio El Centro',
+      municipio: 'Masagua',
+      departamento: 'Escuintla',
+    });
+  });
+
+  it('sin dirección devuelve null', () => {
+    expect(leerDireccion({ error: 'Unable to geocode' })).toBeNull();
+    expect(leerDireccion(null)).toBeNull();
+  });
+});

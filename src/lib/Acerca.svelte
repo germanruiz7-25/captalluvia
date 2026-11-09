@@ -12,7 +12,7 @@
   <dl>
     <dt>Nombre</dt><dd>{acerca.nombre} — {acerca.subtitulo}</dd>
     <dt>Versión</dt><dd>v{version}</dd>
-    <dt>Autor</dt><dd>{acerca.autor}</dd>
+    <dt>Autores</dt><dd>{acerca.autores.join(' y ')}</dd>
     <dt>Organización</dt><dd>{acerca.organizacion}</dd>
     <dt>Objetivo</dt><dd>{acerca.objetivo}</dd>
     <dt>Código y licencia</dt>
@@ -22,7 +22,7 @@
     </dd>
     <dt>Contacto</dt><dd><a href="mailto:{acerca.contacto}">{acerca.contacto}</a></dd>
     <dt>Fuentes de datos</dt><dd>{acerca.fuentesDatos}</dd>
-    <dt>Cómo citar</dt><dd>{cita}</dd>
+    <dt>Cómo citar (APA 7)</dt><dd>{cita}<br />En el texto: {acerca.citaEnTexto.replace('{anio}', String(new Date().getFullYear()))}</dd>
     <dt>Inteligencia artificial</dt><dd>{acerca.avisoIA}</dd>
     <dt>Aviso</dt><dd>{acerca.aviso}</dd>
   </dl>

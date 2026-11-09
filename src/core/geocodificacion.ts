@@ -59,3 +59,44 @@ export async function buscarLugar(texto: string, f: typeof fetch = fetch): Promi
 export function coordenadaTexto(v: number): string {
   return (Math.round(v * 1e5) / 1e5).toString();
 }
+
+// ---------------------------------------------------------------------------
+// Dirección del punto (Nominatim reverse): comunidad, municipio y departamento.
+// Solo se consulta cuando la persona pulsa "Completar desde el mapa".
+// ---------------------------------------------------------------------------
+
+export interface DireccionLugar {
+  comunidad: string;
+  municipio: string;
+  departamento: string;
+}
+
+export function urlDireccion(lat: number, lon: number, idioma = 'es'): string {
+  const p = new URLSearchParams({
+    lat: String(lat),
+    lon: String(lon),
+    format: 'jsonv2',
+    zoom: '16',
+    addressdetails: '1',
+    'accept-language': idioma,
+  });
+  return `https://nominatim.openstreetmap.org/reverse?${p}`;
+}
+
+/** Interpreta la dirección de Nominatim (en Guatemala: state = departamento; county/city/town = municipio). */
+export function leerDireccion(json: unknown): DireccionLugar | null {
+  const a = (json as { address?: Record<string, string> } | null)?.address;
+  if (!a || typeof a !== 'object') return null;
+  const primero = (...claves: string[]) => claves.map((k) => a[k]).find((v) => typeof v === 'string' && v.trim()) ?? '';
+  const municipio = primero('municipality', 'county', 'city', 'town', 'village');
+  let comunidad = primero('village', 'hamlet', 'suburb', 'neighbourhood', 'quarter', 'isolated_dwelling', 'town', 'city');
+  if (comunidad === municipio) comunidad = primero('hamlet', 'suburb', 'neighbourhood', 'quarter') || comunidad;
+  const departamento = primero('state', 'state_district', 'region', 'province');
+  return municipio || departamento || comunidad ? { comunidad, municipio, departamento } : null;
+}
+
+export async function buscarDireccion(lat: number, lon: number, f: typeof fetch = fetch): Promise<DireccionLugar | null> {
+  const res = await f(urlDireccion(lat, lon));
+  if (!res.ok) throw new Error('No se pudo obtener la dirección del punto.');
+  return leerDireccion(await res.json());
+}

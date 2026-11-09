@@ -75,6 +75,15 @@
       intensidad de diseño indicada por el usuario (se recomienda la curva IDF local de INSIVUMEH).
     </li>
     <li>
+      Volumen del tanque: balance mensual con el método del pico secuente (diferencias acumuladas). Rippl, W. (1883).
+      The capacity of storage-reservoirs for water-supply. <em>Minutes of Proceedings of the Institution of Civil
+      Engineers</em>, 71, 270–278.
+    </li>
+    <li>
+      Capacidades y medidas de tanques de polietileno (450 a 2,500 L): Rotoplas Centroamérica. <em>Manual de
+      instalación del tinaco</em>.
+    </li>
+    <li>
       Intensidad de diseño usada: {fuenteIntensidad || 'escrita por el usuario'}.
     </li>
     <li>

@@ -40,7 +40,7 @@ CaptaLluvia **no usa inteligencia artificial** para calcular: los resultados sal
 | Cloudflare (Workers y D1) | Registro de la organización, eventos de uso y consultas a estaciones | Base de datos y puente de estaciones |
 | Open-Meteo, NASA POWER, Climate Hazards Center | Coordenadas redondeadas | Obtener la lluvia histórica |
 | OpenStreetMap (servidores de teselas) | La zona del mapa que estás viendo (como cualquier mapa en línea) y datos técnicos de la conexión | Mostrar el mapa para ubicar la vivienda |
-| Nominatim (OpenStreetMap) | El texto que escribes en "Buscar" | Encontrar el municipio o la dirección |
+| Nominatim (OpenStreetMap) | El texto que escribes en "Buscar" y, solo si pulsas "Completar con el punto del mapa", el punto redondeado a ~100 m | Encontrar el lugar y completar comunidad, municipio y departamento |
 | Esri, Mapbox o MapTiler (solo si eliges su mapa satelital) | La zona del mapa que estás viendo y datos técnicos de la conexión | Mostrar la imagen satelital |
 | APIs de estaciones que tú conectes | Lo que exija cada API (por ejemplo tu clave) | Traer datos de tus estaciones |
 

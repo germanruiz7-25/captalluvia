@@ -1,7 +1,7 @@
 {
   "nombre": "CaptaLluvia",
   "subtitulo": "Diseño de sistemas de cosecha de agua de lluvia (SCALL)",
-  "autor": "Alfaro, G.",
+  "autor": "Alfaro, G. y Fuentes, F.",
   "organizacion": "Programa de Gestión de Riesgo de Desastres (GdR), Instituto Privado de Investigación sobre Cambio Climático (ICC)",
   "objetivo": "Herramienta gratuita para ubicar una vivienda, analizar la lluvia histórica del lugar y dimensionar un sistema de cosecha de agua de lluvia (área de techo, canaletas, tubería, tanque, tratamiento y presupuesto) en cualquier parte del mundo.",
   "contacto": "galfaro@icc.org.gt",
@@ -10,9 +10,14 @@
   "licencia": "PolyForm Noncommercial 1.0.0 (uso no comercial)",
   "licenciaUrl": "https://polyformproject.org/licenses/noncommercial/1.0.0/",
   "fuentesDatos": "Open-Meteo (reanálisis ERA5), mapa y búsqueda de OpenStreetMap (Nominatim), y datos de lluvia ingresados por el usuario",
-  "citaPlantilla": "Alfaro, G. ({anio}). CaptaLluvia v{version}. Programa de Gestión de Riesgo de Desastres, ICC. https://captalluvia.org",
+  "citaPlantilla": "Alfaro, G. y Fuentes, F. ({anio}). CaptaLluvia (versión {version}) [Software]. Programa de Gestión de Riesgo de Desastres, Instituto Privado de Investigación sobre Cambio Climático. https://germanruiz7-25.github.io/captalluvia/",
   "aviso": "Resultados estimados para prefactibilidad; no reemplazan el diseño firmado por un profesional.",
   "avisoIA": "CaptaLluvia no usa inteligencia artificial para calcular: los resultados salen de fórmulas documentadas. El código se desarrolla con asistencia de IA y revisión humana.",
   "logos": [],
-  "_logos": "Logotipos de organizaciones para el informe: archivos en public/logos/, por ejemplo {\"archivo\": \"logos/icc.png\", \"nombre\": \"ICC\"}"
+  "_logos": "Logotipos de organizaciones para el informe: archivos en public/logos/, por ejemplo {\"archivo\": \"logos/icc.png\", \"nombre\": \"ICC\"}",
+  "autores": [
+    "German Alfaro",
+    "Francisco Fuentes"
+  ],
+  "citaEnTexto": "(Alfaro y Fuentes, {anio})"
 }

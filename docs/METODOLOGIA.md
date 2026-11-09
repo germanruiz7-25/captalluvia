@@ -81,6 +81,15 @@ Todas son **dimensiones mínimas**; el diseñador decide si las adopta o las aum
 3. **Forma de Sherman con periodo de retorno** (app de W. Bardales en Google Earth Engine, rejilla de 1 km para Guatemala): I = K · T^m / (D + B)^n. La app enlaza a esa herramienta; el valor se escribe a mano.
 4. **Simulador:** para cada intensidad, Q del tramo = C · i · A_tramo / 3600, con A_tramo = área del techo / canaletas / bajantes por canaleta. El nivel del agua en el canal rectangular se obtiene resolviendo Manning por bisección. Estados: dentro del diseño (≤ 3/4 del lado bajo), al límite (entre 3/4 y el lado bajo) y rebalsa (> lado bajo). La bajante se satura cuando Q supera su capacidad (Wyly y Eaton, llenado 1/3). Las intensidades límite salen de i = 3600 · Q / (C · A_tramo).
 
+## 8. Tanque de almacenamiento (`tanque.ts`)
+
+1. **Oferta mensual (m³)** = PN del mes (mm) × área del techo (m²) / 1000. Se usa el techo existente si se escribieron sus medidas; si no, el área mínima necesaria del paso 5.
+2. **Demanda mensual (m³)** = demanda anual / 12.
+3. **Volumen (pico secuente, diferencias acumuladas de Rippl, 1883):** K_t = max(0, K_{t−1} + D_t − Q_t); el volumen es el mayor K en un año estable (se simulan dos años). Si la oferta anual es menor que la demanda, se dimensiona para guardar todo el excedente de la época de lluvias, S_t = max(0, S_{t−1} + Q_t − D_t), y se informa qué parte del año se cubre.
+4. **Simulación:** nivel al final de cada mes = min(V, max(0, nivel anterior + Q − D)); lo que no cabe se rebalsa y lo que falta es demanda no cubierta.
+5. **Tanques de polietileno:** número = ⌈V / capacidad⌉; se sugiere el más pequeño con el que bastan 4 unidades o menos. "Tanques que se llenan" en el mes = m³ captados / capacidad.
+6. **Cisterna de block:** base cuadrada de lado ⌈√(V / alto útil)⌉ (redondeado a 0.10 m), alto útil 1.50 m por defecto y 0.30 m de borde libre; o medidas del usuario, volumen = largo × ancho × alto útil (medidas interiores).
+
 ## Ejemplo de verificación
 
 5 personas × 50 L/día = 91.25 m³/año. Lluvia de 1,200 mm con 110 días de lluvia, lámina metálica, descarte de 1 mm:
@@ -100,6 +109,8 @@ En dos aguas, el techo de 9.5 × 10.0 m queda en dos segmentos de 4.75 × 10.0 m
 - Anaya-Garduño, M., Pérez-Hernández, A. y Luque-Delgadillo, A. (2021). Sistemas de captación del agua de lluvia (SCALL) para diversos usos. *Agro-Divulgación*, 1(0). https://doi.org/10.54767/ad.v1i1.3
 - INSIVUMEH e ICC (2025). *Curvas de intensidad, duración y frecuencia (IDF) para la vertiente del Pacífico de Guatemala*. 54 p. https://icc.org.gt/wp-content/uploads/2023/03/265.pdf
 - Bardales, W. (s. f.). *IDF_Guatemala_Sherman* [aplicación de Google Earth Engine]. https://ee-bardaleswa.projects.earthengine.app/view/idfguatemalasherman
+- Rippl, W. (1883). The capacity of storage-reservoirs for water-supply. *Minutes of Proceedings of the Institution of Civil Engineers*, 71, 270–278.
+- Rotoplas Centroamérica. *Manual de instalación del tinaco*.
 - Chow, V. T. (1959). *Open-channel hydraulics*. Nueva York: McGraw-Hill.
 - Durman (Aliaxis). *Canales para techo. Catálogo 2024*.
 - Amanco Wavin. *Canales de PVC: Canal Colonial y Canal Alto Caudal. Ficha técnica*.

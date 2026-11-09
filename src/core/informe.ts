@@ -29,6 +29,17 @@ export interface DatosDrenajeInforme {
   fallaPrimero: 'canal' | 'bajante';
 }
 
+export interface DatosTanqueInforme {
+  volumenM3: number;
+  criterio: 'cubre' | 'parcial';
+  cobertura: number;
+  areaTechoM2: number;
+  origenArea: 'existente' | 'necesaria';
+  tanque: string;
+  cisterna: string;
+  mesesLlenos: string;
+}
+
 export interface DatosInforme {
   nombreProyecto: string;
   edificio: string;
@@ -46,6 +57,7 @@ export interface DatosInforme {
   demanda: { usuarios: number; litrosPorUsuarioDia: number; diasUso: number; m3Anual: number };
   areaNecesariaM2: number | null;
   drenaje: DatosDrenajeInforme | null;
+  tanque?: DatosTanqueInforme | null;
 }
 
 export interface SeccionResumen {
@@ -125,6 +137,19 @@ export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
         : []),
     ],
   });
+  if (d.tanque) {
+    const t = d.tanque;
+    s.push({
+      titulo: 'Tanque de almacenamiento',
+      filas: [
+        ['Techo usado para el cálculo', `${n1(t.areaTechoM2)} m² (${t.origenArea === 'existente' ? 'techo existente' : 'área mínima necesaria'})`],
+        ['Volumen de almacenamiento', `${n1(t.volumenM3)} m³ (${n0(t.volumenM3 * 1000)} L)`],
+        ['Cobertura de la demanda en el año', pct(t.cobertura)],
+        ['Opción 1: tanques de polietileno', t.tanque],
+        ['Opción 2: cisterna de block (medidas interiores)', t.cisterna],
+      ],
+    });
+  }
   if (d.drenaje) {
     const r = d.drenaje;
     s.push({
@@ -185,6 +210,16 @@ export function conclusiones(d: DatosInforme): string[] {
           `${n0(d.areaNecesariaM2)} m² de techo medidos en planta.`,
       );
     }
+  }
+  if (d.tanque) {
+    const t = d.tanque;
+    c.push(
+      `Se requiere un almacenamiento de ${n1(t.volumenM3)} m³ (${n0(t.volumenM3 * 1000)} litros)` +
+        (t.criterio === 'cubre'
+          ? ' para cubrir la demanda durante todo el año'
+          : `, con el que se cubre ${pct(t.cobertura)} de la demanda anual porque el techo no capta lo suficiente`) +
+        `. Puede resolverse con ${t.tanque} o con una cisterna de block de ${t.cisterna}.`,
+    );
   }
   if (d.drenaje) {
     const r = d.drenaje;

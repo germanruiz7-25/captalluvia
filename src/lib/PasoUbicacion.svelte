@@ -2,18 +2,25 @@
   import { MESES_LARGOS, resumirMensualManual, type ResumenLluvia } from '../core/lluvia';
   import { consultarLluviaOpenMeteo } from '../core/openmeteo';
   import Mapa from './Mapa.svelte';
+  import { buscarDireccion } from '../core/geocodificacion';
 
   let {
     lluvia = $bindable(null),
     lat = $bindable(''),
     lon = $bindable(''),
     nombreProyecto = $bindable(''),
+    comunidad = $bindable(''),
+    municipio = $bindable(''),
+    departamento = $bindable(''),
     onListo,
   }: {
     lluvia: ResumenLluvia | null;
     lat: string;
     lon: string;
     nombreProyecto: string;
+    comunidad: string;
+    municipio: string;
+    departamento: string;
     onListo: () => void;
   } = $props();
 
@@ -38,19 +45,63 @@
     }
   }
 
+  let completando = $state(false);
+  let avisoDireccion = $state('');
+  async function completarDireccion() {
+    avisoDireccion = '';
+    completando = true;
+    try {
+      // Se envía el punto redondeado a 3 decimales (~100 m), no la ubicación exacta de la vivienda.
+      const r3 = (v: string) => Math.round(Number(v) * 1000) / 1000;
+      const d = await buscarDireccion(r3(lat), r3(lon));
+      if (!d) avisoDireccion = 'No se encontró la dirección de este punto. Escríbela a mano.';
+      else {
+        if (d.comunidad) comunidad = d.comunidad;
+        if (d.municipio) municipio = d.municipio;
+        if (d.departamento) departamento = d.departamento;
+        avisoDireccion = 'Revisa los datos: el mapa a veces da el nombre de la cabecera o de un barrio cercano.';
+      }
+    } catch (e) {
+      avisoDireccion = e instanceof Error ? e.message : 'No se pudo obtener la dirección.';
+    } finally {
+      completando = false;
+    }
+  }
+
   function usarManual() {
     lluvia = resumirMensualManual(manualMm, manualDias);
     onListo();
   }
 </script>
 
+{#snippet lugar()}
+    <fieldset class="lugar">
+      <legend>¿Dónde se ubica? (para la carátula del informe)</legend>
+      <div class="campos">
+        <label>Comunidad, aldea o caserío
+          <input bind:value={comunidad} placeholder="Ej. Aldea El Rodeo" />
+        </label>
+        <label>Municipio
+          <input bind:value={municipio} placeholder="Ej. Masagua" />
+        </label>
+        <label>Departamento
+          <input bind:value={departamento} placeholder="Ej. Escuintla" />
+        </label>
+      </div>
+      <button class="secundario" type="button" onclick={completarDireccion} disabled={completando || lat === '' || lon === ''}>
+        {completando ? 'Buscando…' : '📍 Completar con el punto del mapa'}
+      </button>
+      {#if avisoDireccion}<p class="nota">{avisoDireccion}</p>{/if}
+    </fieldset>
+{/snippet}
+
 <section class="tarjeta paso">
-  <p class="numero-paso">Paso 1 de 7</p>
+  <p class="numero-paso">Paso 1 de 8</p>
   <h2>¿Dónde está la vivienda o el edificio?</h2>
 
   <div class="no-imprimir">
-    <label class="proyecto-campo">Nombre del proyecto o lugar (opcional, aparece en el informe)
-      <input placeholder="Ej. Escuela Oficial Rural Mixta, aldea …" bind:value={nombreProyecto} />
+    <label class="proyecto-campo">Lugar: institución, escuela o vivienda familiar (aparece en la carátula del informe)
+      <input placeholder="Ej. Escuela Oficial Rural Mixta, aldea … / Vivienda de la familia …" bind:value={nombreProyecto} />
     </label>
 
     <div class="pestanas" role="tablist">
@@ -75,6 +126,7 @@
           </label>
         </div>
       </details>
+      {@render lugar()}
       <div class="acciones">
         <button class="principal grande" onclick={consultar} disabled={consultando || lat === '' || lon === ''}>
           {consultando ? 'Consultando 20 años de lluvia…' : 'Ver la lluvia de este lugar →'}
@@ -99,16 +151,22 @@
           <input type="number" min="0" max="366" bind:value={manualDias} />
         </label>
       </div>
+      {@render lugar()}
       <div class="acciones">
         <button class="principal grande" onclick={usarManual}>Usar estos datos →</button>
       </div>
     {/if}
 
     {#if error}<p class="alerta" role="alert">{error}</p>{/if}
+
+
   </div>
 </section>
 
 <style>
   .proyecto-campo { margin-bottom: 1rem; }
+  .lugar { border: 1px solid var(--borde); border-radius: 0.75rem; padding: 0.5rem 1rem 0.9rem; margin-top: 1.25rem; background: var(--fondo); }
+  .lugar legend { font-weight: 600; padding: 0 0.3rem; }
+  .lugar .campos { margin-bottom: 0.75rem; }
   .meses { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: 0.5rem 0.75rem; margin: 0.75rem 0; }
 </style>

@@ -29,7 +29,7 @@
 </script>
 
 <section class="tarjeta paso">
-  <p class="numero-paso">Paso 5 de 7</p>
+  <p class="numero-paso">Paso 5 de 8</p>
   <h2>Área de techo necesaria</h2>
 
   {#if !oferta}
@@ -64,9 +64,8 @@
     <DibujoTecho {opciones} {aguas} />
 
     <p class="nota">
-      Este es el balance anual: el agua que cae en la época de lluvia debe guardarse para la época seca.
-      En la siguiente versión se agregan la simulación mes a mes del tanque, el área recomendada para la
-      época seca, el tanque comercial, los materiales y el presupuesto.
+      Este es el balance anual: el agua que cae en la época de lluvia debe guardarse para la época seca. El
+      tanque se calcula mes a mes en el paso 7.
     </p>
   {/if}
 </section>

@@ -41,7 +41,7 @@
 </script>
 
 <section class="tarjeta paso">
-  <p class="numero-paso">Paso 4 de 7</p>
+  <p class="numero-paso">Paso 4 de 8</p>
   <h2>Usuarios y consumo</h2>
 
   <div class="no-imprimir">

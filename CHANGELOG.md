@@ -2,9 +2,16 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
-## [0.4.0] — 2026-11-08 — Curvas IDF, simulador e informe mejorado
+## [0.4.0] — 2026-11-08 — Curvas IDF, simulador, tanque e informe técnico
 
 ### Agregado
+- **Paso 7 · Tanque de almacenamiento:** balance mes a mes (agua captada con el techo existente o el área mínima, demanda mensual) y volumen por el método del pico secuente (Rippl). Tabla mensual con lluvia, PN, m³ captados, **cuántos tanques se llenan cada mes** y agua guardada al final del mes; gráfica del nivel del tanque.
+- **Opción 1: tanques de polietileno tipo tinaco** (450 a 10,000 L, medidas de 450 a 2,500 L de Rotoplas Centroamérica) con número de tanques y dibujo.
+- **Opción 2: cisterna de block y cemento:** medidas interiores sugeridas (base cuadrada, alto útil editable, 0.30 m de borde libre) o escritas por el usuario (largo × ancho × alto → m³), con dibujo en perspectiva.
+- **Carátula del informe:** "Informe técnico. Proyecto: Diseño y cálculo de Sistema de Captación de Agua de Lluvia – SCALL", lugar (institución, escuela o vivienda) y ubicación (comunidad, municipio, departamento).
+- Paso 1: campos de comunidad, municipio y departamento, con botón para completarlos desde el punto del mapa (Nominatim, punto redondeado a ~100 m).
+- **Formato del informe:** Calibri, texto en negro, títulos 16 pt, subtítulos 14 pt y texto 12 pt; gráficas y dibujos en azul.
+- **Autores:** German Alfaro y Francisco Fuentes; cita en formato APA 7.
 - **Informe PDF renovado:** encabezado con logotipos (CaptaLluvia y, opcionalmente, los de la organización en `public/logos/`), ficha del proyecto, **introducción**, secciones numeradas, **cuadro resumen del diseño** (sitio y lluvia, techo, demanda, canaletas y bajantes), **conclusiones y recomendaciones** automáticas y **bibliografía**.
 - El cuadro resumen y las conclusiones también se ven en el paso 7.
 - **Techo existente por ancho × largo:** el paso 3 pide las medidas en planta y calcula los m²; el paso 5 compara con los m² necesarios y el paso 6 drena ese techo por defecto.
@@ -12,7 +19,7 @@ Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado 
 - Enlace a la app **IDF Guatemala (Sherman) de Walter Bardales** en Google Earth Engine para consultar la curva del punto y escribir el valor; citada en las fuentes.
 - **Simulador "¿qué pasa si llueve más fuerte?":** barra de intensidad con marcas de los periodos de retorno de la estación, dibujo del canal con el nivel del agua (dentro del diseño, al límite o rebalsa), uso de la bajante y las intensidades a las que el canal rebalsa y la bajante se satura; indica qué falla primero.
 - **Tabla de aguaceros cortos** de la estación (5 a 60 minutos × 2 a 100 años) coloreada según cómo responde el canal.
-- 18 pruebas nuevas (84 en total).
+- 35 pruebas nuevas (96 en total).
 
 ## [0.3.0] — 2026-11-08 — Asistente por pasos y mapa
 

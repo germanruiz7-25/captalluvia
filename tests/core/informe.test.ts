@@ -96,3 +96,25 @@ describe('informe', () => {
     expect(conclusiones(d).join(' ')).toContain('Atención');
   });
 });
+
+describe('informe con tanque', () => {
+  it('agrega la sección y la conclusión del tanque', () => {
+    const d: DatosInforme = {
+      ...base,
+      tanque: {
+        volumenM3: 36,
+        criterio: 'cubre',
+        cobertura: 1,
+        areaTechoM2: 71,
+        origenArea: 'necesaria',
+        tanque: '4 tanques de 10,000 L',
+        cisterna: '4.90 × 4.90 m, alto útil 1.50 m (+ 0.30 m de borde libre) = 36.0 m³',
+        mesesLlenos: '',
+      },
+    };
+    const sec = cuadroResumen(d).find((s) => s.titulo === 'Tanque de almacenamiento')!;
+    expect(sec.filas).toContainEqual(['Volumen de almacenamiento', '36 m³ (36,000 L)']);
+    expect(conclusiones(d).join(' ')).toContain('Se requiere un almacenamiento de 36 m³');
+    expect(conclusiones(d).join(' ')).toContain('4 tanques de 10,000 L');
+  });
+});

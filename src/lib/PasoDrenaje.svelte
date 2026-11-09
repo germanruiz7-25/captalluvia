@@ -179,7 +179,7 @@
 </script>
 
 <section class="tarjeta paso">
-  <p class="numero-paso">Paso 6 de 7</p>
+  <p class="numero-paso">Paso 6 de 8</p>
   <h2>Canaletas y bajantes</h2>
 
   {#if opciones.length === 0 && !techoExistente}
