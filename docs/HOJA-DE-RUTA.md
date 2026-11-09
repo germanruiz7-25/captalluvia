@@ -15,7 +15,7 @@ Duraciones estimadas para una persona a medio tiempo (~26 semanas hasta la v1.0)
 
 - Nombre: **CaptaLluvia**; dominio **captalluvia.org**; repositorio `germanruiz7-25/captalluvia`.
 - Licencia: PolyForm Noncommercial 1.0.0 (código) y CC BY-NC-SA 4.0 (documentación). Titular: G. Alfaro.
-- Registro obligatorio de organizaciones al primer uso; registro de uso propio en Cloudflare D1 (sin analítica de terceros).
+- ✅ (v0.5.0) Registro obligatorio al primer uso y aviso de informes descargados en una hoja de Google mediante Apps Script (sin analítica de terceros). Ver `docs/REGISTRO.md`.
 - Confiabilidad del tanque: 90 % de días abastecidos por defecto (80 o 95 % editable).
 - Idioma: español en v1.0; inglés en la fase 5.
 - Estaciones: RedMet del ICC e importación Excel/CSV (INSIVUMEH) primero; Meteostat después.

@@ -2,6 +2,18 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.5.0] — 2026-11-09 — Registro de uso
+
+### Agregado
+- **Registro obligatorio al primer uso:** nombre, correo, institución u organización, uso (rol), país, departamento y municipio, con aceptación de la política de privacidad y del descargo. Se pide una vez por dispositivo y explica qué se envía y a quién.
+- **Hoja de registros en Google Sheets** mediante Google Apps Script (`herramientas/registro/Codigo.gs`): pestaña "Registros", correo de aviso al responsable por cada registro nuevo y pestaña "Informes" con un aviso por cada informe descargado (departamento, municipio, infraestructura, usuarios y volumen del tanque; nunca coordenadas). Pasos de instalación en `docs/REGISTRO.md`; la dirección se configura con la variable `VITE_REGISTRO_URL`.
+- Envíos sin conexión: quedan en cola y se mandan al volver la conexión.
+- **Borrar mi registro** (paso 8): pide a la hoja que elimine el registro y los avisos de esa instalación.
+- 5 pruebas nuevas (112 en total).
+
+### Cambiado
+- Política de privacidad 1.0: nuevos datos recopilados, Google como tercero, base de consentimiento, borrado y conservación.
+
 ## [0.4.0] — 2026-11-08 — Curvas IDF, simulador, tanque e informe técnico
 
 ### Agregado

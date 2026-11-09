@@ -6,4 +6,6 @@ interface ImportMetaEnv {
   readonly VITE_ESRI_KEY?: string;
   readonly VITE_MAPBOX_TOKEN?: string;
   readonly VITE_MAPTILER_KEY?: string;
+  /** Dirección de la aplicación web de Google Apps Script que recibe los registros. */
+  readonly VITE_REGISTRO_URL?: string;
 }

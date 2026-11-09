@@ -18,10 +18,51 @@
   import UbicacionProyecto from './lib/UbicacionProyecto.svelte';
   import InformeResumen from './lib/InformeResumen.svelte';
   import { redondearCoordenada } from './core/openmeteo';
+  import Registro from './lib/Registro.svelte';
+  import {
+    URL_REGISTRO,
+    borrarRegistroLocal,
+    cargarRegistro,
+    crearRegistro,
+    encolarYEnviar,
+    eventoBorrar,
+    eventoInforme,
+    eventoRegistro,
+    guardarRegistro,
+    type DatosRegistro,
+  } from './core/registro';
   import type { DatosDrenajeInforme, DatosInforme, DatosTanqueInforme } from './core/informe';
 
   const version = __APP_VERSION__;
   const privacidad = `${acerca.repositorio}/blob/main/docs/PRIVACIDAD.md`;
+  const descargoUrl = `${acerca.repositorio}/blob/main/docs/DESCARGO.md`;
+
+  // ---------- Registro de uso (una vez por dispositivo) ----------
+  let registro = $state(cargarRegistro());
+  function registrar(d: DatosRegistro) {
+    const r = crearRegistro(d, version);
+    guardarRegistro(r);
+    registro = r;
+    void encolarYEnviar(URL_REGISTRO, eventoRegistro(r));
+    window.scrollTo({ top: 0 });
+  }
+  onMount(() => {
+    // Reenvía lo que quedó pendiente (sin conexión) al abrir y al volver la conexión
+    void encolarYEnviar(URL_REGISTRO, null);
+    const alVolver = () => void encolarYEnviar(URL_REGISTRO, null);
+    window.addEventListener('online', alVolver);
+    return () => window.removeEventListener('online', alVolver);
+  });
+  let confirmarBorrarRegistro = $state(false);
+  let borrandoRegistro = $state(false);
+  async function borrarMiRegistro() {
+    if (!registro) return;
+    borrandoRegistro = true;
+    await encolarYEnviar(URL_REGISTRO, eventoBorrar(registro, version));
+    borrarRegistroLocal();
+    location.hash = '';
+    location.reload();
+  }
 
   // Proyecto: se guarda solo en este dispositivo (localStorage)
   const g = cargarProyecto();
@@ -213,6 +254,18 @@
   function descargarInforme() {
     const titulo = document.title;
     document.title = `Informe CaptaLluvia${nombreProyecto ? ' - ' + nombreProyecto : ''} - ${new Date().toISOString().slice(0, 10)}`;
+    if (registro) {
+      void encolarYEnviar(
+        URL_REGISTRO,
+        eventoInforme(registro, version, {
+          departamento,
+          municipio,
+          infraestructura: EDIFICIOS[edificio].nombre,
+          usuarios: demanda.usuarios,
+          volumenM3: datosTanque?.volumenM3 ?? null,
+        }),
+      );
+    }
     window.print();
     document.title = titulo;
   }
@@ -233,6 +286,11 @@
 </header>
 
 <!-- Encabezado del informe (solo en el PDF) -->
+{#if !registro}
+<main>
+  <Registro {privacidad} descargo={descargoUrl} onRegistrar={registrar} />
+</main>
+{:else}
 <!-- Carátula e introducción (solo en el PDF) -->
 <div class="solo-impresion caratula">
   <div class="logos">
@@ -385,10 +443,10 @@
         de consulta y la nota "Acerca de CaptaLluvia".
       </p>
       <details class="detalle">
-        <summary>Tus datos en este dispositivo</summary>
+        <summary>Tus datos y tu registro</summary>
         <p class="nota">
-          El proyecto se guarda solo en este navegador para que puedas continuar después. No se envía a ningún
-          servidor. <a href={privacidad}>Política de privacidad</a>.
+          El proyecto (ubicación, techo, usuarios, tanque) se guarda solo en este navegador para que puedas continuar
+          después; no se envía a ningún servidor. <a href={privacidad}>Política de privacidad</a>.
         </p>
         {#if !confirmarBorrado}
           <button class="secundario peligro" onclick={() => (confirmarBorrado = true)}>Borrar mis datos de este dispositivo</button>
@@ -398,6 +456,24 @@
             <button class="principal peligro-lleno" onclick={borrarTodo}>Sí, borrar todo</button>
             <button class="secundario" onclick={() => (confirmarBorrado = false)}>Cancelar</button>
           </div>
+        {/if}
+        {#if registro}
+          <p class="nota registro-dato">
+            Registrado como <strong>{registro.nombre}</strong> ({registro.correo}, {registro.organizacion}). Tu registro y
+            los avisos de informes descargados se guardan en la hoja de registros de los autores.
+          </p>
+          {#if !confirmarBorrarRegistro}
+            <button class="secundario peligro" onclick={() => (confirmarBorrarRegistro = true)}>Borrar mi registro</button>
+          {:else}
+            <p class="alerta">
+              Se pedirá a la hoja de registros que borre tu registro y tus avisos de uso. Para volver a usar la app tendrás
+              que registrarte de nuevo.
+            </p>
+            <div class="acciones">
+              <button class="principal peligro-lleno" onclick={borrarMiRegistro} disabled={borrandoRegistro}>Sí, borrar mi registro</button>
+              <button class="secundario" onclick={() => (confirmarBorrarRegistro = false)}>Cancelar</button>
+            </div>
+          {/if}
         {/if}
       </details>
     </section>
@@ -417,6 +493,7 @@
     {/if}
   </div>
 </main>
+{/if}
 
 <footer>
   {acerca.nombre} v{version} · {acerca.autor} · ICC ·

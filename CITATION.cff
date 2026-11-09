@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 message: "Si usas CaptaLluvia en un informe, taller o publicación, cítala así."
 title: "CaptaLluvia: Diseño de sistemas de cosecha de agua de lluvia (SCALL)"
-version: 0.4.0
-date-released: 2026-11-07
+version: 0.5.0
+date-released: 2026-11-09
 authors:
   - family-names: Alfaro
     given-names: German
