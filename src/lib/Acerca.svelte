@@ -7,7 +7,7 @@
     .replace('{version}', version);
 </script>
 
-<section class="tarjeta" id="acerca">
+<section class="tarjeta salto-impresion" id="acerca">
   <h2>Acerca de {acerca.nombre}</h2>
   <dl>
     <dt>Nombre</dt><dd>{acerca.nombre} — {acerca.subtitulo}</dd>

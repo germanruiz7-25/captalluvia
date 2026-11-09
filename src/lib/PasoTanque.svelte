@@ -71,7 +71,8 @@
   const maxNivel = $derived(r ? Math.max(vUsado, ...r.meses.map((m) => m.nivelM3), 0.001) : 1);
   let anchoContenedor = $state(600);
   // Ancho máximo del dibujo: así las letras no se achican al imprimir
-  const anchoGrafico = $derived(Math.min(anchoContenedor, 680));
+  // Si el contenedor está oculto (otra pantalla o al imprimir) mide 0: se usa el ancho de impresión
+  const anchoGrafico = $derived(anchoContenedor >= 300 ? Math.min(anchoContenedor, 680) : 680);
   const G = { izq: 44, der: 10, arriba: 14, abajo: 34, alto: 200 };
   const paso = $derived((anchoGrafico - G.izq - G.der) / 12);
   const yDe = (v: number) => G.arriba + (1 - v / maxNivel) * (G.alto - G.arriba - G.abajo);
@@ -101,7 +102,7 @@
   });
 </script>
 
-<section class="tarjeta paso">
+<section class="tarjeta paso salto-impresion">
   <p class="numero-paso">Paso 7 de 8</p>
   <h2>Tanque de almacenamiento</h2>
 

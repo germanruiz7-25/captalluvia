@@ -360,13 +360,13 @@
           </tbody>
         </table>
       </div>
+</div>
       <p class="nota informe">
         Criterio: se sugiere canal tipo colonial cuando bastan 1 o 2 bajantes de 3" por canaleta y la sección del Canal
         Colonial (100 × 90 mm útiles) lleva el caudal de cada tramo; si no, canal de alto caudal con bajantes de 4"
         (se agregan bajantes si hace falta). Se usan las medidas de Amanco Wavin; si eliges Durman, verifica que su
         sección sea igual o mayor. Los fabricantes indican soportes cada 40 a 50 cm y una pendiente mínima de 0.2 %.
       </p>
-</div>
       </details>
 
       {#if seccion && analisis && r && b}

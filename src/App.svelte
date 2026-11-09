@@ -484,7 +484,8 @@
   .peligro-lleno { background: var(--alerta); }
 
   @media print {
-    .pantalla { display: grid !important; gap: 0.6rem; }
+    .pantalla { display: block !important; }
+    .pantalla > :global(* + *) { margin-top: 0.6rem; }
     .pantalla.no-imprimir { display: none !important; }
   }
   main { max-width: 60rem; margin: 0 auto; padding: 1.5rem clamp(1rem, 4vw, 2rem); display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }

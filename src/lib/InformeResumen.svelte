@@ -7,7 +7,7 @@
   const textos = $derived(conclusiones(datos));
 </script>
 
-<section class="tarjeta paso informe-resumen">
+<section class="tarjeta paso informe-resumen salto-impresion">
   <h2>Cuadro resumen del diseño</h2>
   <table class="tabla resumen">
     {#each secciones as s (s.titulo)}
@@ -21,7 +21,7 @@
   </table>
 </section>
 
-<section class="tarjeta paso informe-conclusiones">
+<section class="tarjeta paso informe-conclusiones salto-impresion">
   <h2>Conclusiones y recomendaciones</h2>
   <ol>
     {#each textos as t (t)}

@@ -26,7 +26,8 @@
   const t100 = $derived(a.periodos.find((p) => p.tr === 100));
 </script>
 
-<div class="bloque hidraulico">
+<div class="hidraulico">
+<div class="bloque">
   <h3>Análisis hidráulico del canal y la bajante</h3>
   <p class="informe-texto">
     Cada tramo de canal ({n1(tramoM)} m) recibe el agua de {n1(a.areaTramoM2)} m² de techo y la descarga en una
@@ -50,8 +51,10 @@
     intensidades mayores a <strong>{n0(a.intensidadLimiteMmH)} mm/h</strong>
     (con la lluvia de diseño se usa el {n0((a.caudalDisenoLs / a.sistemaLs) * 100)} % de la capacidad).
   </p>
+</div>
 
   {#if a.periodos.length}
+  <div class="bloque">
     <table class="tabla rejilla periodos">
       <thead>
         <tr>
@@ -83,6 +86,7 @@
         o aumentar la pendiente.
       {/if}
     </p>
+  </div>
   {/if}
 </div>
 

@@ -134,6 +134,12 @@ details.detalle[open] { padding-bottom: 0.75rem; }
   .paso > h2::before { counter-increment: seccion; content: counter(seccion) '. '; }
   .numero-paso { display: none; }
   .salto-impresion { break-before: page; }
+  /* <details> no se divide bien entre hojas en Chromium: al imprimir su contenido fluye como bloque normal */
+  details.detalle:not(.no-imprimir) { display: contents !important; }
+  #fuentes ul { display: block !important; }
+  #fuentes li { margin: 0 0 0.12rem; }
+  #acerca dl { gap: 0.15rem 1rem !important; }
+  #descargo p { margin: 0.3rem 0; }
   table.rejilla th, table.rejilla td { border-color: #000; }
   p.atribucion { font-size: 9pt !important; }
 
@@ -145,7 +151,8 @@ details.detalle[open] { padding-bottom: 0.75rem; }
   }
   .no-imprimir, footer { display: none !important; }
   .solo-impresion { display: block; }
-  main { padding: 0 !important; gap: 0.6rem !important; max-width: none !important; }
+  main { padding: 0 !important; display: block !important; max-width: none !important; }
+  main > * + * { margin-top: 0.6rem; }
   .tarjeta { border: 0; border-radius: 0; padding: 0.4rem 0; }
   .paso { border-top: 1px solid #bbb; }
   h2, h3 { break-after: avoid; }

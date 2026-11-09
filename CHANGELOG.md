@@ -26,11 +26,12 @@ Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado 
 - **Análisis hidráulico del canal y la bajante** (pantalla e informe): capacidad del canal con borde libre y lleno, capacidad de la bajante y capacidad máxima del tramo en L/s y **L/min**, elemento que controla, intensidad máxima que soporta y, con la curva IDF, por periodo de retorno (2 a 100 años): intensidad de 5 min, caudal, % de la capacidad y **duración de los aguaceros que rebalsan** (D* = (A/i)^(1/n) − B).
 - 46 pruebas nuevas (107 en total).
 
-- **Sección 2 del informe · Ubicación y generalidades del proyecto:** mapa de macrolocalización (OpenStreetMap) y de microlocalización (satélite si hay clave configurada) con el punto marcado en el paso 1, norte y barra de escala; tabla con lugar, comunidad, municipio, departamento, coordenadas, tipo de infraestructura y cantidad de usuarios.
+- **Sección 2 del informe · Ubicación y generalidades del proyecto:** mapas de macrolocalización y microlocalización con el punto marcado en el paso 1, norte y barra de escala; tabla con lugar, comunidad, municipio, departamento, coordenadas, tipo de infraestructura y cantidad de usuarios.
 
 ### Cambiado
 - Tablas del análisis hidráulico y de generalidades con líneas (cuadrícula).
-- "Lluvia del lugar" y "Techo y lluvia neta" empiezan en hoja nueva; la ilustración "1 mm = 1 L" ya no se imprime.
+- Distribución del informe: "Lluvia del lugar", "Techo y lluvia neta", "Tanque de almacenamiento", "Cuadro resumen", "Conclusiones" (seguidas de la bibliografía) y "Acerca de CaptaLluvia" con el descargo empiezan en hoja nueva; los canales de PVC del mercado y el análisis hidráulico siguen de forma continua; la ilustración "1 mm = 1 L" ya no se imprime.
+- Mapas de ubicación con imagen satelital cuando hay una clave de mapas configurada (OpenStreetMap como respaldo).
 - El informe deja solo la información técnica que justifica el diseño: se ocultan las instrucciones y explicaciones de uso de la app y el simulador interactivo (se reemplaza por el análisis hidráulico).
 - Cuadro resumen y conclusiones con la capacidad por tramo en L/min, la intensidad que soporta y los aguaceros que rebalsan según la curva IDF.
 

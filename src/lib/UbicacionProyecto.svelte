@@ -23,24 +23,23 @@
     usuarios: number;
   } = $props();
 
-  const capas = capasDisponibles(CLAVES_COMPILADAS);
-  const calles = capas[0];
-  const detalle = capaInicial(capas, null); // satélite si hay clave; si no, calles
+  // Imagen satelital si hay una clave configurada; si no, mapa de calles (OpenStreetMap)
+  const capa = capaInicial(capasDisponibles(CLAVES_COMPILADAS), null);
 
   const la = $derived(Number(lat));
   const lo = $derived(Number(lon));
   const hayPunto = $derived(lat !== '' && lon !== '' && Number.isFinite(la) && Number.isFinite(lo));
   const coord = (v: number) => v.toLocaleString('es-GT', { minimumFractionDigits: 5, maximumFractionDigits: 5 });
   const o = (v: string) => v.trim() || '—';
-  const atribuciones = [...new Set([calles, detalle].map((c) => atribucionTexto(c.atribucion)))].join(' · ');
+  const atribuciones = atribucionTexto(capa.atribucion);
 </script>
 
 <section class="paso ubicacion-proyecto">
   <h2>Ubicación y generalidades del proyecto</h2>
   {#if hayPunto}
     <div class="mapas">
-      <MapaEstatico lat={la} lon={lo} zoom={7} capa={calles} ancho={240} alto={300} titulo="Figura 1. Macrolocalización" />
-      <MapaEstatico lat={la} lon={lo} zoom={17} capa={detalle} ancho={440} alto={300} titulo="Figura 2. Microlocalización (punto marcado en el mapa)" />
+      <MapaEstatico lat={la} lon={lo} zoom={7} capa={capa} ancho={240} alto={300} titulo="Figura 1. Macrolocalización" />
+      <MapaEstatico lat={la} lon={lo} zoom={17} capa={capa} ancho={440} alto={300} titulo="Figura 2. Microlocalización (punto marcado en el mapa)" />
     </div>
     <p class="atribucion">Mapas: {atribuciones}.</p>
   {/if}
