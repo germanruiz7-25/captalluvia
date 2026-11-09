@@ -12,5 +12,7 @@
   "fuentesDatos": "Open-Meteo (reanálisis ERA5), mapa y búsqueda de OpenStreetMap (Nominatim), y datos de lluvia ingresados por el usuario",
   "citaPlantilla": "Alfaro, G. ({anio}). CaptaLluvia v{version}. Programa de Gestión de Riesgo de Desastres, ICC. https://captalluvia.org",
   "aviso": "Resultados estimados para prefactibilidad; no reemplazan el diseño firmado por un profesional.",
-  "avisoIA": "CaptaLluvia no usa inteligencia artificial para calcular: los resultados salen de fórmulas documentadas. El código se desarrolla con asistencia de IA y revisión humana."
+  "avisoIA": "CaptaLluvia no usa inteligencia artificial para calcular: los resultados salen de fórmulas documentadas. El código se desarrolla con asistencia de IA y revisión humana.",
+  "logos": [],
+  "_logos": "Logotipos de organizaciones para el informe: archivos en public/logos/, por ejemplo {\"archivo\": \"logos/icc.png\", \"nombre\": \"ICC\"}"
 }

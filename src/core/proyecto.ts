@@ -18,6 +18,9 @@ export interface ProyectoGuardado {
   descarteMm: number;
   umbralMm: number;
   areaDisponible: number | null;
+  /** Medidas en planta del techo existente (m). */
+  anchoTecho?: number | null;
+  largoTecho?: number | null;
   edificio: string;
   usuarios: number;
   dotacionId: string;

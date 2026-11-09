@@ -23,8 +23,8 @@
   const deOpenMeteo = $derived(!!lluvia && lluvia.fuente.includes('Open-Meteo'));
 </script>
 
-<section class="tarjeta" id="fuentes">
-  <h2>Fuentes de consulta</h2>
+<section class="tarjeta paso" id="fuentes">
+  <h2>Bibliografía y fuentes de consulta</h2>
 
   <h3>Datos de lluvia</h3>
   <ul>

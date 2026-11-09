@@ -79,6 +79,9 @@ button:disabled { opacity: 0.6; cursor: progress; }
 
 .solo-impresion { display: none; }
 
+/* URLs largas de la bibliografía: que corten línea en el celular */
+#fuentes li, #fuentes a, .resumen td { overflow-wrap: anywhere; }
+
 .proyecto-campo { display: grid; gap: 0.35rem; color: var(--texto-suave); font-size: 0.9rem; }
 .principal.grande { font-size: 1.05rem; padding: 0.8rem 1.4rem; }
 
@@ -97,6 +100,11 @@ details.detalle[open] { padding-bottom: 0.75rem; }
 
 /* ---------- Informe PDF (impresión) ---------- */
 @media print {
+  /* Secciones numeradas del informe: 1. Introducción, 2. Lluvia del lugar, … */
+  body { counter-reset: seccion; }
+  .paso > h2::before { counter-increment: seccion; content: counter(seccion) '. '; }
+  .numero-paso { display: none; }
+
   @page { size: letter; margin: 14mm 12mm; }
   :root {
     --fondo: #fff; --fondo-tarjeta: #fff; --texto: #000; --texto-suave: #333;

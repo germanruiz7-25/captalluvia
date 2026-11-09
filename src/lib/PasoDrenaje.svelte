@@ -12,11 +12,13 @@
     intensidadEstacion,
     type PeriodoRetorno,
   } from '../core/idf';
+  import type { DatosDrenajeInforme } from '../core/informe';
   import {
     BAJANTE_MINIMA_PRACTICA,
     CANALES_MERCADO,
     SECCIONES_COMERCIALES,
     evaluarCanalRectangular,
+    limitesSimulacion,
     MATERIALES_CANALETA,
     NOMBRES_TIPO_CANAL,
     disenarDrenaje,
@@ -28,22 +30,27 @@
     opciones,
     aguas,
     tipoTecho,
+    techoExistente = null,
     lat = '',
     lon = '',
     resumen = $bindable(''),
     fuenteIntensidad = $bindable(''),
+    datos = $bindable(null),
   }: {
     opciones: OpcionTecho[];
     aguas: NumeroAguas;
     tipoTecho: TipoTecho;
+    techoExistente?: { ancho: number; largo: number } | null;
     lat?: string;
     lon?: string;
     resumen?: string;
     fuenteIntensidad?: string;
+    datos?: DatosDrenajeInforme | null;
   } = $props();
 
   // Parámetros de diseño (editables por el diseñador)
-  let techoElegido = $state('rectangular');
+  // 'auto' = el techo existente si se escribieron sus medidas; si no, la forma rectangular sugerida
+  let techoElegido = $state('auto');
   let largoPropio: number | null = $state(null);
   let anchoPropio: number | null = $state(null);
   // Intensidad de diseño: de la curva IDF de la estación más cercana o escrita a mano
@@ -70,6 +77,9 @@
   let altoAltoPropio: number | null = $state(null);
 
   const techo = $derived.by(() => {
+    if ((techoElegido === 'auto' || techoElegido === 'existente') && techoExistente) {
+      return { largo: techoExistente.largo, ancho: techoExistente.ancho, nombre: 'Techo existente' };
+    }
     if (techoElegido === 'propio') {
       const l = Number(largoPropio) || 0;
       const a = Number(anchoPropio) || 0;
@@ -114,6 +124,51 @@
       : null,
   );
 
+  // Entrada del simulador y datos para el cuadro resumen del informe
+  const entradaSim = $derived(
+    r && b && techo && seccion && seccion.anchoMm > 0 && seccion.altoBajoMm > 0
+      ? {
+          areaTramoM2: (techo.largo * techo.ancho) / r.numeroCanaletas / b.porCanaleta,
+          c: ce,
+          seccion,
+          pendientePct: Number(pendientePct) || 0,
+          material,
+          capacidadBajanteLs: b.capacidadLs,
+        }
+      : null,
+  );
+  $effect(() => {
+    if (!r || !b || !techo || !seccion || !rect || !entradaSim) {
+      datos = null;
+      return;
+    }
+    const lim = limitesSimulacion(entradaSim);
+    datos = {
+      techoAncho: techo.ancho,
+      techoLargo: techo.largo,
+      techoNombre: techo.nombre,
+      intensidadMmH: intensidad,
+      fuenteIntensidad,
+      tipoCanal: NOMBRES_TIPO_CANAL[r.tipoCanal],
+      lineasCanal: r.lineasSugeridas.map((l) => `${l.marca}: ${l.modelo}`).join('; '),
+      canalRevisado: seccion.nombre,
+      capacidadCanalLs: rect.capacidadLs,
+      caudalTramoLs: r.caudalPorTramoLs,
+      cumpleCanal: rect.cumple,
+      bajanteNombre: b.nombre,
+      bajantesPorCanaleta: b.porCanaleta,
+      bajantesTotal: b.total,
+      numeroCanaletas: r.numeroCanaletas,
+      longitudCanaletaM: r.longitudTotalCanaletaM,
+      pendientePct: Number(pendientePct) || 0,
+      material: MATERIALES_CANALETA[material].nombre,
+      canaletaEquivalente: c ? c.nombre : null,
+      rebalsaMmH: lim.canalRebalsaMmH,
+      bajanteSaturaMmH: lim.bajanteMmH,
+      fallaPrimero: lim.fallaPrimero,
+    };
+  });
+
   $effect(() => {
     resumen = r && b ? `${NOMBRES_TIPO_CANAL[r.tipoCanal]} · ${b.total} bajante${b.total > 1 ? 's' : ''} de ${b.nombre}` : '';
   });
@@ -127,12 +182,17 @@
   <p class="numero-paso">Paso 6 de 7</p>
   <h2>Canaletas y bajantes</h2>
 
-  {#if opciones.length === 0}
+  {#if opciones.length === 0 && !techoExistente}
     <p class="nota">Completa los pasos anteriores para dimensionar canaletas y bajantes.</p>
   {:else}
     <div class="campos no-imprimir">
       <label>Techo a drenar
         <select bind:value={techoElegido}>
+          {#if techoExistente}
+            <option value="auto">Techo existente: {n1(techoExistente.ancho)} × {n1(techoExistente.largo)} m</option>
+          {:else}
+            <option value="auto">Sugerido (rectangular)</option>
+          {/if}
           {#each opciones as o (o.forma)}
             <option value={o.forma}>{o.nombre}: {n1(o.ancho)} × {n1(o.largo)} m</option>
           {/each}
@@ -296,16 +356,9 @@
       </p>
       </details>
 
-      {#if seccion && seccion.anchoMm > 0 && seccion.altoBajoMm > 0}
+      {#if seccion && entradaSim}
         <SimuladorLluvia
-          entrada={{
-            areaTramoM2: (techo.largo * techo.ancho) / r.numeroCanaletas / b.porCanaleta,
-            c: ce,
-            seccion,
-            pendientePct: Number(pendientePct) || 0,
-            material,
-            capacidadBajanteLs: b.capacidadLs,
-          }}
+          entrada={entradaSim}
           nombreCanal={seccion.nombre}
           altoAltoMm={seccion.altoAltoMm}
           intensidadDiseno={intensidad}
