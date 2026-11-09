@@ -11,6 +11,7 @@ export interface ProyectoGuardado {
   paso: number;
   nombreProyecto: string;
   elaboradoPor?: string;
+  volumenTanque?: number | null;
   institucionTecnico?: string;
   comunidad?: string;
   municipio?: string;

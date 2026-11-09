@@ -60,8 +60,10 @@
       </p>
     {/if}
 
+<div class="bloque">
     <h3>Medidas sugeridas del techo</h3>
     <DibujoTecho {opciones} {aguas} />
+</div>
 
     <p class="nota">
       Este es el balance anual: el agua que cae en la época de lluvia debe guardarse para la época seca. El

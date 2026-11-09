@@ -152,6 +152,7 @@
   </ul>
 
   {#if estacion}
+<div class="bloque">
     <h4>Aguaceros cortos en la estación {estacion.nombre}</h4>
     <p class="nota">
       Intensidad (mm/h) según la duración del aguacero y cada cuántos años se repite. El color indica cómo responde
@@ -183,6 +184,7 @@
       <span><span class="punto amarilla"></span> al límite</span>
       <span><span class="punto roja"></span> rebalsa o se satura la bajante</span>
     </p>
+</div>
   {/if}
 </div>
 

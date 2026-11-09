@@ -45,6 +45,7 @@
         <div><span class="cifra">{n0(lluvia.anualMm)} L</span><span>caen al año sobre cada m² de techo</span></div>
       </div>
       <IlustracionLitro anualMm={lluvia.anualMm} />
+<div class="bloque">
       <h3>Precipitación promedio mensual y precipitación neta (PN) a cosechar (mm)</h3>
       <GraficoMensual
         brutaMm={lluvia.mensualMm}
@@ -64,6 +65,7 @@
         PN = precipitación × Ce − primer descarte, con el techo del paso 3
         ({NOMBRES_TECHO[tipoTecho].toLowerCase()}, Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}, descarte de {descarteMm} mm por lluvia).
       </p>
+</div>
       {#if umbralMm > 0}
         <p class="recomendacion">
           Recomendación: captar la lluvia en los meses con {umbralMm} mm o más de precipitación neta (PN), sobre la línea roja punteada.

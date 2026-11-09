@@ -82,6 +82,8 @@ button:disabled { opacity: 0.6; cursor: progress; }
 /* URLs largas de la bibliografía: que corten línea en el celular */
 #fuentes li, #fuentes a, .resumen td { overflow-wrap: anywhere; }
 
+.bloque { min-width: 0; }
+
 .proyecto-campo { display: grid; gap: 0.35rem; color: var(--texto-suave); font-size: 0.9rem; }
 .principal.grande { font-size: 1.05rem; padding: 0.8rem 1.4rem; }
 
@@ -100,6 +102,12 @@ details.detalle[open] { padding-bottom: 0.75rem; }
 
 /* ---------- Informe PDF (impresión) ---------- */
 @media print {
+  /* Mantener juntos títulos, tablas, gráficas y dibujos; centrar figuras en la hoja */
+  .bloque, .destacado, .intensidad-caja, figure, .resultado, .opciones, .dibujos { break-inside: avoid; page-break-inside: avoid; }
+  figure svg, .bloque > svg { margin-left: auto !important; margin-right: auto !important; }
+  figure { text-align: center; }
+  .tarjeta + .tarjeta { margin-top: 0.4cm; }
+
   /* Formato del informe: Calibri, todo el texto en negro; títulos 16 pt, subtítulos 14 pt, texto 12 pt.
      Las gráficas y dibujos (SVG) conservan sus colores azules. */
   html { font-size: 12pt; }

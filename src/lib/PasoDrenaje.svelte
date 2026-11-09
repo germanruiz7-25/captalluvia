@@ -284,7 +284,7 @@
       <p class="nota">Escribe el largo y el ancho del techo.</p>
     {:else}
       <p class="solo-impresion">
-        Parámetros: techo {techo.nombre.toLowerCase()} de {n1(techo.ancho)} × {n1(techo.largo)} m, intensidad de diseño
+        Parámetros: {techo.nombre === 'Techo existente' ? 'techo existente' : `techo ${techo.nombre.toLowerCase()}`} de {n1(techo.ancho)} × {n1(techo.largo)} m, intensidad de diseño
         {n0(Number(intensidad))} mm/h, C = {ce}, canaleta de {MATERIALES_CANALETA[material].nombre} con
         pendiente de {n1(Number(pendientePct))} %.
       </p>
@@ -330,6 +330,7 @@
 
       <details class="detalle">
         <summary>Ver los canales de PVC del mercado de Guatemala</summary>
+<div class="bloque">
       <h3>Canales de PVC en el mercado de Guatemala</h3>
       <div class="tabla-desplazable">
         <table class="tabla mercado">
@@ -354,6 +355,7 @@
         (se agregan bajantes si hace falta). Se usan las medidas de Amanco Wavin; si eliges Durman, verifica que su
         sección sea igual o mayor. Los fabricantes indican soportes cada 40 a 50 cm y una pendiente mínima de 0.2 %.
       </p>
+</div>
       </details>
 
       {#if seccion && entradaSim}
@@ -368,6 +370,7 @@
 
       <details class="detalle">
         <summary>Ver cómo se calcularon las bajantes y la canaleta</summary>
+<div class="bloque">
       <h3>Bajantes: m² de techo que evacua cada diámetro</h3>
       <div class="tabla-desplazable">
         <table class="tabla">
@@ -394,7 +397,9 @@
         Wavin. «Por canaleta» usa el valor más exigente de los dos. Diámetros menores a {BAJANTE_MINIMA_PRACTICA} (en gris) se
         tapan con facilidad y no se sugieren como mínimo.
       </p>
+</div>
 
+<div class="bloque">
       <h3>Opción 1 · canaleta semicircular: tramo de {n1(r.tramoM)} m con {n2(r.caudalPorTramoLs)} L/s</h3>
       <div class="tabla-desplazable">
         <table class="tabla">
@@ -417,6 +422,7 @@
         Capacidad con la ecuación de Manning, llenando la canaleta hasta 3/4 de su radio (25 % de borde libre).
         Reparte las bajantes a lo largo de la canaleta para que cada una reciba un tramo igual.
       </p>
+</div>
       </details>
 
       <h3>Opción 2 · canal comercial: {seccion?.nombre}</h3>

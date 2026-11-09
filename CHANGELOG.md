@@ -6,11 +6,12 @@ Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado 
 
 ### Agregado
 - **Paso 7 · Tanque de almacenamiento:** balance mes a mes (agua captada con el techo existente o el área mínima, demanda mensual) y volumen por el método del pico secuente (Rippl). Tabla mensual con lluvia, PN, m³ captados, **cuántos tanques se llenan cada mes** y agua guardada al final del mes; gráfica del nivel del tanque.
-- **Volumen que se decide usar** (por ejemplo, 10 m³): la simulación, los tanques y la cisterna se recalculan; se muestra su equivalencia en **barriles de 55 galones (208 L)** con un dibujo de barriles.
+- **Volumen que se decide usar** (por ejemplo, 10 m³): la simulación, los tanques y la cisterna se recalculan; se muestra su equivalencia en **barriles de 55 galones (208 L)** con el dibujo de un barril con agua celeste y el número de unidades adentro (por ejemplo, 15 m³ = 72 barriles). El volumen elegido se guarda con el proyecto.
 - **Opción 1: tanques de polietileno tipo tinaco** (450 a 10,000 L, medidas de 450 a 2,500 L de Rotoplas Centroamérica) con número de tanques y dibujo.
 - **Opción 2: cisterna de block y cemento:** medidas interiores sugeridas (base cuadrada, alto útil editable, 0.30 m de borde libre) o escritas por el usuario (largo × ancho × alto → m³), con dibujo en perspectiva.
 - **Carátula del informe:** "Informe técnico. Proyecto: Diseño y cálculo de Sistema de Captación de Agua de Lluvia – SCALL", lugar (institución, escuela o vivienda) y ubicación (comunidad, municipio, departamento).
 - Paso 1: campos de comunidad, municipio y departamento, con botón para completarlos desde el punto del mapa (Nominatim, punto redondeado a ~100 m).
+- **Diagramación del informe:** títulos, tablas, gráficas y dibujos se mantienen juntos en la misma hoja; figuras centradas; gráfica del tanque con letras legibles al imprimir.
 - **Formato del informe:** Calibri, texto en negro, títulos 16 pt, subtítulos 14 pt y texto 12 pt; gráficas y dibujos en azul.
 - **Autores:** German Alfaro y Francisco Fuentes; cita en formato APA 7.
 - **Elaborado por:** nombre del técnico o responsables del cálculo e institución, en la carátula.

@@ -191,8 +191,8 @@ export function conclusiones(d: DatosInforme): string[] {
     if (secos.length > 0 && captados.length > 0) {
       c.push(
         `Durante ${secos.length} mes${secos.length === 1 ? '' : 'es'} (${listaMeses(secos)}) no se capta lluvia: el agua de la época ` +
-          'lluviosa debe guardarse en un tanque para cubrir la época seca. El volumen del tanque se dimensiona con la ' +
-          'simulación mes a mes (próxima versión de CaptaLluvia).',
+          'lluviosa debe guardarse en un tanque para cubrir la época seca' +
+          (d.tanque ? ' (ver la sección del tanque de almacenamiento).' : '.'),
       );
     }
   }

@@ -29,6 +29,7 @@
   let nombreProyecto = $state(g?.nombreProyecto ?? '');
   let comunidad = $state(g?.comunidad ?? '');
   let elaboradoPor = $state(g?.elaboradoPor ?? '');
+  let volumenTanque: number | null = $state(g?.volumenTanque ?? null);
   let institucionTecnico = $state(g?.institucionTecnico ?? '');
   let municipio = $state(g?.municipio ?? '');
   let departamento = $state(g?.departamento ?? '');
@@ -135,7 +136,7 @@
   // Guardar en el dispositivo cada vez que cambia algo.
   $effect(() => {
     guardarProyecto({
-      paso, nombreProyecto, elaboradoPor, institucionTecnico, comunidad, municipio, departamento, lat, lon, lluvia, tipoTecho, aguas,
+      paso, nombreProyecto, elaboradoPor, volumenTanque, institucionTecnico, comunidad, municipio, departamento, lat, lon, lluvia, tipoTecho, aguas,
       descarteMm: Number(descarteMm) || 0, umbralMm: Number(umbralMm) || 0, areaDisponible, anchoTecho, largoTecho,
       edificio, usuarios, dotacionId, usos: $state.snapshot(usos), diasUso,
     });
@@ -327,6 +328,7 @@
       areaTechoM2={areaDisponible ?? areaNecesaria}
       origenArea={areaDisponible ? 'existente' : 'necesaria'}
       bind:datos={datosTanque}
+      bind:volumenElegido={volumenTanque}
     />
   </div>
   <div class="pantalla" class:activa={paso === 8}>
@@ -488,7 +490,7 @@
   .logos { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; padding-bottom: 0.5rem; border-bottom: 2px solid var(--acento); margin-bottom: 0.75rem; }
   .logo-app { display: flex; align-items: center; gap: 0.5rem; margin-right: auto; font-size: 0.85rem; line-height: 1.25; }
   .logos img { max-height: 3.2rem; max-width: 10rem; object-fit: contain; }
-  .ficha-informe { border-collapse: collapse; margin: 0.5rem 0 1rem; font-size: 0.85rem; }
+  .ficha-informe { border-collapse: collapse; margin: 0.5rem auto 1rem; font-size: 0.85rem; }
   .ficha-informe td { padding: 0.15rem 0.75rem 0.15rem 0; vertical-align: top; }
   .ficha-informe td:first-child { color: var(--texto-suave); white-space: nowrap; }
   .introduccion p { text-align: justify; }

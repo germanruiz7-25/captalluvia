@@ -88,6 +88,7 @@
   {#if !lluvia || !oferta}
     <p class="nota">Completa el paso 1 para ver la lluvia neta.</p>
   {:else}
+<div class="bloque">
     <div class="destacado">
       <span class="cifra">{n0(oferta.netaAnualMm)} L</span>
       <span>
@@ -104,6 +105,7 @@
         <tr class="total"><td>Lluvia neta aprovechable</td><td>{n0(oferta.netaAnualMm)} mm</td></tr>
       </tbody>
     </table>
+</div>
 
     {#if oferta.m3NetosAnual !== null && oferta.m3BrutosAnual !== null}
       <div class="destacado">

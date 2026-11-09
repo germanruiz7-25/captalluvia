@@ -24,6 +24,7 @@
     areaTechoM2,
     origenArea,
     datos = $bindable(null),
+    volumenElegido = $bindable(null),
   }: {
     lluvia: ResumenLluvia | null;
     oferta: ResumenOferta | null;
@@ -31,11 +32,11 @@
     areaTechoM2: number | null;
     origenArea: 'existente' | 'necesaria';
     datos?: DatosTanqueInforme | null;
+    /** Volumen que el diseñador decide usar (m³); vacío = el calculado. */
+    volumenElegido?: number | null;
   } = $props();
 
   let capacidadElegida = $state<number | 'auto'>('auto');
-  // Volumen que el diseñador decide usar (m³); vacío = el calculado
-  let volumenElegido: number | null = $state(null);
   let altoUtil = $state(1.5);
   let largoPropio: number | null = $state(null);
   let anchoPropio: number | null = $state(null);
@@ -68,7 +69,9 @@
   });
 
   const maxNivel = $derived(r ? Math.max(vUsado, ...r.meses.map((m) => m.nivelM3), 0.001) : 1);
-  let anchoGrafico = $state(600);
+  let anchoContenedor = $state(600);
+  // Ancho máximo del dibujo: así las letras no se achican al imprimir
+  const anchoGrafico = $derived(Math.min(anchoContenedor, 680));
   const G = { izq: 44, der: 10, arriba: 14, abajo: 34, alto: 200 };
   const paso = $derived((anchoGrafico - G.izq - G.der) / 12);
   const yDe = (v: number) => G.arriba + (1 - v / maxNivel) * (G.alto - G.arriba - G.abajo);
@@ -127,7 +130,8 @@
       </p>
     {/if}
 
-    <h3>Volumen que se decide usar</h3>
+<div class="bloque">
+    <h3>Volumen adoptado para el tanque</h3>
     <div class="campos no-imprimir">
       <label>Volumen del tanque (m³)
         <input type="number" min="0.5" step="0.5" placeholder={n1(r.volumenM3)} bind:value={volumenElegido} />
@@ -145,8 +149,10 @@
         {/if}
       </span>
     </div>
-    <DibujoBarriles {barriles} />
+    <DibujoBarriles {barriles} volumenM3={vUsado} />
+</div>
 
+<div class="bloque">
     <h3>Opción 1: tanques de polietileno (tipo tinaco)</h3>
     <div class="campos no-imprimir">
       <label>Capacidad de cada tanque
@@ -169,6 +175,8 @@
       {/if}
     {/if}
 
+</div>
+<div class="bloque">
     <h3>Lluvia captada mes a mes</h3>
     <p class="nota">
       Cuántos tanques de {tanque?.capacidadL.toLocaleString('es-GT')} L se llenarían cada mes con el agua captada, y cuánta
@@ -212,8 +220,10 @@
       </table>
     </div>
 
+</div>
+<div class="bloque">
     <h3>Agua en el tanque al final de cada mes</h3>
-    <div class="grafico" bind:clientWidth={anchoGrafico}>
+    <div class="grafico" bind:clientWidth={anchoContenedor}>
       <svg viewBox="0 0 {anchoGrafico} {G.alto}" width={anchoGrafico} height={G.alto} role="img"
         aria-label="Agua guardada en el tanque al final de cada mes">
         {#each [0, 0.5, 1] as f (f)}
@@ -234,7 +244,9 @@
       <span><span class="cuadro azul"></span> agua guardada</span>
       <span><span class="linea"></span> capacidad del tanque ({n1(vUsado)} m³)</span>
     </p>
+</div>
 
+<div class="bloque">
     <h3>Opción 2: cisterna de block y cemento</h3>
     <div class="campos no-imprimir">
       <label>Alto útil del agua (m)
@@ -259,6 +271,7 @@
       </p>
       <DibujoCisterna largoM={cisterna.largoM} anchoM={cisterna.anchoM} altoUtilM={cisterna.altoUtilM} bordeLibreM={cisterna.bordeLibreM} />
     {/if}
+</div>
 
     <details class="detalle">
       <summary>Ver cómo se calculó el tanque</summary>
@@ -290,5 +303,5 @@
   .cuadro.azul { background: #0b63b6; }
   .linea { display: inline-block; width: 1.4rem; border-top: 2px dashed #0b2f52; vertical-align: middle; }
   @media (max-width: 36rem) { .extra { display: none; } }
-  @media print { .extra { display: table-cell !important; } .grafico svg { width: 100%; height: auto; } }
+  @media print { .extra { display: table-cell !important; } .grafico svg { max-width: 100%; height: auto; margin: 0 auto; } }
 </style>
