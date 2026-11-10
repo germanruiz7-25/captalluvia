@@ -40,7 +40,7 @@ jobs:
           # Código del sitio en GoatCounter para contar visitas sin cookies (docs/ANALITICA.md)
           VITE_GOATCOUNTER_CODE: ${{ vars.VITE_GOATCOUNTER_CODE }}
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
