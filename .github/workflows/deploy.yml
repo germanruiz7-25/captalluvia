@@ -39,7 +39,7 @@ jobs:
           VITE_REGISTRO_URL: ${{ vars.VITE_REGISTRO_URL }}
           # Código del sitio en GoatCounter para contar visitas sin cookies (docs/ANALITICA.md)
           VITE_GOATCOUNTER_CODE: ${{ vars.VITE_GOATCOUNTER_CODE }}
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
