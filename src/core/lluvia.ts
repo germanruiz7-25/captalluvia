@@ -12,7 +12,7 @@ export const MESES_LARGOS = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ] as const;
 
-/** Un día cuenta como "día con lluvia" (evento de primer descarte) desde este umbral. */
+/** Un día cuenta como "día con lluvia" desde este umbral. */
 export const UMBRAL_DIA_LLUVIA_MM = 1;
 
 /** Fracción mínima de días con dato para aceptar un mes de un año. */

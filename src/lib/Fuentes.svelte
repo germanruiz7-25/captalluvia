@@ -80,7 +80,7 @@
       lluvia (SCALL) para diversos usos. <em>Agro-Divulgación</em>, 1(0).
       <a href="https://doi.org/10.54767/ad.v1i1.3">doi:10.54767/ad.v1i1.3</a>
     </li>
-    <li>Primer descarte por evento de lluvia: valor de referencia de CaptaLluvia (1 mm por evento, editable).</li>
+    <li>Primer descarte por temporada: no se capta en la época seca (la racha más larga de meses seguidos con menos de {umbralMm} mm de precipitación neta) y esas lluvias lavan el sistema; se capta el resto del año, incluida la canícula (criterio de CaptaLluvia para sistemas artesanales).</li>
     <li>Coeficientes de escorrentía por material del techo: valores de referencia usuales, editables en la app.</li>
     <li>Equivalencia: 1 mm de lluvia sobre 1 m² de superficie = 1 litro de agua.</li>
     <li>

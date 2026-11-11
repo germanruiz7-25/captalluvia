@@ -26,6 +26,9 @@ export const TANQUES_POLIETILENO: TanqueComercial[] = [
   { capacidadL: 2500, diametroM: 1.55, alturaM: 1.6 },
   { capacidadL: 5000, diametroM: null, alturaM: null },
   { capacidadL: 10000, diametroM: null, alturaM: null },
+  { capacidadL: 15000, diametroM: null, alturaM: null },
+  { capacidadL: 22000, diametroM: null, alturaM: null },
+  { capacidadL: 25000, diametroM: null, alturaM: null },
 ];
 
 export const FUENTE_TANQUES =

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { resumirMensualManual } from '../../src/core/lluvia';
-import { calcularOferta } from '../../src/core/oferta';
+import { calcularOferta, epocaSeca } from '../../src/core/oferta';
 import { calcularDemanda, litrosDeUsos, USOS_INICIALES } from '../../src/core/demanda';
 import { areaMinimaM2 } from '../../src/core/techo';
 
@@ -50,6 +50,34 @@ describe('oferta de agua', () => {
     const o = calcularOferta(l, 0.9, 1, null, 0);
     expect(o.perdidaMesesSecosMm).toBe(0);
     expect(o.mesesCaptados[2]).toBe(true);
+  });
+  it('época seca: no se capta y sus lluvias lavan el sistema; el resto del año sí se capta', () => {
+    // Guatemala: época seca de noviembre a abril, temporada de mayo a octubre
+    const l = resumirMensualManual([3, 3, 9, 36, 171, 270, 202, 211, 300, 233, 30, 9], 120);
+    const o = calcularOferta(l, 0.9, 0);
+    expect(o.inicioCaptacion).toBe(4);
+    expect(o.mesesLavado).toEqual([10, 11, 0, 1, 2, 3]);
+    expect(o.lavadoMm).toBe(90);
+    expect(o.perdidaMesesSecosMm).toBe(90);
+    expect(o.mesesCaptados).toEqual([false, false, false, false, true, true, true, true, true, true, false, false]);
+    // canícula: un mes bajo el umbral a mitad de la temporada sí se capta
+    const c = calcularOferta(resumirMensualManual([0, 0, 0, 0, 200, 200, 30, 200, 200, 200, 0, 0], 100), 0.9, 0);
+    expect(c.mesesCaptados[6]).toBe(true);
+    expect(c.netaMensualMm[6]).toBeCloseTo(27, 6);
+    expect(c.mesesLavado).toEqual([10, 11, 0, 1, 2, 3]);
+    // temporada que empieza en diciembre (hemisferio sur)
+    const sur = calcularOferta(resumirMensualManual([200, 200, 200, 100, 0, 0, 0, 0, 0, 10, 30, 200], 100), 0.9, 0);
+    expect(sur.inicioCaptacion).toBe(11);
+    expect(sur.mesesLavado).toEqual([4, 5, 6, 7, 8, 9, 10]);
+    // todos los meses superan el umbral: se captan los 12
+    const humedo = calcularOferta(resumirMensualManual(Array(12).fill(100), 100), 0.9, 0);
+    expect(humedo.mesesLavado).toEqual([]);
+    expect(humedo.mesesCaptados.every(Boolean)).toBe(true);
+  });
+  it('la época seca es la racha más larga bajo el umbral', () => {
+    expect(epocaSeca([true, true, true, false, false, false, true, false, false, false, false, true])).toEqual([11, 0, 1, 2]);
+    expect(epocaSeca(Array(12).fill(false))).toEqual([]);
+    expect(epocaSeca(Array(12).fill(true))).toHaveLength(12);
   });
   it('un mes nunca queda negativo', () => {
     const seco = resumirMensualManual([2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 5);

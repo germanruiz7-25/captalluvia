@@ -2,6 +2,18 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.7.0] — 2026-11-11
+
+### Cambiado
+- **Temporada de captación y primer descarte:** se quitó el descarte de 1 mm en cada lluvia. Ahora no se capta en la **época seca** (la racha más larga de meses seguidos con menos de 40 mm de precipitación neta, p. ej. noviembre a abril) y esas lluvias lavan el techo, las canaletas y el tanque; se capta todo el resto del año, incluidos los meses de la temporada lluviosa que bajen de 40 mm (canícula). Sin dispositivo de descarte, más sencillo en sistemas artesanales. El paso 3 y el informe muestran la época seca y sus milímetros.
+
+### Corregido
+- **Enviar por correo:** Chrome, Edge y los navegadores basados en Chromium (Android, Windows) no permiten compartir archivos de Word y daban error. Ahora el botón "Compartir" solo aparece en Safari (iPhone, iPad, Mac), donde sí funciona; en los demás se usa "Descargar el Word y abrir mi correo".
+
+### Agregado
+- **Tanques de polietileno de 15,000, 22,000 y 25,000 L** en la opción 1 del paso 7 (medidas según fabricante).
+- 4 pruebas nuevas (131 en total).
+
 ## [0.6.1] — 2026-11-10
 
 ### Corregido

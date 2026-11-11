@@ -2,14 +2,13 @@
   import { COEFICIENTES_ESCORRENTIA, NOMBRES_TECHO, type NumeroAguas, type TipoTecho } from '../core/techo';
   import type { ResumenOferta } from '../core/oferta';
   import GraficoMensual from './GraficoMensual.svelte';
-  import { MESES, type ResumenLluvia } from '../core/lluvia';
+  import { MESES, MESES_LARGOS, type ResumenLluvia } from '../core/lluvia';
 
   let {
     lluvia,
     oferta,
     tipoTecho = $bindable(),
     aguas = $bindable(),
-    descarteMm = $bindable(),
     anchoTecho = $bindable(),
     largoTecho = $bindable(),
     areaDisponible = null,
@@ -19,15 +18,23 @@
     oferta: ResumenOferta | null;
     tipoTecho: TipoTecho;
     aguas: NumeroAguas;
-    descarteMm: number;
     anchoTecho: number | null;
     largoTecho: number | null;
     areaDisponible?: number | null;
     umbralMm: number;
   } = $props();
 
-  const mesesSecos = $derived(
-    lluvia && oferta ? oferta.mesesCaptados.flatMap((c, i) => (!c && lluvia.mensualMm[i] > 0 ? [MESES[i]] : [])) : [],
+  /** Meses de las primeras lluvias (primer descarte por temporada), p. ej. "Ene–Abr". */
+  const mesesLavadoTexto = $derived.by(() => {
+    const m = oferta?.mesesLavado ?? [];
+    if (!m.length) return '';
+    return m.length === 1 ? MESES[m[0]] : `${MESES[m[0]]}–${MESES[m[m.length - 1]]}`;
+  });
+  /** Otros meses sin captar (fin de temporada, canícula). */
+  const otrosSecos = $derived(
+    lluvia && oferta
+      ? oferta.mesesCaptados.flatMap((c, i) => (!c && !oferta.mesesLavado.includes(i) && lluvia.mensualMm[i] > 0 ? [MESES[i]] : []))
+      : [],
   );
 
   const tipos = Object.keys(COEFICIENTES_ESCORRENTIA) as TipoTecho[];
@@ -52,9 +59,6 @@
         <option value={2}>Dos aguas (cumbrera al centro)</option>
         <option value={1}>Un agua (una sola pendiente)</option>
       </select>
-    </label>
-    <label>Primer descarte por lluvia (mm)
-      <input type="number" min="0" max="5" step="0.5" bind:value={descarteMm} />
     </label>
     <label>Captar desde (mm de PN al mes)
       <input type="number" min="0" max="300" step="5" bind:value={umbralMm} />
@@ -82,7 +86,7 @@
 
   <p class="solo-impresion">
     Techo de {NOMBRES_TECHO[tipoTecho].toLowerCase()} (Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}),
-    {aguas === 2 ? 'dos aguas' : 'un agua'}, primer descarte de {n1(descarteMm)} mm por lluvia, captación en meses con {n0(umbralMm)} mm o más de precipitación neta{#if areaDisponible}, techo existente de {n1(Number(anchoTecho))} × {n1(Number(largoTecho))} m = {n1(areaDisponible)} m²{/if}.
+    {aguas === 2 ? 'dos aguas' : 'un agua'}, captación en la temporada de lluvia{#if oferta?.mesesLavado.length}; en la época seca ({mesesLavadoTexto}, menos de {n0(umbralMm)} mm de precipitación neta al mes) no se capta y sus lluvias lavan el sistema{/if}{#if areaDisponible}, techo existente de {n1(Number(anchoTecho))} × {n1(Number(largoTecho))} m = {n1(areaDisponible)} m²{/if}.
   </p>
 
   {#if !lluvia || !oferta}
@@ -99,12 +103,28 @@
     <table class="cascada">
       <tbody>
         <tr><td>Lluvia que cae al año</td><td>{n0(oferta.brutaAnualMm)} mm</td></tr>
-        <tr><td>− Meses con PN menor a {n0(oferta.umbralMm)} mm, no se captan{mesesSecos.length ? ` (${mesesSecos.join(', ')})` : ''}</td><td>−{n0(oferta.perdidaMesesSecosMm)} mm</td></tr>
+        {#if oferta.mesesLavado.length}
+          <tr><td>− Época seca ({mesesLavadoTexto}): no se capta; sus lluvias lavan techo, canaletas y tanque (primer descarte)</td><td>−{n0(oferta.lavadoMm)} mm</td></tr>
+        {/if}
+        {#if oferta.perdidaMesesSecosMm - oferta.lavadoMm > 0.5}
+          <tr><td>− {oferta.mesesLavado.length ? 'Otros meses' : 'Meses'} con PN menor a {n0(oferta.umbralMm)} mm, no se captan{otrosSecos.length ? ` (${otrosSecos.join(', ')})` : ''}</td><td>−{n0(oferta.perdidaMesesSecosMm - oferta.lavadoMm)} mm</td></tr>
+        {/if}
         <tr><td>− Pérdida por el material del techo (Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}, {NOMBRES_TECHO[tipoTecho].toLowerCase()})</td><td>−{n0(oferta.perdidaEscorrentiaMm)} mm</td></tr>
-        <tr><td>− Primer descarte ({n1(descarteMm)} mm por cada día con lluvia de los meses captados)</td><td>−{n0(oferta.perdidaDescarteMm)} mm</td></tr>
         <tr class="total"><td>Lluvia neta aprovechable</td><td>{n0(oferta.netaAnualMm)} mm</td></tr>
       </tbody>
     </table>
+    <p class="nota informe">
+      {#if oferta.mesesLavado.length}
+        Se capta de {oferta.inicioCaptacion !== null ? MESES_LARGOS[oferta.inicioCaptacion].toLowerCase() : ''} a
+        {MESES_LARGOS[(oferta.mesesLavado[0] + 11) % 12].toLowerCase()} (temporada de lluvia), incluidos los meses de
+        la temporada que bajen de {n0(oferta.umbralMm)} mm, como la canícula. En la época seca ({mesesLavadoTexto},
+        meses seguidos con menos de {n0(oferta.umbralMm)} mm de precipitación neta) no se capta: esas lluvias,
+        {n0(oferta.lavadoMm)} mm, se dejan correr para lavar el techo, las canaletas y el tanque (primer descarte).
+      {:else}
+        Todos los meses superan {n0(oferta.umbralMm)} mm de precipitación neta: para lavar el sistema, deja correr la
+        primera lluvia después de cada periodo sin lluvia antes de conectar la bajante al tanque.
+      {/if}
+    </p>
 </div>
 
     {#if oferta.m3NetosAnual !== null && oferta.m3BrutosAnual !== null}

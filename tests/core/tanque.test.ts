@@ -56,7 +56,9 @@ describe('tanque de almacenamiento', () => {
     expect(tanqueSugerido(1).capacidadL).toBe(450); // 3 de 450
     expect(tanqueSugerido(8).capacidadL).toBe(2500); // 4 de 2,500
     expect(tanqueSugerido(36).capacidadL).toBe(10000); // 4 de 10,000
-    expect(tanqueSugerido(100).capacidadL).toBe(10000);
+    expect(tanqueSugerido(55).capacidadL).toBe(15000); // 4 de 15,000
+    expect(tanqueSugerido(100).capacidadL).toBe(25000); // 4 de 25,000
+    expect(tanqueSugerido(500).capacidadL).toBe(25000); // el más grande si ninguno alcanza con 4
   });
 
   it('cisterna de base cuadrada con altura útil y borde libre', () => {
