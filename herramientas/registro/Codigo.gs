@@ -22,8 +22,8 @@ const HOJAS = {
   },
   informe: {
     nombre: 'Informes',
-    columnas: ['Fecha', 'ID instalación', 'Departamento', 'Municipio', 'Infraestructura', 'Usuarios', 'Volumen tanque (m³)', 'Versión app'],
-    valores: (ev) => [ev.datos.departamento, ev.datos.municipio, ev.datos.infraestructura, ev.datos.usuarios, ev.datos.volumenM3, ev.version],
+    columnas: ['Fecha', 'ID instalación', 'Departamento', 'Municipio', 'Infraestructura', 'Usuarios', 'Volumen tanque (m³)', 'Versión app', 'Formato'],
+    valores: (ev) => [ev.datos.departamento, ev.datos.municipio, ev.datos.infraestructura, ev.datos.usuarios, ev.datos.volumenM3, ev.version, ev.datos.formato || 'pdf'],
   },
 };
 

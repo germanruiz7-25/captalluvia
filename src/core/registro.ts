@@ -156,7 +156,15 @@ export function eventoRegistro(r: Registro): Evento {
 export function eventoInforme(
   r: Registro,
   version: string,
-  p: { pais?: string; departamento: string; municipio: string; infraestructura: string; usuarios: number; volumenM3?: number | null },
+  p: {
+    pais?: string;
+    departamento: string;
+    municipio: string;
+    infraestructura: string;
+    usuarios: number;
+    volumenM3?: number | null;
+    formato?: 'pdf' | 'word';
+  },
   ahora = new Date(),
 ): Evento {
   return {
@@ -170,6 +178,7 @@ export function eventoInforme(
       infraestructura: p.infraestructura,
       usuarios: Math.round(p.usuarios),
       volumenM3: p.volumenM3 != null ? Math.round(p.volumenM3 * 10) / 10 : '',
+      formato: p.formato ?? 'pdf',
     },
   };
 }

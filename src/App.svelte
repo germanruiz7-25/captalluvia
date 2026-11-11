@@ -29,6 +29,7 @@
   import InformeResumen from './lib/InformeResumen.svelte';
   import { redondearCoordenada } from './core/openmeteo';
   import Registro from './lib/Registro.svelte';
+  import EnviarInforme from './lib/EnviarInforme.svelte';
   import { contar } from './core/visitas';
   import {
     URL_REGISTRO,
@@ -333,21 +334,58 @@
 
   const fecha = new Date().toLocaleDateString('es-GT', { year: 'numeric', month: 'long', day: 'numeric' });
 
+  const nombreInforme = $derived(`Informe CaptaLluvia${nombreProyecto ? ' - ' + nombreProyecto : ''} - ${new Date().toISOString().slice(0, 10)}`);
+  const citaApa = acerca.citaPlantilla.replace('{anio}', String(new Date().getFullYear())).replace('{version}', version);
+
+  function avisarInforme(formato: 'pdf' | 'word') {
+    if (!registro) return;
+    void encolarYEnviar(
+      URL_REGISTRO,
+      eventoInforme(registro, version, {
+        departamento,
+        municipio,
+        infraestructura: EDIFICIOS[edificio].nombre,
+        usuarios: demanda.usuarios,
+        volumenM3: datosTanque?.volumenM3 ?? null,
+        formato,
+      }),
+    ).then((n) => (pendientes = n));
+  }
+
+  // ---------- Informe en Word (editable) ----------
+  let preparandoWord = $state(false);
+  let errorWord = $state('');
+  async function generarWord(): Promise<Blob> {
+    const { generarInformeWord } = await import('./lib/informeWord');
+    const blob = await generarInformeWord({ titulo: nombreInforme, cita: citaApa, autor: elaboradoPor || acerca.nombre });
+    avisarInforme('word');
+    contar('informe-word', { titulo: 'Informe Word generado', evento: true });
+    return blob;
+  }
+  async function descargarWord() {
+    preparandoWord = true;
+    errorWord = '';
+    try {
+      const blob = await generarWord();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${nombreInforme.replace(/[\\/:*?"<>|]/g, '-')}.docx`;
+      document.body.append(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    } catch (e) {
+      errorWord = 'No se pudo generar el Word: ' + (e instanceof Error ? e.message : String(e));
+    } finally {
+      preparandoWord = false;
+    }
+  }
+  let mostrarEnviar = $state(false);
+
   function descargarInforme() {
     const titulo = document.title;
-    document.title = `Informe CaptaLluvia${nombreProyecto ? ' - ' + nombreProyecto : ''} - ${new Date().toISOString().slice(0, 10)}`;
-    if (registro) {
-      void encolarYEnviar(
-        URL_REGISTRO,
-        eventoInforme(registro, version, {
-          departamento,
-          municipio,
-          infraestructura: EDIFICIOS[edificio].nombre,
-          usuarios: demanda.usuarios,
-          volumenM3: datosTanque?.volumenM3 ?? null,
-        }),
-      );
-    }
+    document.title = nombreInforme;
+    avisarInforme('pdf');
     contar('informe-pdf', { titulo: 'Informe PDF descargado', evento: true });
     window.print();
     document.title = titulo;
@@ -549,6 +587,25 @@
       </div>
       <div class="acciones">
         <button class="principal grande" onclick={descargarInforme} disabled={!oferta}>📄 Descargar informe en PDF</button>
+        <button class="secundario" onclick={descargarWord} disabled={!oferta || preparandoWord}>
+          {preparandoWord ? 'Preparando el Word…' : '📝 Descargar en Word (editable)'}
+        </button>
+        <button class="secundario" onclick={() => (mostrarEnviar = !mostrarEnviar)} disabled={!oferta} aria-expanded={mostrarEnviar}>✉️ Enviar por correo</button>
+      </div>
+      {#if errorWord}<p class="alerta">{errorWord}</p>{/if}
+      <p class="nota">
+        El Word se puede modificar; si lo haces, conserva la referencia a CaptaLluvia que va al pie de cada hoja:
+        {citaApa}
+      </p>
+      {#if mostrarEnviar}
+        <EnviarInforme
+          {generarWord}
+          nombreArchivo={`${nombreInforme.replace(/[\\/:*?"<>|]/g, '-')}.docx`}
+          asuntoInicial={`Informe técnico SCALL – ${lugarInforme}`}
+          mensajeInicial={`Le comparto el informe técnico del diseño del sistema de captación de agua de lluvia (SCALL) para ${lugarInforme}${ubicacionTexto ? `, ${ubicacionTexto}` : ''}.\n\nElaborado con CaptaLluvia: ${citaApa}`}
+        />
+      {/if}
+      <div class="acciones">
         <button class="secundario" onclick={guardarArchivo}>💾 Guardar el proyecto (archivo)</button>
         <button class="secundario" onclick={() => (confirmarNuevo = true)}>🆕 Nuevo cálculo</button>
       </div>

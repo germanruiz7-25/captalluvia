@@ -45,6 +45,11 @@ app, limita el largo de cada dato y evita fórmulas en las celdas.
 
 ## 5. Cambiar el código después
 
+**Desde la versión 0.6.0** la pestaña "Informes" tiene la columna **Formato** (PDF o Word). Si tu hoja ya
+existía, escribe `Formato` en la celda **I1** de "Informes" y actualiza el código con el `Codigo.gs` nuevo
+(pasos de abajo). Si no lo actualizas, todo sigue funcionando; solo no se anota el formato.
+
+
 Si editas `Codigo.gs`, usa **Implementar → Gestionar implementaciones → lápiz → Versión: Nueva versión →
 Implementar**. Así la URL no cambia y no hay que tocar GitHub.
 
@@ -53,7 +58,7 @@ Implementar**. Así la URL no cambia y no hay que tocar GitHub.
 | Pestaña | Una fila por | Columnas |
 | --- | --- | --- |
 | Registros | persona registrada (por dispositivo) | fecha, ID de instalación, nombre, correo, institución, uso, país, departamento, municipio, versión, política |
-| Informes | informe descargado | fecha, ID de instalación, departamento, municipio, infraestructura, usuarios, volumen del tanque, versión |
+| Informes | informe descargado (PDF o Word) | fecha, ID de instalación, departamento, municipio, infraestructura, usuarios, volumen del tanque, versión, formato |
 
 Con el **ID de instalación** se cruzan ambas pestañas (por ejemplo, informes por institución con una
 tabla dinámica). Si una persona pide borrar su registro desde la app (paso 8 → "Tus datos y tu

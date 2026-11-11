@@ -13,10 +13,13 @@ Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado 
   - **Escribir promedios** a mano ahora pide nombre, coordenadas y años de registro de la estación.
 - En el informe: tabla de estaciones usadas (coordenadas, distancia, periodo, años, peso), fuente y advertencia si hay menos de 10 años; bibliografía con cada estación.
 - **Guardar el proyecto en un archivo** (`.captalluvia.json`) y **abrirlo** después desde el paso 1, en el mismo u otro dispositivo, con todo el cálculo.
+- **Informe en Word (.docx) editable**, generado en el dispositivo con el mismo contenido del PDF (tablas, gráficas, dibujos y mapas como imágenes), en Calibri; al pie de cada hoja: "Si modifica este documento, conserve la referencia" con la cita APA.
+- **Enviar por correo** desde la cuenta de la propia persona: "Compartir" con el Word adjunto (celulares y equipos compatibles) o "Descargar el Word y abrir mi correo" con destinatarios, asunto y mensaje ya escritos. CaptaLluvia no envía correos.
+- El aviso de informe a la hoja de registros indica el formato (PDF o Word); nueva columna "Formato" en `Codigo.gs`.
 - **Nuevo cálculo** en el paso 8: ofrece guardar el proyecto y vuelve al paso 1 con todo en blanco (el registro se conserva).
 - **Acerca de** en el encabezado abre una ventana con la información de la herramienta; el logotipo del ICC enlaza a icc.org.gt.
 - Estado de la conexión con la hoja de registros y envíos pendientes en "Tus datos y tu registro", con "Reintentar ahora".
-- 16 pruebas nuevas (130 en total).
+- 16 pruebas nuevas (130 en total); prueba de punta a punta que genera el Word y lo abre en LibreOffice.
 
 ### Corregido
 - Carátula: "Lugar" muestra el nombre escrito; si no hay, "Vivienda familiar" para viviendas o el tipo de edificio. El nombre se puede escribir o corregir también en el paso 8.
