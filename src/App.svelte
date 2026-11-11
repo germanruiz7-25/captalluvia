@@ -3,7 +3,7 @@
   import type { ResumenLluvia } from './core/lluvia';
   import { calcularOferta, UMBRAL_CAPTACION_MM } from './core/oferta';
   import { calcularDemanda, DOTACIONES, EDIFICIOS, USOS_INICIALES, litrosDeUsos, type TipoEdificio, type UsoAgua } from './core/demanda';
-  import { COEFICIENTES_ESCORRENTIA, NOMBRES_TECHO, areaMinimaM2, opcionesDeTecho, type NumeroAguas, type TipoTecho } from './core/techo';
+  import { COEFICIENTES_ESCORRENTIA, EFICIENCIA_CAPTACION, NOMBRES_TECHO, areaMinimaM2, opcionesDeTecho, type NumeroAguas, type TipoTecho } from './core/techo';
   import { onMount } from 'svelte';
   import {
     EXTENSION_ARCHIVO,
@@ -118,6 +118,7 @@
   let dotacionId = $state(g?.dotacionId ?? DOTACIONES[edificioInicial][0].id);
   let usos: UsoAgua[] = $state(g?.usos ?? USOS_INICIALES[edificioInicial].map((u) => ({ ...u })));
   let diasUso = $state(g?.diasUso ?? EDIFICIOS[edificioInicial].diasUso);
+  let diasCriticos = $state(g?.diasCriticos ?? EDIFICIOS[edificioInicial].diasCriticos);
 
   // ---------- Asistente por pasos ----------
   const PASOS = [
@@ -169,7 +170,7 @@
 
   const oferta = $derived(
     lluvia
-      ? calcularOferta(lluvia, COEFICIENTES_ESCORRENTIA[tipoTecho], Number(descarteMm) || 0, areaDisponible, Number(umbralMm) || 0)
+      ? calcularOferta(lluvia, COEFICIENTES_ESCORRENTIA[tipoTecho], Number(descarteMm) || 0, areaDisponible, Number(umbralMm) || 0, EFICIENCIA_CAPTACION)
       : null,
   );
   const litrosPorUsuario = $derived(
@@ -177,7 +178,7 @@
       ? litrosDeUsos(usos)
       : (DOTACIONES[edificio].find((d) => d.id === dotacionId)?.litros ?? 0),
   );
-  const demanda = $derived(calcularDemanda(usuarios, litrosPorUsuario, diasUso));
+  const demanda = $derived(calcularDemanda(usuarios, litrosPorUsuario, diasUso, diasCriticos));
   const areaNecesaria = $derived.by(() => {
     const exacta = oferta ? areaMinimaM2(demanda.m3Anual, oferta.netaAnualMm) : null;
     return exacta === null || demanda.m3Anual <= 0 ? null : Math.ceil(exacta - 1e-9);
@@ -207,7 +208,7 @@
       paso, nombreProyecto, elaboradoPor, volumenTanque, institucionTecnico, comunidad, municipio, departamento, lat, lon,
       lluvia: $state.snapshot(lluvia), tipoTecho, aguas,
       descarteMm: Number(descarteMm) || 0, umbralMm: Number(umbralMm) || 0, areaDisponible, anchoTecho, largoTecho,
-      edificio, usuarios, dotacionId, usos: $state.snapshot(usos), diasUso,
+      edificio, usuarios, dotacionId, usos: $state.snapshot(usos), diasUso, diasCriticos,
     };
   }
 
@@ -312,6 +313,7 @@
     techo: {
       material: NOMBRES_TECHO[tipoTecho],
       ce: COEFICIENTES_ESCORRENTIA[tipoTecho],
+      efc: EFICIENCIA_CAPTACION,
       aguas,
       descarteMm: 0,
       lavado: oferta && oferta.mesesLavado.length ? { meses: oferta.mesesLavado, mm: oferta.lavadoMm } : null,
@@ -326,6 +328,9 @@
       litrosPorUsuarioDia: demanda.litrosPorUsuarioDia,
       diasUso: demanda.diasUso,
       m3Anual: demanda.m3Anual,
+      m3Mensual: demanda.m3Mensual,
+      diasCriticos: demanda.diasCriticos,
+      m3Critico: demanda.m3Critico,
     },
     areaNecesariaM2: areaNecesaria,
     drenaje: datosDrenaje,
@@ -535,7 +540,7 @@
     <PasoTecho {lluvia} {oferta} bind:tipoTecho bind:aguas bind:anchoTecho bind:largoTecho {areaDisponible} bind:umbralMm />
   </div>
   <div class="pantalla" class:activa={paso === 4}>
-    <PasoUsuarios bind:edificio bind:usuarios bind:dotacionId bind:usos bind:diasUso {demanda} />
+    <PasoUsuarios bind:edificio bind:usuarios bind:dotacionId bind:usos bind:diasUso bind:diasCriticos {demanda} />
   </div>
   <div class="pantalla" class:activa={paso === 5}>
     <PasoResultados {oferta} {demanda} {aguas} {techoExistente} />
@@ -547,7 +552,7 @@
     <PasoTanque
       {lluvia}
       {oferta}
-      demandaAnualM3={demanda.m3Anual}
+      {demanda}
       areaTechoM2={areaDisponible ?? areaNecesaria}
       origenArea={areaDisponible ? 'existente' : 'necesaria'}
       bind:datos={datosTanque}

@@ -32,6 +32,8 @@ export interface ProyectoGuardado {
   dotacionId: string;
   usos: { nombre: string; litros: number }[];
   diasUso: number;
+  /** Días de consumo a garantizar con el tanque en la época seca (desde v0.8.0). */
+  diasCriticos?: number;
 }
 
 type Almacen = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;

@@ -47,9 +47,9 @@ export const FUENTE_IDF_ICC = {
 };
 
 export const FUENTE_IDF_BARDALES = {
-  corta: 'Bardales, W. — IDF Guatemala (Sherman)',
+  corta: 'Bardales, W. (2025) — IDF Guatemala (Sherman)',
   cita:
-    'Bardales, W. (s. f.). IDF_Guatemala_Sherman: curvas IDF de Guatemala con la ecuación de Sherman ' +
+    'Bardales, W. (2025). IDF_Guatemala_Sherman: curvas IDF de Guatemala con la ecuación de Sherman ' +
     '[aplicación de Google Earth Engine].',
   url: 'https://ee-bardaleswa.projects.earthengine.app/view/idfguatemalasherman',
 };

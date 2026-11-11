@@ -60,8 +60,9 @@
         {/if}
       </p>
       <p class="nota informe">
-        PN = precipitación × Ce, con el techo del paso 3 ({NOMBRES_TECHO[tipoTecho].toLowerCase()},
-        Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}). Las lluvias de la época seca (meses seguidos con PN menor a
+        PN = precipitación × Cc, con el coeficiente de captación Cc = Ce × Efc del techo del paso 3
+        ({NOMBRES_TECHO[tipoTecho].toLowerCase()}: {COEFICIENTES_ESCORRENTIA[tipoTecho]} × 0.85 =
+        {(COEFICIENTES_ESCORRENTIA[tipoTecho] * 0.85).toLocaleString('es-GT', { maximumFractionDigits: 3 })}). Las lluvias de la época seca (meses seguidos con PN menor a
         {umbralMm} mm) no se captan: lavan el sistema (primer descarte por temporada).
       </p>
 </div>

@@ -85,7 +85,7 @@
   </fieldset>
 
   <p class="solo-impresion">
-    Techo de {NOMBRES_TECHO[tipoTecho].toLowerCase()} (Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}),
+    Techo de {NOMBRES_TECHO[tipoTecho].toLowerCase()} (Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}, coeficiente de captación Ce × 0.85),
     {aguas === 2 ? 'dos aguas' : 'un agua'}, captación en la temporada de lluvia{#if oferta?.mesesLavado.length}; en la época seca ({mesesLavadoTexto}, menos de {n0(umbralMm)} mm de precipitación neta al mes) no se capta y sus lluvias lavan el sistema{/if}{#if areaDisponible}, techo existente de {n1(Number(anchoTecho))} × {n1(Number(largoTecho))} m = {n1(areaDisponible)} m²{/if}.
   </p>
 
@@ -109,10 +109,17 @@
         {#if oferta.perdidaMesesSecosMm - oferta.lavadoMm > 0.5}
           <tr><td>− {oferta.mesesLavado.length ? 'Otros meses' : 'Meses'} con PN menor a {n0(oferta.umbralMm)} mm, no se captan{otrosSecos.length ? ` (${otrosSecos.join(', ')})` : ''}</td><td>−{n0(oferta.perdidaMesesSecosMm - oferta.lavadoMm)} mm</td></tr>
         {/if}
-        <tr><td>− Pérdida por el material del techo (Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}, {NOMBRES_TECHO[tipoTecho].toLowerCase()})</td><td>−{n0(oferta.perdidaEscorrentiaMm)} mm</td></tr>
+        <tr><td>− Pérdida por el material del techo (Ce {oferta.ce}, {NOMBRES_TECHO[tipoTecho].toLowerCase()})</td><td>−{n0(oferta.perdidaEscorrentiaMm)} mm</td></tr>
+        <tr><td>− Pérdida en la conducción: salpicadura, rebalse y fugas (eficiencia de captación Efc {Math.round(oferta.efc * 100)} %)</td><td>−{n0(oferta.perdidaEficienciaMm)} mm</td></tr>
         <tr class="total"><td>Lluvia neta aprovechable</td><td>{n0(oferta.netaAnualMm)} mm</td></tr>
       </tbody>
     </table>
+    <p class="nota informe formula">
+      Precipitación neta de cada mes: <strong>PN = P × Cc</strong>, con el coeficiente de captación
+      <strong>Cc = Ce × Efc = {oferta.ce} × {oferta.efc} = {oferta.cc.toLocaleString('es-GT', { maximumFractionDigits: 3 })}</strong>.
+      Ce es el coeficiente de escorrentía del material del techo (de 0 a 0.9 según su rugosidad y absorción) y Efc la
+      eficiencia de captación de lluvia (85 %).
+    </p>
     <p class="nota informe">
       {#if oferta.mesesLavado.length}
         Se capta de {oferta.inicioCaptacion !== null ? MESES_LARGOS[oferta.inicioCaptacion].toLowerCase() : ''} a

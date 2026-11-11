@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { resumirMensualManual } from '../../src/core/lluvia';
 import { calcularOferta, epocaSeca } from '../../src/core/oferta';
 import { calcularDemanda, litrosDeUsos, USOS_INICIALES } from '../../src/core/demanda';
-import { areaMinimaM2 } from '../../src/core/techo';
+import { areaMinimaM2, coeficienteCaptacion } from '../../src/core/techo';
 
 const lluvia = resumirMensualManual([0, 0, 0, 0, 200, 200, 100, 100, 200, 200, 100, 100], 110);
 
@@ -42,7 +42,7 @@ describe('oferta de agua', () => {
     expect(o.perdidaMesesSecosMm).toBe(30);
     expect(o.netaMensualMm[2]).toBe(0);
     // la suma de pérdidas y neta reconstruye la lluvia bruta
-    const total = o.perdidaMesesSecosMm + o.perdidaEscorrentiaMm + o.perdidaDescarteMm + o.netaAnualMm;
+    const total = o.perdidaMesesSecosMm + o.perdidaEscorrentiaMm + o.perdidaEficienciaMm + o.perdidaDescarteMm + o.netaAnualMm;
     expect(total).toBeCloseTo(o.brutaAnualMm, 6);
   });
   it('con umbral 0 se capta todo mes con lluvia', () => {
@@ -78,6 +78,18 @@ describe('oferta de agua', () => {
     expect(epocaSeca([true, true, true, false, false, false, true, false, false, false, false, true])).toEqual([11, 0, 1, 2]);
     expect(epocaSeca(Array(12).fill(false))).toEqual([]);
     expect(epocaSeca(Array(12).fill(true))).toHaveLength(12);
+  });
+  it('PN = P × Ce × Efc (coeficiente de captación)', () => {
+    const l = resumirMensualManual([5, 5, 10, 40, 478.1, 250, 200, 200, 280, 220, 60, 10], 120);
+    const o = calcularOferta(l, 0.9, 0, 100, 40, 0.85);
+    expect(o.cc).toBeCloseTo(0.765, 9);
+    expect(o.pnMensualMm[4]).toBeCloseTo(365.7465, 6);
+    expect(o.netaMensualMm[4]).toBeCloseTo(365.7465, 6);
+    const total = o.perdidaMesesSecosMm + o.perdidaEscorrentiaMm + o.perdidaEficienciaMm + o.perdidaDescarteMm + o.netaAnualMm;
+    expect(total).toBeCloseTo(o.brutaAnualMm, 6);
+    expect(o.perdidaEficienciaMm).toBeGreaterThan(0);
+    expect(coeficienteCaptacion('lamina_metalica')).toBeCloseTo(0.765, 9);
+    expect(coeficienteCaptacion('cesped')).toBeCloseTo(0.255, 9);
   });
   it('un mes nunca queda negativo', () => {
     const seco = resumirMensualManual([2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 5);

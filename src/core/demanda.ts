@@ -10,6 +10,9 @@ export interface DatosEdificio {
   /** Días de uso al año por defecto (editable). */
   diasUso: number;
   notaDias: string;
+  /** Días de consumo a garantizar con el tanque en la época seca (periodo crítico), por defecto. */
+  diasCriticos: number;
+  notaCriticos: string;
 }
 
 export const EDIFICIOS: Record<TipoEdificio, DatosEdificio> = {
@@ -18,18 +21,24 @@ export const EDIFICIOS: Record<TipoEdificio, DatosEdificio> = {
     usuarios: 'Habitantes',
     diasUso: 365,
     notaDias: 'Uso todo el año.',
+    diasCriticos: 60,
+    notaCriticos: 'Dos meses (60 días) de los más secos del año, por ejemplo marzo y abril.',
   },
   escuela: {
     nombre: 'Escuela',
     usuarios: 'Alumnos, docentes y personal',
     diasUso: 180,
     notaDias: 'Guatemala establece un mínimo de 180 días de clase al año. Ajusta según tu calendario.',
+    diasCriticos: 40,
+    notaCriticos: 'Unos 40 días de clase de los meses más secos (por ejemplo marzo y abril).',
   },
   institucion: {
     nombre: 'Institución u otro',
     usuarios: 'Usuarios diarios',
     diasUso: 250,
     notaDias: 'Días hábiles aproximados; ajústalos a tu caso.',
+    diasCriticos: 44,
+    notaCriticos: 'Unos 44 días hábiles de los dos meses más secos.',
   },
 };
 
@@ -84,23 +93,40 @@ export function litrosDeUsos(usos: UsoAgua[]): number {
   return usos.reduce((t, u) => t + Math.max(0, Number(u.litros) || 0), 0);
 }
 
+/** Días promedio de un mes (365 ÷ 12). */
+export const DIAS_MES = 30.4;
+
 export interface ResumenDemanda {
   usuarios: number;
   litrosPorUsuarioDia: number;
   diasUso: number;
   litrosDia: number;
+  /** Demanda mensual Dj = usuarios × L/día × 30.4 días ÷ 1000 (m³/mes). */
+  m3Mensual: number;
+  /** Demanda anual = usuarios × L/día × días de uso ÷ 1000 (con 365 días ≈ Dj × 12). */
   m3Anual: number;
+  /** Días de consumo a garantizar con el tanque en la época seca. */
+  diasCriticos: number;
+  /** Meses equivalentes (días críticos ÷ 30.4). */
+  mesesCriticos: number;
+  /** Volumen a almacenar = usuarios × L/día × días críticos ÷ 1000 (m³). */
+  m3Critico: number;
 }
 
-export function calcularDemanda(usuarios: number, litrosPorUsuarioDia: number, diasUso: number): ResumenDemanda {
+export function calcularDemanda(usuarios: number, litrosPorUsuarioDia: number, diasUso: number, diasCriticos = 60): ResumenDemanda {
   const u = Math.max(0, Number(usuarios) || 0);
   const l = Math.max(0, Number(litrosPorUsuarioDia) || 0);
   const d = Math.min(366, Math.max(0, Number(diasUso) || 0));
+  const dc = Math.min(366, Math.max(0, Number(diasCriticos) || 0));
   return {
     usuarios: u,
     litrosPorUsuarioDia: l,
     diasUso: d,
     litrosDia: u * l,
+    m3Mensual: (u * l * DIAS_MES) / 1000,
     m3Anual: (u * l * d) / 1000,
+    diasCriticos: dc,
+    mesesCriticos: dc / DIAS_MES,
+    m3Critico: (u * l * dc) / 1000,
   };
 }

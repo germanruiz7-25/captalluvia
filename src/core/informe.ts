@@ -49,6 +49,12 @@ export interface DatosTanqueInforme {
   tanque: string;
   cisterna: string;
   mesesLlenos: string;
+  /** Días que garantiza el tanque en la época seca y volumen calculado para ellos (desde v0.8.0). */
+  diasCriticos?: number;
+  /** Veces que se llena el tanque elegido con la lluvia del año. */
+  llenadosAnual?: number;
+  /** Capacidad del tanque elegido (L). */
+  capacidadTanqueL?: number;
 }
 
 export interface DatosInforme {
@@ -59,6 +65,8 @@ export interface DatosInforme {
   techo: {
     material: string;
     ce: number;
+    /** Eficiencia de captación (Efc); si falta, solo se muestra Ce. */
+    efc?: number;
     aguas: 1 | 2;
     descarteMm: number;
     /** Primer descarte por temporada: meses (0–11) de las primeras lluvias que lavan el sistema. */
@@ -67,7 +75,16 @@ export interface DatosInforme {
     existente: { ancho: number; largo: number; area: number } | null;
   };
   oferta: { netaAnualMm: number; eficiencia: number; mesesCaptados: boolean[]; m3NetosAnual: number | null } | null;
-  demanda: { usuarios: number; litrosPorUsuarioDia: number; diasUso: number; m3Anual: number };
+  demanda: {
+    usuarios: number;
+    litrosPorUsuarioDia: number;
+    diasUso: number;
+    m3Anual: number;
+    /** Demanda mensual Dj (m³/mes) y periodo crítico a garantizar (desde v0.8.0). */
+    m3Mensual?: number;
+    diasCriticos?: number;
+    m3Critico?: number;
+  };
   areaNecesariaM2: number | null;
   drenaje: DatosDrenajeInforme | null;
   tanque?: DatosTanqueInforme | null;
@@ -118,6 +135,12 @@ export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
     titulo: 'Techo y lluvia neta',
     filas: [
       ['Material y coeficiente de escorrentía', `${d.techo.material} (Ce ${d.techo.ce})`],
+      ...(d.techo.efc
+        ? ([[
+            'Coeficiente de captación (Cc = Ce × Efc)',
+            `${d.techo.ce} × ${d.techo.efc} = ${(d.techo.ce * d.techo.efc).toLocaleString('es-GT', { maximumFractionDigits: 3 })} (eficiencia de captación ${Math.round(d.techo.efc * 100)} %)`,
+          ]] as [string, string][])
+        : []),
       ['Forma', d.techo.aguas === 2 ? 'Dos aguas' : 'Un agua'],
       [
         'Primer descarte',
@@ -149,8 +172,17 @@ export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
     filas: [
       ['Usuarios', n0(d.demanda.usuarios)],
       ['Dotación', `${n1(d.demanda.litrosPorUsuarioDia)} L por usuario al día`],
+      ...(d.demanda.m3Mensual !== undefined
+        ? ([['Demanda mensual (Dj = usuarios × dotación × 30.4 días)', `${n1(d.demanda.m3Mensual)} m³ (${n0(d.demanda.m3Mensual * 1000)} L)`]] as [string, string][])
+        : []),
       ['Días de uso al año', n0(d.demanda.diasUso)],
-      ['Demanda anual', `${n1(d.demanda.m3Anual)} m³`],
+      ['Demanda anual', `${n1(d.demanda.m3Anual)} m³ (${n0(d.demanda.m3Anual * 1000)} L)`],
+      ...(d.demanda.diasCriticos && d.demanda.m3Critico !== undefined
+        ? ([[
+            'Periodo crítico a garantizar (época seca)',
+            `${n0(d.demanda.diasCriticos)} días (${n1(d.demanda.diasCriticos / 30.4)} meses): ${n1(d.demanda.m3Critico)} m³`,
+          ]] as [string, string][])
+        : []),
       ...(d.areaNecesariaM2 !== null ? ([['Área de techo necesaria (mínima, en planta)', `${n0(d.areaNecesariaM2)} m²`]] as [string, string][]) : []),
       ...(d.oferta?.m3NetosAnual != null && d.demanda.m3Anual > 0
         ? ([['Cobertura de la demanda con el techo existente', pct(d.oferta.m3NetosAnual / d.demanda.m3Anual)]] as [string, string][])
@@ -166,11 +198,20 @@ export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
         ...(t.volumenNecesarioM3 !== undefined && Math.abs(t.volumenNecesarioM3 - t.volumenM3) > 0.05
           ? ([['Volumen calculado por el balance', `${n1(t.volumenNecesarioM3)} m³`]] as [string, string][])
           : []),
+        ...(t.diasCriticos
+          ? ([['Criterio', `garantizar ${n0(t.diasCriticos)} días de consumo en la época seca`]] as [string, string][])
+          : []),
         ['Volumen de almacenamiento elegido', `${n1(t.volumenM3)} m³ (${n0(t.volumenM3 * 1000)} L)`],
         ...(t.barriles ? ([['Equivale a', `${n1(t.barriles)} barriles de 55 galones (208 L)`]] as [string, string][]) : []),
-        ['Cobertura de la demanda en el año', pct(t.cobertura)],
+        ...(t.diasCriticos ? [] : ([['Cobertura de la demanda en el año', pct(t.cobertura)]] as [string, string][])),
         ['Opción 1: tanques de polietileno', t.tanque],
         ['Opción 2: cisterna de block (medidas interiores)', t.cisterna],
+        ...(t.llenadosAnual !== undefined && t.capacidadTanqueL
+          ? ([[
+              'Llenados del tanque con la lluvia del año',
+              `${n1(t.llenadosAnual)} veces el tanque de ${n0(t.capacidadTanqueL)} L${t.mesesLlenos ? ` (meses con uno o más llenados: ${t.mesesLlenos})` : ''}`,
+            ]] as [string, string][])
+          : []),
       ],
     });
   }
@@ -254,11 +295,20 @@ export function conclusiones(d: DatosInforme): string[] {
     c.push(
       `Se adopta un almacenamiento de ${n1(t.volumenM3)} m³ (${n0(t.volumenM3 * 1000)} litros` +
         (t.barriles ? `, equivalente a ${n0(t.barriles)} barriles de 55 galones)` : ')') +
-        (t.criterio === 'cubre'
-          ? ' para cubrir la demanda durante todo el año'
-          : `, con el que se cubre ${pct(t.cobertura)} de la demanda anual porque el techo no capta lo suficiente`) +
+        (t.diasCriticos
+          ? ` para garantizar ${n0(t.diasCriticos)} días de consumo en los meses más secos del año`
+          : t.criterio === 'cubre'
+            ? ' para cubrir la demanda durante todo el año'
+            : `, con el que se cubre ${pct(t.cobertura)} de la demanda anual porque el techo no capta lo suficiente`) +
         `. Puede resolverse con ${t.tanque} o con una cisterna de block de ${t.cisterna}.`,
     );
+    if (t.llenadosAnual !== undefined && t.capacidadTanqueL) {
+      c.push(
+        `Con la lluvia promedio y ${n1(t.areaTechoM2)} m² de techo, el agua captada en el año equivale a llenar ` +
+          `${n1(t.llenadosAnual)} veces el tanque de ${n0(t.capacidadTanqueL)} L. Durante la temporada de lluvia el agua ` +
+          `puede usarse a diario; lo importante es que el tanque quede lleno al terminar la temporada para cubrir la época seca.`,
+      );
+    }
   }
   if (d.drenaje) {
     const r = d.drenaje;

@@ -136,7 +136,7 @@ En dos aguas, el techo de 9.5 × 10.0 m queda en dos segmentos de 4.75 × 10.0 m
 - Anaya Garduño, M. (2011). *Captación del agua de lluvia. Solución caída del cielo* (1.ª ed.). Colegio de Postgraduados; Universidad Autónoma Chapingo. ISBN 9786077150176. Umbral de 40 mm de PN: pp. 56–57, fig. 4.7.
 - Anaya-Garduño, M., Pérez-Hernández, A. y Luque-Delgadillo, A. (2021). Sistemas de captación del agua de lluvia (SCALL) para diversos usos. *Agro-Divulgación*, 1(0). https://doi.org/10.54767/ad.v1i1.3
 - INSIVUMEH e ICC (2025). *Curvas de intensidad, duración y frecuencia (IDF) para la vertiente del Pacífico de Guatemala*. 54 p. https://icc.org.gt/wp-content/uploads/2023/03/265.pdf
-- Bardales, W. (s. f.). *IDF_Guatemala_Sherman* [aplicación de Google Earth Engine]. https://ee-bardaleswa.projects.earthengine.app/view/idfguatemalasherman
+- Bardales, W. (2025). *IDF_Guatemala_Sherman* [aplicación de Google Earth Engine]. https://ee-bardaleswa.projects.earthengine.app/view/idfguatemalasherman
 - Rippl, W. (1883). The capacity of storage-reservoirs for water-supply. *Minutes of Proceedings of the Institution of Civil Engineers*, 71, 270–278.
 - Rotoplas Centroamérica. *Manual de instalación del tinaco*.
 - Chow, V. T. (1959). *Open-channel hydraulics*. Nueva York: McGraw-Hill.
