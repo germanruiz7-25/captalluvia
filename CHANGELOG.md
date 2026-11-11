@@ -12,7 +12,15 @@ Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado 
   - Varias estaciones: promedio ponderado por distancia (IDW, recomendado) o promedio simple.
   - **Escribir promedios** a mano ahora pide nombre, coordenadas y años de registro de la estación.
 - En el informe: tabla de estaciones usadas (coordenadas, distancia, periodo, años, peso), fuente y advertencia si hay menos de 10 años; bibliografía con cada estación.
-- 13 pruebas nuevas (127 en total).
+- **Guardar el proyecto en un archivo** (`.captalluvia.json`) y **abrirlo** después desde el paso 1, en el mismo u otro dispositivo, con todo el cálculo.
+- **Nuevo cálculo** en el paso 8: ofrece guardar el proyecto y vuelve al paso 1 con todo en blanco (el registro se conserva).
+- **Acerca de** en el encabezado abre una ventana con la información de la herramienta; el logotipo del ICC enlaza a icc.org.gt.
+- Estado de la conexión con la hoja de registros y envíos pendientes en "Tus datos y tu registro", con "Reintentar ahora".
+- 16 pruebas nuevas (130 en total).
+
+### Corregido
+- Carátula: "Lugar" muestra el nombre escrito; si no hay, "Vivienda familiar" para viviendas o el tipo de edificio. El nombre se puede escribir o corregir también en el paso 8.
+- Borrar los datos del dispositivo ya no volvía a guardar el proyecto anterior antes de recargar.
 
 ### Cambiado
 - Paso 1: el proyecto siempre se ubica en el mapa; luego se elige la fuente de lluvia: "Registro satelital (recomendado)" o "Datos de estaciones".

@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { CLAVE_PROYECTO, borrarProyecto, cargarProyecto, guardarProyecto, type ProyectoGuardado } from '../../src/core/proyecto';
+import {
+  CLAVE_PROYECTO,
+  borrarProyecto,
+  cargarProyecto,
+  guardarProyecto,
+  leerArchivoProyecto,
+  nombreArchivoProyecto,
+  textoArchivoProyecto,
+  type ProyectoGuardado,
+} from '../../src/core/proyecto';
 
 function memoria() {
   const m = new Map<string, string>();
@@ -66,5 +75,28 @@ describe('proyecto guardado en el dispositivo', () => {
     expect(guardarProyecto(proyecto, null)).toBe(false);
     expect(cargarProyecto(null)).toBeNull();
     expect(() => borrarProyecto(null)).not.toThrow();
+  });
+});
+
+describe('archivo del proyecto', () => {
+  const p = {
+    paso: 8, nombreProyecto: 'Escuela Oficial Rural Mixta, aldea El Rodeo', lat: '14.3', lon: '-90.8', lluvia: null,
+    tipoTecho: 'lamina', aguas: 2, descarteMm: 2, umbralMm: 0, areaDisponible: 120, edificio: 'escuela', usuarios: 150,
+    dotacionId: 'escuela-3', usos: [], diasUso: 200,
+  };
+  it('se guarda y se vuelve a abrir igual', () => {
+    const t = textoArchivoProyecto(p, '0.6.0', new Date('2026-11-10T12:00:00Z'));
+    expect(JSON.parse(t).formato).toBe('captalluvia-proyecto');
+    expect(leerArchivoProyecto(t)).toEqual(p);
+  });
+  it('rechaza archivos que no son proyectos', () => {
+    expect(() => leerArchivoProyecto('hola')).toThrow(/no es un proyecto/);
+    expect(() => leerArchivoProyecto('{"a":1}')).toThrow(/no es un proyecto/);
+  });
+  it('nombre de archivo sin tildes ni signos', () => {
+    expect(nombreArchivoProyecto('Escuela Oficial, aldea El Rodeo', new Date('2026-11-10T12:00:00Z'))).toBe(
+      'CaptaLluvia-Escuela-Oficial-aldea-El-Rodeo-2026-11-10.captalluvia.json',
+    );
+    expect(nombreArchivoProyecto('', new Date('2026-11-10T12:00:00Z'))).toBe('CaptaLluvia-proyecto-2026-11-10.captalluvia.json');
   });
 });
