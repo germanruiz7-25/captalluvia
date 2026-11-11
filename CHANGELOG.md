@@ -13,7 +13,7 @@ Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado 
   - **Escribir promedios** a mano ahora pide nombre, coordenadas y años de registro de la estación.
 - En el informe: tabla de estaciones usadas (coordenadas, distancia, periodo, años, peso), fuente y advertencia si hay menos de 10 años; bibliografía con cada estación.
 - **Guardar el proyecto en un archivo** (`.captalluvia.json`) y **abrirlo** después desde el paso 1, en el mismo u otro dispositivo, con todo el cálculo.
-- **Informe en Word (.docx) editable**, generado en el dispositivo con el mismo contenido del PDF (tablas, gráficas, dibujos y mapas como imágenes), en Calibri; al pie de cada hoja: "Si modifica este documento, conserve la referencia" con la cita APA.
+- **Informe en Word (.docx) editable**, generado en el dispositivo con el mismo contenido y la misma distribución del PDF: misma carátula, márgenes, saltos de hoja, tamaños de gráficas y dibujos, cifras y dibujos lado a lado, mapas (satelitales cuando hay clave). La cita APA va solo al pie de la carátula como "Fuente sugerida"; las demás hojas llevan el número de página.
 - **Enviar por correo** desde la cuenta de la propia persona: "Compartir" con el Word adjunto (celulares y equipos compatibles) o "Descargar el Word y abrir mi correo" con destinatarios, asunto y mensaje ya escritos. CaptaLluvia no envía correos.
 - El aviso de informe a la hoja de registros indica el formato (PDF o Word); nueva columna "Formato" en `Codigo.gs`.
 - **Nuevo cálculo** en el paso 8: ofrece guardar el proyecto y vuelve al paso 1 con todo en blanco (el registro se conserva).
@@ -22,6 +22,7 @@ Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado 
 - 16 pruebas nuevas (130 en total); prueba de punta a punta que genera el Word y lo abre en LibreOffice.
 
 ### Corregido
+- Se reemplazó el término "first flush" por "dispositivo de primer descarte" (todo en español).
 - Carátula: "Lugar" muestra el nombre escrito; si no hay, "Vivienda familiar" para viviendas o el tipo de edificio. El nombre se puede escribir o corregir también en el paso 8.
 - Borrar los datos del dispositivo ya no volvía a guardar el proyecto anterior antes de recargar.
 

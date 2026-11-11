@@ -58,7 +58,7 @@ P_aprovechable = P_anual × Ce − n_eventos × d_ff  (desde v0.1.0 se calcula m
 
 - **Ce**, coeficiente de escorrentía: lámina metálica 0.90; teja de barro 0.80; losa de concreto 0.80; paja 0.60.
 - **n_eventos**: días con lluvia en el año (en la fase 1 se contarán los días con más de 1 mm en la serie diaria).
-- **d_ff**: primer descarte (first flush), 1 mm por evento (1 L por m² de techo).
+- **d_ff**: primer descarte (agua que lava el techo al inicio de cada lluvia y no se almacena), 1 mm por evento (1 L por m² de techo).
 
 ## 3. Área mínima de techo
 

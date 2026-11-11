@@ -31,6 +31,8 @@ import {
 
 type Bloque = Paragraph | Table;
 interface Ctx {
+  /** Ancho disponible para imágenes (px); dentro de una fila de dibujos es el de su columna. */
+  ancho?: number;
   centrado?: boolean;
   tamano?: number; // medio-puntos
   enTabla?: boolean;
@@ -42,11 +44,14 @@ interface Trozo {
   salto?: boolean;
   enlace?: string;
   pequeno?: boolean;
+  grande?: boolean;
 }
 
 const FUENTE = 'Calibri';
-/** Ancho útil de la hoja carta con márgenes de 2 cm, en píxeles (96 ppp). */
-const ANCHO_UTIL_PX = 660;
+/** Ancho útil de la hoja carta con los márgenes del PDF (12 mm a los lados), en píxeles (96 ppp). */
+const ANCHO_UTIL_PX = 720;
+/** Márgenes del PDF (@page: 14 mm arriba y abajo, 12 mm a los lados) en veinteavos de punto. */
+const MARGEN = { top: 794, bottom: 794, left: 680, right: 680, footer: 340, header: 340 };
 const BLOQUE = new Set([
   'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'TABLE', 'UL', 'OL', 'DL', 'DIV', 'SECTION', 'FIGURE', 'IMG', 'DETAILS', 'FIELDSET',
   'FORM', 'ARTICLE', 'LEGEND', 'FIGCAPTION', 'DT', 'DD', 'LI', 'HR', 'MAIN', 'HEADER', 'FOOTER', 'NAV', 'BLOCKQUOTE', 'svg',
@@ -103,6 +108,17 @@ function medidasSvg(svg: SVGSVGElement): { w: number; h: number } {
   return { w, h };
 }
 
+/** Tamaño con que se ve el dibujo en el PDF: el ancho del atributo (si es en px) o el de su viewBox. */
+function tamanoVisible(svg: SVGSVGElement): { w: number; h: number } {
+  const { w, h } = medidasSvg(svg);
+  const attr = svg.getAttribute('width') ?? '';
+  const aw = /^\d+(\.\d+)?(px)?$/.test(attr) ? parseFloat(attr) : NaN;
+  const maxCss = parseFloat(getComputedStyle(svg).maxWidth);
+  let ancho = Number.isFinite(aw) ? aw : w;
+  if (Number.isFinite(maxCss) && maxCss > 0) ancho = Math.min(ancho, maxCss);
+  return { w: ancho, h: (ancho * h) / w };
+}
+
 /** Dibuja un SVG de la página (con sus estilos calculados) en un lienzo. */
 async function svgALienzo(svg: SVGSVGElement, escala = 2): Promise<HTMLCanvasElement> {
   const { w, h } = medidasSvg(svg);
@@ -136,8 +152,8 @@ function imagen(data: Uint8Array, w: number, h: number, maxAncho = ANCHO_UTIL_PX
 
 async function imagenSvg(svg: SVGSVGElement, maxAncho?: number): Promise<ImageRun | null> {
   try {
-    const { w, h } = medidasSvg(svg);
-    const c = await svgALienzo(svg);
+    const { w, h } = tamanoVisible(svg);
+    const c = await svgALienzo(svg, Math.max(2, (2 * medidasSvg(svg).w) / w));
     return imagen(await lienzoAPng(c), w, h, maxAncho);
   } catch {
     return null;
@@ -159,7 +175,7 @@ async function imagenImg(el: HTMLImageElement, maxAncho: number, maxAlto = 9999)
 }
 
 /** Mapa estático: teselas (con permiso CORS del proveedor) + capa SVG de marcador, norte y escala. */
-async function imagenMapa(fig: Element): Promise<ImageRun | null> {
+async function imagenMapa(fig: Element, maxAncho = ANCHO_UTIL_PX): Promise<ImageRun | null> {
   const lienzo = fig.querySelector<HTMLElement>('.lienzo');
   if (!lienzo) return null;
   const w = parseFloat(lienzo.style.width);
@@ -181,7 +197,7 @@ async function imagenMapa(fig: Element): Promise<ImageRun | null> {
     if (capa) g.drawImage(await svgALienzo(capa, 1), 0, 0, w, h);
     g.strokeStyle = '#000';
     g.strokeRect(0.5, 0.5, w - 1, h - 1);
-    return imagen(await lienzoAPng(c), w, h);
+    return imagen(await lienzoAPng(c), w, h, maxAncho);
   } catch {
     return null; // el proveedor de mapas no permite copiar la imagen
   }
@@ -207,6 +223,10 @@ function trozos(n: Node, f: Omit<Trozo, 'texto'> = {}, salida: Trozo[] = []): Tr
   if (el.tagName === 'STRONG' || el.tagName === 'B' || el.tagName === 'TH') g.negrita = true;
   if (el.tagName === 'EM' || el.tagName === 'I') g.cursiva = true;
   if (el.tagName === 'SMALL') g.pequeno = true;
+  if (el.classList.contains('cifra')) {
+    g.negrita = true;
+    g.grande = true;
+  }
   if (el.tagName === 'A' && (el as HTMLAnchorElement).href.startsWith('http')) g.enlace = (el as HTMLAnchorElement).href;
   el.childNodes.forEach((h) => trozos(h, g, salida));
   return salida;
@@ -228,7 +248,7 @@ function corridas(ts: Trozo[], ctx: Ctx, extra: { negrita?: boolean } = {}): Par
       break: t.salto ? 1 : undefined,
       bold: t.negrita || extra.negrita,
       italics: t.cursiva,
-      size: t.pequeno ? Math.round((ctx.tamano ?? 24) * 0.85) : ctx.tamano,
+      size: t.grande ? 28 : t.pequeno ? Math.round((ctx.tamano ?? 24) * 0.85) : ctx.tamano,
       color: t.enlace ? '0B63B6' : undefined,
       underline: t.enlace ? {} : undefined,
     });
@@ -245,13 +265,15 @@ class Conversor {
   bloques: Bloque[] = [];
   seccion = 0;
   salto = false;
+  /** Cantidad de bloques de la carátula (va en su propia sección, con la cita al pie). */
+  finCaratula = 0;
 
   private parrafo(hijos: ParagraphChild[], ctx: Ctx, opc: Partial<IParagraphOptions> = {}) {
     const { spacing, ...resto } = opc;
     const p = new Paragraph({
       children: hijos,
       alignment: ctx.centrado ? AlignmentType.CENTER : undefined,
-      spacing: { after: ctx.enTabla ? 0 : 120, line: 264, lineRule: LineRuleType.AUTO, ...(spacing ?? {}) },
+      spacing: { after: ctx.enTabla ? 0 : 100, line: 252, lineRule: LineRuleType.AUTO, ...(spacing ?? {}) },
       pageBreakBefore: this.salto && !ctx.enTabla ? true : undefined,
       ...resto,
     });
@@ -283,13 +305,15 @@ class Conversor {
 
     if (el.classList.contains('logos')) return this.logos(el, ctx);
     if (el.classList.contains('mapa-estatico')) {
-      const img = await imagenMapa(el);
+      const img = await imagenMapa(el, ctx.ancho);
       if (img) this.parrafo([img], { ...ctx, centrado: true }, { spacing: { after: 40 } });
       const cap = el.querySelector('figcaption');
       if (cap) this.parrafo(corridas(trozos(cap), { ...ctx, tamano: 20 }), { ...ctx, centrado: true });
       return;
     }
     if (el.classList.contains('caratula')) return this.caratula(el);
+
+    if (await this.fila(el, ctx)) return;
 
     switch (tag) {
       case 'H1':
@@ -320,7 +344,7 @@ class Conversor {
         const ts = corridas(trozos(el), ctx, { negrita: tag === 'DT' });
         if (ts.length) this.parrafo(ts, el.classList.contains('caratula-tipo') || tag === 'FIGCAPTION' ? { ...ctx, centrado: true } : ctx);
         for (const s of svgs) {
-          const img = await imagenSvg(s);
+          const img = await imagenSvg(s, ctx.ancho);
           if (img) this.parrafo([img], { ...ctx, centrado: true });
         }
         return;
@@ -347,7 +371,7 @@ class Conversor {
         return;
       }
       case 'svg': {
-        const img = await imagenSvg(el as unknown as SVGSVGElement);
+        const img = await imagenSvg(el as unknown as SVGSVGElement, ctx.ancho);
         if (img) this.parrafo([img], { ...ctx, centrado: true });
         return;
       }
@@ -356,6 +380,52 @@ class Conversor {
       default:
         return this.hijos(el, ctx);
     }
+  }
+
+  /**
+   * Contenedores que en el PDF ponen 2 a 4 elementos lado a lado (cifras destacadas, dibujos, mapas):
+   * se arman como una tabla sin bordes de una fila, para conservar la misma distribución.
+   */
+  private async fila(el: Element, ctx: Ctx): Promise<boolean> {
+    if (ctx.enTabla || !['DIV', 'SECTION', 'FIGURE', 'UL'].includes(el.tagName)) return false;
+    const cs = getComputedStyle(el);
+    const enFila = (cs.display === 'flex' && !cs.flexDirection.startsWith('column')) || cs.display === 'grid';
+    if (!enFila) return false;
+    const hijos = [...el.children].filter((h) => !oculto(h));
+    if (hijos.length < 2 || hijos.length > 4) return false;
+    if (el.querySelector('table, h2, h3, ol, .pantalla')) return false;
+    if (cs.display === 'grid') {
+      const cols = cs.gridTemplateColumns.split(' ').filter((x) => /\d/.test(x) && !x.startsWith('repeat')).length;
+      if (cols === 1) return false;
+    }
+    const ancho = Math.floor((ctx.ancho ?? ANCHO_UTIL_PX) / hijos.length) - 8;
+    const celdas: TableCell[] = [];
+    for (const h of hijos) {
+      const previo = this.bloques;
+      this.bloques = [];
+      await this.nodo(h, { ...ctx, ancho, enTabla: true, centrado: true });
+      if (!this.bloques.length && h.textContent?.trim())
+        this.bloques.push(new Paragraph({ alignment: AlignmentType.CENTER, children: corridas(trozos(h), ctx) }));
+      const contenido = this.bloques;
+      this.bloques = previo;
+      celdas.push(
+        new TableCell({
+          width: { size: Math.round(100 / hijos.length), type: WidthType.PERCENTAGE },
+          children: contenido.length ? contenido : [new Paragraph('')],
+          margins: { left: 60, right: 60 },
+        }),
+      );
+    }
+    this.agregar(
+      new Table({
+        rows: [new TableRow({ children: celdas, cantSplit: true })],
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: { top: SIN_BORDE, bottom: SIN_BORDE, left: SIN_BORDE, right: SIN_BORDE, insideHorizontal: SIN_BORDE, insideVertical: SIN_BORDE },
+      }),
+      ctx,
+    );
+    this.bloques.push(new Paragraph({ children: [], spacing: { after: 60 } }));
+    return true;
   }
 
   /** Contenedor: agrupa el texto suelto en párrafos y procesa los bloques. */
@@ -504,7 +574,7 @@ class Conversor {
       this.bloques.push(
         new Paragraph({ spacing: { before: 360 }, children: [new TextRun({ text: (descargo.textContent ?? '').trim(), italics: true, size: 22 })] }),
       );
-    this.salto = true;
+    this.finCaratula = this.bloques.length;
   }
 
   /** Fila de logotipos de la carátula: CaptaLluvia a la izquierda, organizaciones a la derecha. */
@@ -559,18 +629,25 @@ export async function generarInformeWord(opciones: { titulo: string; cita: strin
   const raiz = document.querySelector('#app') ?? document.body;
   await c.hijos(raiz, {});
 
-  const pie = new Footer({
+  // La cita va solo al pie de la carátula, como fuente sugerida; las demás hojas llevan el número de página.
+  const pieCaratula = new Footer({
     children: [
       new Paragraph({
-        alignment: AlignmentType.CENTER,
+        border: { top: { style: BorderStyle.SINGLE, size: 4, color: '999999', space: 4 } },
         children: [
-          new TextRun({ text: 'Si modifica este documento, conserve la referencia: ', italics: true, size: 16 }),
+          new TextRun({ text: 'Fuente sugerida: ', bold: true, size: 16 }),
           new TextRun({ text: opciones.cita, size: 16 }),
+          new TextRun({ text: ' Si modifica este documento, conserve esta referencia.', italics: true, size: 16 }),
         ],
       }),
-      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ children: ['Página ', PageNumber.CURRENT, ' de ', PageNumber.TOTAL_PAGES], size: 16 })] }),
     ],
   });
+  const pie = new Footer({
+    children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ children: ['Página ', PageNumber.CURRENT, ' de ', PageNumber.TOTAL_PAGES], size: 16 })] })],
+  });
+  const pagina = { size: { width: 12240, height: 15840 }, margin: MARGEN };
+  const caratula = c.bloques.slice(0, c.finCaratula);
+  const cuerpo = c.bloques.slice(c.finCaratula);
 
   const doc = new Document({
     creator: opciones.autor,
@@ -584,11 +661,8 @@ export async function generarInformeWord(opciones: { titulo: string; cita: strin
       ],
     },
     sections: [
-      {
-        properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 1134, bottom: 1134, left: 1134, right: 1134 } } },
-        footers: { default: pie },
-        children: c.bloques,
-      },
+      ...(caratula.length ? [{ properties: { page: pagina }, footers: { default: pieCaratula }, children: caratula }] : []),
+      { properties: { page: pagina }, footers: { default: pie }, children: cuerpo },
     ],
   });
   return Packer.toBlob(doc);
