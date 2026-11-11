@@ -50,26 +50,53 @@
     }
   })();
 
-  async function archivo(): Promise<File> {
-    const blob = await generarWord();
-    return new File([blob], nombreArchivo, { type: blob.type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-  }
+  const TIPO_DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
-  async function compartir() {
+  // El navegador solo deja abrir "Compartir" justo después del toque de la persona: si antes hay que
+  // esperar a que se arme el Word, lo bloquea. Por eso el Word se prepara al abrir este panel y el
+  // botón "Compartir" lo usa ya listo.
+  let listo: File | null = $state(null);
+  let preparando = $state(false);
+  async function preparar(): Promise<File> {
+    if (listo) return listo;
+    preparando = true;
+    try {
+      const blob = await generarWord();
+      listo = new File([blob], nombreArchivo, { type: TIPO_DOCX });
+      return listo;
+    } finally {
+      preparando = false;
+    }
+  }
+  $effect(() => {
+    if (puedeCompartirArchivos) preparar().catch(() => (error = 'No se pudo preparar el informe.'));
+  });
+
+  function compartir() {
     error = '';
     aviso = '';
-    trabajando = true;
-    try {
-      const f = await archivo();
-      if (lista.length && navigator.clipboard) await navigator.clipboard.writeText(lista.join(', ')).catch(() => {});
-      await navigator.share({ files: [f], title: asunto, text: mensaje });
-      aviso = lista.length ? 'Los correos se copiaron: pégalos como destinatarios en la app de correo que elegiste.' : '';
-      onEnviado?.('compartir');
-    } catch (e) {
-      if (!(e instanceof DOMException && e.name === 'AbortError')) error = 'No se pudo compartir. Usa "Abrir mi correo".';
-    } finally {
-      trabajando = false;
+    if (!listo) return;
+    const datos: ShareData = { files: [listo], title: asunto, text: mensaje };
+    if (navigator.canShare && !navigator.canShare(datos)) {
+      error = 'Este navegador no permite compartir archivos de Word. Usa "Descargar el Word y abrir mi correo".';
+      return;
     }
+    navigator
+      .share(datos)
+      .then(() => {
+        onEnviado?.('compartir');
+        if (lista.length) {
+          navigator.clipboard?.writeText(lista.join(', ')).catch(() => {});
+          aviso = `Recuerda poner como destinatarios: ${lista.join(', ')} (también se copiaron para pegarlos).`;
+        }
+      })
+      .catch((e) => {
+        if (e instanceof DOMException && e.name === 'AbortError') return; // la persona cerró el menú
+        error =
+          e instanceof DOMException && e.name === 'NotAllowedError'
+            ? 'Tu navegador no permitió abrir el menú de compartir. Usa "Descargar el Word y abrir mi correo".'
+            : 'No se pudo compartir. Usa "Descargar el Word y abrir mi correo".';
+      });
   }
 
   async function abrirCorreo() {
@@ -77,7 +104,7 @@
     aviso = '';
     trabajando = true;
     try {
-      const f = await archivo();
+      const f = await preparar();
       const a = document.createElement('a');
       a.href = URL.createObjectURL(f);
       a.download = f.name;
@@ -114,13 +141,15 @@
   </div>
   <div class="acciones">
     {#if puedeCompartirArchivos}
-      <button class="principal" onclick={compartir} disabled={trabajando}>📤 Compartir con el informe adjunto (Word)</button>
+      <button class="principal" onclick={compartir} disabled={trabajando || !listo}>
+        {listo ? '📤 Compartir con el informe adjunto (Word)' : 'Preparando el informe…'}
+      </button>
     {/if}
     <button class={puedeCompartirArchivos ? 'secundario' : 'principal'} onclick={abrirCorreo} disabled={trabajando || invalidos.length > 0}>
       ✉️ Descargar el Word y abrir mi correo
     </button>
   </div>
-  {#if trabajando}<p class="nota">Preparando el informe…</p>{/if}
+  {#if trabajando || preparando}<p class="nota">Preparando el informe…</p>{/if}
   {#if aviso}<p class="nota">{aviso}</p>{/if}
   {#if error}<p class="alerta">{error}</p>{/if}
   <p class="nota">

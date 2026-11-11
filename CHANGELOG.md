@@ -2,6 +2,12 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.6.1] — 2026-11-10
+
+### Corregido
+- **Enviar por correo → Compartir** fallaba con "No se pudo compartir": el navegador solo permite abrir el menú de compartir justo después del toque, y la app primero armaba el Word. Ahora el Word se prepara al abrir el panel y "Compartir" lo usa ya listo. Mensajes de error más claros y aviso de los destinatarios.
+- El aviso de informe en Word a la hoja de registros se envía al descargarlo o enviarlo, no al prepararlo.
+
 ## [0.6.0] — 2026-11-10 — Lluvia de estaciones
 
 ### Agregado

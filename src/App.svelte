@@ -355,9 +355,13 @@
   // ---------- Informe en Word (editable) ----------
   let preparandoWord = $state(false);
   let errorWord = $state('');
-  async function generarWord(): Promise<Blob> {
+  /** Genera el Word sin avisar (el aviso se manda al descargarlo o enviarlo). */
+  async function crearWord(): Promise<Blob> {
     const { generarInformeWord } = await import('./lib/informeWord');
-    const blob = await generarInformeWord({ titulo: nombreInforme, cita: citaApa, autor: elaboradoPor || acerca.nombre });
+    return generarInformeWord({ titulo: nombreInforme, cita: citaApa, autor: elaboradoPor || acerca.nombre });
+  }
+  async function generarWord(): Promise<Blob> {
+    const blob = await crearWord();
     avisarInforme('word');
     contar('informe-word', { titulo: 'Informe Word generado', evento: true });
     return blob;
@@ -599,7 +603,11 @@
       </p>
       {#if mostrarEnviar}
         <EnviarInforme
-          {generarWord}
+          generarWord={crearWord}
+          onEnviado={(via) => {
+            avisarInforme('word');
+            contar(via === 'compartir' ? 'informe-compartido' : 'informe-correo', { titulo: 'Informe enviado por correo', evento: true });
+          }}
           nombreArchivo={`${nombreInforme.replace(/[\\/:*?"<>|]/g, '-')}.docx`}
           asuntoInicial={`Informe técnico SCALL – ${lugarInforme}`}
           mensajeInicial={`Le comparto el informe técnico del diseño del sistema de captación de agua de lluvia (SCALL) para ${lugarInforme}${ubicacionTexto ? `, ${ubicacionTexto}` : ''}.\n\nElaborado con CaptaLluvia: ${citaApa}`}
