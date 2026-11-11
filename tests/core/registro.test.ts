@@ -59,7 +59,7 @@ describe('registro', () => {
     const r = crearRegistro(datos, '0.5.0');
     const e = eventoInforme(r, '0.5.0', { departamento: 'Escuintla', municipio: 'Masagua', infraestructura: 'Escuela', usuarios: 150, volumenM3: 10.04 });
     expect(e.tipo).toBe('informe');
-    expect(e.datos).toEqual({ departamento: 'Escuintla', municipio: 'Masagua', infraestructura: 'Escuela', usuarios: 150, volumenM3: 10 });
+    expect(e.datos).toEqual({ departamento: 'Escuintla', municipio: 'Masagua', infraestructura: 'Escuela', usuarios: 150, volumenM3: 10, formato: 'pdf' });
     expect(JSON.stringify(e)).not.toMatch(/correo|nombre|lat|lon/);
     expect(eventoRegistro(r).datos.correo).toBe('ana@ejemplo.org');
   });

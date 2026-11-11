@@ -56,18 +56,64 @@ function lluviaValida(l: unknown): l is ResumenLluvia {
   );
 }
 
-/** Lee el proyecto guardado; devuelve null si no hay o si está dañado. */
-export function cargarProyecto(a: Almacen | null = almacen()): Partial<ProyectoGuardado> | null {
+function validarProyecto(texto: string): Partial<ProyectoGuardado> | null {
   try {
-    const texto = a?.getItem(CLAVE_PROYECTO);
-    if (!texto) return null;
     const p = JSON.parse(texto) as Partial<ProyectoGuardado>;
-    if (typeof p !== 'object' || p === null) return null;
+    if (typeof p !== 'object' || p === null || Array.isArray(p)) return null;
     if (p.lluvia !== null && p.lluvia !== undefined && !lluviaValida(p.lluvia)) p.lluvia = null;
     return p;
   } catch {
     return null;
   }
+}
+
+/** Lee el proyecto guardado; devuelve null si no hay o si está dañado. */
+export function cargarProyecto(a: Almacen | null = almacen()): Partial<ProyectoGuardado> | null {
+  try {
+    const texto = a?.getItem(CLAVE_PROYECTO);
+    return texto ? validarProyecto(texto) : null;
+  } catch {
+    return null;
+  }
+}
+
+// ---------- Archivo del proyecto (guardar y abrir en otro momento o dispositivo) ----------
+
+export const FORMATO_ARCHIVO = 'captalluvia-proyecto';
+export const EXTENSION_ARCHIVO = '.captalluvia.json';
+
+/** Contenido del archivo que se descarga: el proyecto con una cabecera de formato y versión. */
+export function textoArchivoProyecto(p: ProyectoGuardado, version: string, ahora = new Date()): string {
+  return JSON.stringify({ formato: FORMATO_ARCHIVO, version, guardado: ahora.toISOString(), proyecto: p }, null, 2);
+}
+
+/** Nombre sugerido del archivo, a partir del lugar y la fecha. */
+export function nombreArchivoProyecto(nombre: string, ahora = new Date()): string {
+  const base =
+    nombre
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^A-Za-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 50) || 'proyecto';
+  return `CaptaLluvia-${base}-${ahora.toISOString().slice(0, 10)}${EXTENSION_ARCHIVO}`;
+}
+
+/** Lee un archivo de proyecto; lanza un error con mensaje claro si no es válido. */
+export function leerArchivoProyecto(texto: string): Partial<ProyectoGuardado> {
+  let datos: unknown;
+  try {
+    datos = JSON.parse(texto);
+  } catch {
+    throw new Error('El archivo no es un proyecto de CaptaLluvia (no se pudo leer).');
+  }
+  const d = datos as { formato?: string; proyecto?: unknown };
+  if (!d || d.formato !== FORMATO_ARCHIVO || typeof d.proyecto !== 'object') {
+    throw new Error('El archivo no es un proyecto de CaptaLluvia.');
+  }
+  const p = validarProyecto(JSON.stringify(d.proyecto));
+  if (!p) throw new Error('El proyecto del archivo está dañado.');
+  return p;
 }
 
 export function guardarProyecto(p: ProyectoGuardado, a: Almacen | null = almacen()): boolean {

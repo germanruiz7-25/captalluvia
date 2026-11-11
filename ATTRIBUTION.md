@@ -16,6 +16,9 @@ CaptaLluvia usa fuentes de datos gratuitas. Cada una se cita en la app y en los 
 | [INSIVUMEH e ICC (2025)](https://icc.org.gt/wp-content/uploads/2023/03/265.pdf) — Curvas IDF de la vertiente del Pacífico | Intensidad de diseño de canaletas (22 estaciones, parámetros Gumbel) | Citar el documento; uso confirmado por los autores de CaptaLluvia (8 nov 2026) |
 | [IDF Guatemala (Sherman)](https://ee-bardaleswa.projects.earthengine.app/view/idfguatemalasherman) — Walter Bardales | Consulta de la curva IDF del punto (enlace) | Citar al autor (uso confirmado, 8 nov 2026); los datos no se copian en la app |
 | [Rotoplas Centroamérica](https://rotoplascentroamerica.com/) — Manual de instalación del tinaco | Capacidades y medidas de tanques de 450 a 2,500 L (referencia; dibujo genérico sin marca) | Citar la fuente |
+| Estaciones aportadas por el usuario | Lluvia mensual o diaria cargada desde Excel o CSV (desde v0.6.0) | Responsabilidad de quien aporta los datos; la app cita la estación, sus coordenadas y el periodo |
+| [docx](https://github.com/dolanmiu/docx) | Informe en Word (.docx) generado en el navegador | Licencia MIT |
+| [read-excel-file](https://gitlab.com/catamphetamine/read-excel-file) | Lectura de archivos .xlsx en el navegador | Licencia MIT |
 | [Meteostat](https://meteostat.net/) | Datos de estaciones (fase 3) | CC BY 4.0 |
 | [RedMet del ICC](https://icc.org.gt/) | Estaciones de la vertiente del Pacífico (fase 3) | Según acuerdo con el ICC |
 

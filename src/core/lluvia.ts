@@ -34,6 +34,10 @@ export interface ResumenLluvia {
   /** Meses sin ningún año válido (se tomaron como 0 mm). */
   mesesSinDatos: number[];
   fuente: string;
+  /** Estaciones usadas cuando la lluvia viene de datos aportados por el usuario. */
+  estaciones?: import('./estaciones').UsoEstacion[];
+  /** Cómo se combinaron varias estaciones. */
+  metodo?: import('./estaciones').MetodoCombinacion;
 }
 
 function diasDelMes(anio: number, mes0: number): number {

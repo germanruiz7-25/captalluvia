@@ -43,6 +43,19 @@
         <em>Quarterly Journal of the Royal Meteorological Society</em>, 146(730), 1999–2049.
         <a href="https://doi.org/10.1002/qj.3803">doi:10.1002/qj.3803</a>
       </li>
+    {:else if lluvia.estaciones?.length}
+      {#each lluvia.estaciones as e (e.nombre)}
+        <li>
+          Estación {e.nombre} ({e.lat.toFixed(4)}, {e.lon.toFixed(4)}){e.anioInicio ? `, ${e.anioInicio}–${e.anioFin}` : ''},
+          {e.anios} años de registro. Datos aportados por quien elaboró el diseño.
+        </li>
+      {/each}
+      {#if lluvia.metodo === 'idw'}
+        <li>
+          Combinación de estaciones por el inverso de la distancia al cuadrado: Shepard, D. (1968). A two-dimensional
+          interpolation function for irregularly-spaced data. <em>Proceedings of the 1968 ACM National Conference</em>, 517–524.
+        </li>
+      {/if}
     {:else}
       <li>Lluvia mensual ingresada por el usuario (fuente indicada por quien elaboró el diseño).</li>
     {/if}

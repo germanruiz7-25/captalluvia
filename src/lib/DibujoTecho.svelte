@@ -79,7 +79,7 @@
 </div>
 <p class="leyenda">
   <span class="item"><span class="muestra-canaleta"></span>{aguas === 2 ? 'Una canaleta en cada lado largo' : 'Canaleta en el lado largo'}</span>
-  <span class="item"><span class="muestra-bajante"></span>Bajante hacia el first flush y el tanque</span>
+  <span class="item"><span class="muestra-bajante"></span>Bajante hacia el dispositivo de primer descarte y el tanque</span>
   {#if aguas === 2}
     <span class="item"><span class="muestra-cumbrera"></span>Cumbrera (parte más alta del techo)</span>
   {/if}

@@ -5,7 +5,17 @@
   import { calcularDemanda, DOTACIONES, EDIFICIOS, USOS_INICIALES, litrosDeUsos, type TipoEdificio, type UsoAgua } from './core/demanda';
   import { COEFICIENTES_ESCORRENTIA, NOMBRES_TECHO, areaMinimaM2, opcionesDeTecho, type NumeroAguas, type TipoTecho } from './core/techo';
   import { onMount } from 'svelte';
-  import { borrarProyecto, cargarProyecto, guardarProyecto } from './core/proyecto';
+  import {
+    EXTENSION_ARCHIVO,
+    borrarProyecto,
+    cargarProyecto,
+    guardarProyecto,
+    leerArchivoProyecto,
+    nombreArchivoProyecto,
+    textoArchivoProyecto,
+    type ProyectoGuardado,
+  } from './core/proyecto';
+  import { leerCola } from './core/registro';
   import PasoUbicacion from './lib/PasoUbicacion.svelte';
   import PasoLluvia from './lib/PasoLluvia.svelte';
   import PasoTecho from './lib/PasoTecho.svelte';
@@ -19,6 +29,7 @@
   import InformeResumen from './lib/InformeResumen.svelte';
   import { redondearCoordenada } from './core/openmeteo';
   import Registro from './lib/Registro.svelte';
+  import EnviarInforme from './lib/EnviarInforme.svelte';
   import { contar } from './core/visitas';
   import {
     URL_REGISTRO,
@@ -44,14 +55,14 @@
     const r = crearRegistro(d, version);
     guardarRegistro(r);
     registro = r;
-    void encolarYEnviar(URL_REGISTRO, eventoRegistro(r));
+    void encolarYEnviar(URL_REGISTRO, eventoRegistro(r)).then((n) => (pendientes = n));
     contar('registro-nuevo', { titulo: 'Registro nuevo', evento: true });
     window.scrollTo({ top: 0 });
   }
   onMount(() => {
     // Reenvía lo que quedó pendiente (sin conexión) al abrir y al volver la conexión
-    void encolarYEnviar(URL_REGISTRO, null);
-    const alVolver = () => void encolarYEnviar(URL_REGISTRO, null);
+    void encolarYEnviar(URL_REGISTRO, null).then((n) => (pendientes = n));
+    const alVolver = () => void encolarYEnviar(URL_REGISTRO, null).then((n) => (pendientes = n));
     window.addEventListener('online', alVolver);
     return () => window.removeEventListener('online', alVolver);
   });
@@ -148,6 +159,7 @@
   let confirmarBorrado = $state(false);
 
   function borrarTodo() {
+    guardadoActivo = false;
     borrarProyecto();
     location.hash = '';
     location.reload();
@@ -183,14 +195,77 @@
     ].map((ok, i) => ok && visitados.includes(i + 1)),
   );
 
-  // Guardar en el dispositivo cada vez que cambia algo.
-  $effect(() => {
-    guardarProyecto({
-      paso, nombreProyecto, elaboradoPor, volumenTanque, institucionTecnico, comunidad, municipio, departamento, lat, lon, lluvia, tipoTecho, aguas,
+  /** Nombre del lugar en la carátula: el escrito; si no hay, "Vivienda familiar" o el tipo de edificio. */
+  const lugarInforme = $derived(
+    nombreProyecto.trim() || (edificio === 'vivienda' ? 'Vivienda familiar' : `${EDIFICIOS[edificio].nombre} (escribe su nombre en el paso 8)`),
+  );
+
+  function proyectoActual(): ProyectoGuardado {
+    return {
+      paso, nombreProyecto, elaboradoPor, volumenTanque, institucionTecnico, comunidad, municipio, departamento, lat, lon,
+      lluvia: $state.snapshot(lluvia), tipoTecho, aguas,
       descarteMm: Number(descarteMm) || 0, umbralMm: Number(umbralMm) || 0, areaDisponible, anchoTecho, largoTecho,
       edificio, usuarios, dotacionId, usos: $state.snapshot(usos), diasUso,
-    });
+    };
+  }
+
+  // Guardar en el dispositivo cada vez que cambia algo.
+  // Se apaga al reemplazar o borrar el proyecto, para que no se vuelva a guardar el anterior antes de recargar.
+  let guardadoActivo = true;
+  $effect(() => {
+    const p = proyectoActual();
+    if (guardadoActivo) guardarProyecto(p);
   });
+
+  // ---------- Archivo del proyecto ----------
+  function guardarArchivo() {
+    const blob = new Blob([textoArchivoProyecto(proyectoActual(), version)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = nombreArchivoProyecto(nombreProyecto);
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    archivoGuardado = true;
+  }
+  let archivoGuardado = $state(false);
+  let errorArchivo = $state('');
+  async function abrirArchivo(ev: Event) {
+    const input = ev.currentTarget as HTMLInputElement;
+    const f = input.files?.[0];
+    input.value = '';
+    if (!f) return;
+    errorArchivo = '';
+    try {
+      const p = leerArchivoProyecto(await f.text());
+      guardadoActivo = false;
+      guardarProyecto(p as ProyectoGuardado);
+      location.hash = `#paso-${p.lluvia ? Math.min(Math.max(Number(p.paso) || 1, 1), 8) : 1}`;
+      location.reload();
+    } catch (e) {
+      errorArchivo = e instanceof Error ? e.message : 'No se pudo abrir el archivo.';
+    }
+  }
+
+  // ---------- Nuevo cálculo ----------
+  let confirmarNuevo = $state(false);
+  function nuevoCalculo() {
+    guardadoActivo = false;
+    borrarProyecto();
+    location.hash = '#paso-1';
+    location.reload();
+  }
+
+  // ---------- Acerca de ----------
+  let dialogoAcerca: HTMLDialogElement | undefined = $state();
+  const sitioIcc = 'https://icc.org.gt/';
+
+  // ---------- Estado del registro (para comprobar que llega a la hoja) ----------
+  let pendientes = $state(leerCola().length);
+  async function reintentarEnvios() {
+    pendientes = await encolarYEnviar(URL_REGISTRO, null);
+  }
 
   onMount(() => {
     const alCambiarUrl = () => {
@@ -259,21 +334,58 @@
 
   const fecha = new Date().toLocaleDateString('es-GT', { year: 'numeric', month: 'long', day: 'numeric' });
 
+  const nombreInforme = $derived(`Informe CaptaLluvia${nombreProyecto ? ' - ' + nombreProyecto : ''} - ${new Date().toISOString().slice(0, 10)}`);
+  const citaApa = acerca.citaPlantilla.replace('{anio}', String(new Date().getFullYear())).replace('{version}', version);
+
+  function avisarInforme(formato: 'pdf' | 'word') {
+    if (!registro) return;
+    void encolarYEnviar(
+      URL_REGISTRO,
+      eventoInforme(registro, version, {
+        departamento,
+        municipio,
+        infraestructura: EDIFICIOS[edificio].nombre,
+        usuarios: demanda.usuarios,
+        volumenM3: datosTanque?.volumenM3 ?? null,
+        formato,
+      }),
+    ).then((n) => (pendientes = n));
+  }
+
+  // ---------- Informe en Word (editable) ----------
+  let preparandoWord = $state(false);
+  let errorWord = $state('');
+  async function generarWord(): Promise<Blob> {
+    const { generarInformeWord } = await import('./lib/informeWord');
+    const blob = await generarInformeWord({ titulo: nombreInforme, cita: citaApa, autor: elaboradoPor || acerca.nombre });
+    avisarInforme('word');
+    contar('informe-word', { titulo: 'Informe Word generado', evento: true });
+    return blob;
+  }
+  async function descargarWord() {
+    preparandoWord = true;
+    errorWord = '';
+    try {
+      const blob = await generarWord();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${nombreInforme.replace(/[\\/:*?"<>|]/g, '-')}.docx`;
+      document.body.append(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    } catch (e) {
+      errorWord = 'No se pudo generar el Word: ' + (e instanceof Error ? e.message : String(e));
+    } finally {
+      preparandoWord = false;
+    }
+  }
+  let mostrarEnviar = $state(false);
+
   function descargarInforme() {
     const titulo = document.title;
-    document.title = `Informe CaptaLluvia${nombreProyecto ? ' - ' + nombreProyecto : ''} - ${new Date().toISOString().slice(0, 10)}`;
-    if (registro) {
-      void encolarYEnviar(
-        URL_REGISTRO,
-        eventoInforme(registro, version, {
-          departamento,
-          municipio,
-          infraestructura: EDIFICIOS[edificio].nombre,
-          usuarios: demanda.usuarios,
-          volumenM3: datosTanque?.volumenM3 ?? null,
-        }),
-      );
-    }
+    document.title = nombreInforme;
+    avisarInforme('pdf');
     contar('informe-pdf', { titulo: 'Informe PDF descargado', evento: true });
     window.print();
     document.title = titulo;
@@ -292,12 +404,22 @@
     </div>
   </div>
   <div class="lado-derecho">
-    {#if registro}<button class="enlace" onclick={() => irAPaso(8)}>Acerca de</button>{/if}
+    <button class="enlace" onclick={() => dialogoAcerca?.showModal()}>Acerca de</button>
     {#each logos as l (l.archivo)}
-      <img class="logo-org" src={`${base}${l.archivo}`} alt={l.nombre} title={l.nombre} />
+      <a href={sitioIcc} target="_blank" rel="noopener" title="{l.nombre} (abre su sitio web)">
+        <img class="logo-org" src={`${base}${l.archivo}`} alt={l.nombre} />
+      </a>
     {/each}
   </div>
 </header>
+
+<dialog class="dialogo-acerca no-imprimir" bind:this={dialogoAcerca} onclick={(e) => { if (e.target === dialogoAcerca) dialogoAcerca?.close(); }}>
+  <div class="dialogo-cuerpo">
+    <button class="cerrar" onclick={() => dialogoAcerca?.close()} aria-label="Cerrar">✕</button>
+    <Acerca enDialogo />
+    <p class="acciones"><a class="secundario boton-enlace" href={sitioIcc} target="_blank" rel="noopener">Visitar el sitio del ICC ↗</a></p>
+  </div>
+</dialog>
 
 <!-- Encabezado del informe (solo en el PDF) -->
 {#if !registro}
@@ -323,7 +445,7 @@
   <div class="caratula-centro">
     <p class="caratula-tipo">INFORME TÉCNICO</p>
     <h1>Proyecto: Diseño y cálculo de Sistema de Captación de Agua de Lluvia – SCALL</h1>
-    <p class="caratula-lugar"><strong>Lugar:</strong> {nombreProyecto || `${EDIFICIOS[edificio].nombre} (sin nombre)`}</p>
+    <p class="caratula-lugar"><strong>Lugar:</strong> {lugarInforme}</p>
     {#if ubicacionTexto}<p class="caratula-lugar"><strong>Ubicación:</strong> {ubicacionTexto}</p>{/if}
     {#if elaboradoPor}<p class="caratula-lugar"><strong>Elaborado por:</strong> {elaboradoPor}{institucionTecnico ? `, ${institucionTecnico}` : ''}</p>{/if}
   </div>
@@ -347,7 +469,11 @@
       Este informe presenta el análisis preliminar (prefactibilidad) de un sistema de captación de agua de lluvia
       (SCALL) para {nombreProyecto || 'el proyecto'}{ubicacionTexto ? `, ubicado en ${ubicacionTexto}` : ''}:
       {EDIFICIOS[edificio].nombre.toLowerCase()} con {demanda.usuarios} usuarios. Con base en
-      {lluvia && lluvia.anios > 0 ? `${lluvia.anios} años de registros diarios de lluvia (${lluvia.fuente})` : 'los datos de lluvia ingresados por el usuario'},
+      {lluvia && lluvia.estaciones?.length
+        ? `registros de lluvia de ${lluvia.estaciones.length === 1 ? `la estación meteorológica ${lluvia.estaciones[0].nombre}` : `las estaciones meteorológicas ${lluvia.estaciones.map((e) => e.nombre).join(', ').replace(/, ([^,]*)$/, ' y $1')}`}`
+        : lluvia && lluvia.anios > 0
+          ? `${lluvia.anios} años de registros diarios de lluvia (${lluvia.fuente})`
+          : 'los datos de lluvia ingresados por el usuario'},
       se estima la lluvia aprovechable del techo, se compara con la demanda de agua y se dimensionan el área de techo,
       las canaletas, las bajantes y el tanque de almacenamiento. Al final se presentan el cuadro resumen del diseño,
       las conclusiones y la bibliografía consultada.
@@ -386,6 +512,13 @@
 
 <main>
   <div class="pantalla no-imprimir" class:activa={paso === 1}>
+    <div class="abrir-proyecto">
+      <label class="secundario boton-archivo">
+        📂 Abrir un proyecto guardado
+        <input type="file" accept="{EXTENSION_ARCHIVO},.json,application/json" onchange={abrirArchivo} />
+      </label>
+      {#if errorArchivo}<span class="alerta">{errorArchivo}</span>{/if}
+    </div>
     <PasoUbicacion bind:lluvia bind:lat bind:lon bind:nombreProyecto bind:comunidad bind:municipio bind:departamento onListo={() => irAPaso(2)} />
   </div>
   <div class="pantalla" class:activa={paso === 2}>
@@ -442,6 +575,9 @@
         </button>
       </div>
       <div class="campos tecnico">
+        <label>Lugar: nombre de la {edificio === 'escuela' ? 'escuela' : edificio === 'institucion' ? 'institución' : 'vivienda o familia'} (carátula del informe)
+          <input bind:value={nombreProyecto} placeholder={edificio === 'vivienda' ? 'Vivienda familiar (si se deja vacío)' : edificio === 'escuela' ? 'Ej. Escuela Oficial Rural Mixta, aldea El Rodeo' : 'Ej. Oficinas de la Municipalidad de Masagua'} />
+        </label>
         <label>Elaborado por (técnico o personas que hacen el cálculo)
           <input bind:value={elaboradoPor} placeholder="Ej. Ing. Ana López, Téc. Juan Pérez" />
         </label>
@@ -451,7 +587,41 @@
       </div>
       <div class="acciones">
         <button class="principal grande" onclick={descargarInforme} disabled={!oferta}>📄 Descargar informe en PDF</button>
+        <button class="secundario" onclick={descargarWord} disabled={!oferta || preparandoWord}>
+          {preparandoWord ? 'Preparando el Word…' : '📝 Descargar en Word (editable)'}
+        </button>
+        <button class="secundario" onclick={() => (mostrarEnviar = !mostrarEnviar)} disabled={!oferta} aria-expanded={mostrarEnviar}>✉️ Enviar por correo</button>
       </div>
+      {#if errorWord}<p class="alerta">{errorWord}</p>{/if}
+      <p class="nota">
+        El Word se puede modificar; si lo haces, conserva la referencia a CaptaLluvia que va al pie de cada hoja:
+        {citaApa}
+      </p>
+      {#if mostrarEnviar}
+        <EnviarInforme
+          {generarWord}
+          nombreArchivo={`${nombreInforme.replace(/[\\/:*?"<>|]/g, '-')}.docx`}
+          asuntoInicial={`Informe técnico SCALL – ${lugarInforme}`}
+          mensajeInicial={`Le comparto el informe técnico del diseño del sistema de captación de agua de lluvia (SCALL) para ${lugarInforme}${ubicacionTexto ? `, ${ubicacionTexto}` : ''}.\n\nElaborado con CaptaLluvia: ${citaApa}`}
+        />
+      {/if}
+      <div class="acciones">
+        <button class="secundario" onclick={guardarArchivo}>💾 Guardar el proyecto (archivo)</button>
+        <button class="secundario" onclick={() => (confirmarNuevo = true)}>🆕 Nuevo cálculo</button>
+      </div>
+      {#if archivoGuardado}
+        <p class="nota">Se descargó el archivo del proyecto. Para seguir después, en el paso 1 usa "Abrir un proyecto guardado".</p>
+      {/if}
+      {#if confirmarNuevo}
+        <div class="confirmar-nuevo">
+          <p><strong>¿Empezar un cálculo nuevo?</strong> Se borra el proyecto actual de este dispositivo y la app vuelve al paso 1. Si lo quieres conservar, guárdalo antes como archivo.</p>
+          <div class="acciones">
+            <button class="secundario" onclick={guardarArchivo}>💾 Guardar el proyecto</button>
+            <button class="principal" onclick={nuevoCalculo}>Empezar de nuevo</button>
+            <button class="secundario" onclick={() => (confirmarNuevo = false)}>Cancelar</button>
+          </div>
+        </div>
+      {/if}
       <p class="nota">
         Se abrirá la ventana de impresión: elige "Guardar como PDF". El informe reúne todos los pasos, las fuentes
         de consulta y la nota "Acerca de CaptaLluvia".
@@ -475,6 +645,15 @@
           <p class="nota registro-dato">
             Registrado como <strong>{registro.nombre}</strong> ({registro.correo}, {registro.organizacion}). Tu registro y
             los avisos de informes descargados se guardan en la hoja de registros de los autores.
+          </p>
+          <p class="nota estado-registro">
+            Conexión con la hoja de registros: {URL_REGISTRO ? '✅ configurada' : '⚠️ no configurada en esta versión'}.
+            {#if pendientes > 0}
+              Envíos pendientes: {pendientes}.
+              {#if URL_REGISTRO}<button class="enlace" onclick={reintentarEnvios}>Reintentar ahora</button>{/if}
+            {:else}
+              Sin envíos pendientes.
+            {/if}
           </p>
           {#if !confirmarBorrarRegistro}
             <button class="secundario peligro" onclick={() => (confirmarBorrarRegistro = true)}>Borrar mi registro</button>
@@ -521,6 +700,18 @@
     padding: 1rem clamp(1rem, 4vw, 2rem); border-bottom: 1px solid var(--borde);
   }
   .marca { display: flex; gap: 0.75rem; align-items: center; min-width: 0; }
+  .lado-derecho a { display: block; line-height: 0; }
+  .dialogo-acerca { border: 0; border-radius: 1rem; padding: 0; width: min(46rem, 94vw); max-height: 90vh; }
+  .dialogo-acerca::backdrop { background: rgb(0 0 0 / 0.45); }
+  .dialogo-cuerpo { position: relative; padding: 0.5rem 0.5rem 1rem; }
+  .dialogo-cuerpo .cerrar { position: absolute; top: 0.6rem; right: 0.8rem; background: none; border: 0; font-size: 1.3rem; cursor: pointer; z-index: 1; }
+  .dialogo-cuerpo .acciones { padding: 0 1rem; }
+  .boton-enlace { display: inline-block; padding: 0.5rem 1rem; border: 1px solid var(--acento); border-radius: 0.5rem; text-decoration: none; }
+  .abrir-proyecto { display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+  .boton-archivo { display: inline-block; cursor: pointer; padding: 0.45rem 0.9rem; border: 1px solid var(--borde); border-radius: 0.5rem; background: var(--fondo-tarjeta, #fff); color: var(--acento); font-size: 0.92rem; }
+  .boton-archivo input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .boton-archivo:focus-within { outline: 2px solid var(--acento); outline-offset: 2px; }
+  .confirmar-nuevo { border: 1px solid var(--borde); border-radius: 0.75rem; padding: 0.5rem 1rem; margin: 0.75rem 0; background: var(--acento-suave); }
   .gota { flex: none; }
   .lado-derecho { display: flex; align-items: center; gap: 1rem; flex: none; }
   .logo-org { height: 3rem; width: auto; max-width: 9rem; object-fit: contain; display: block; }

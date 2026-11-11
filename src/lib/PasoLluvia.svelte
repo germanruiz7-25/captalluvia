@@ -88,11 +88,38 @@
           {/if}
         </tbody>
       </table>
+      {#if lluvia.estaciones?.length}
+        <div class="bloque">
+          <table class="rejilla estaciones-usadas">
+            <thead>
+              <tr><th>Estación</th><th>Latitud</th><th>Longitud</th><th>Distancia al proyecto</th><th>Periodo</th><th>Años con dato</th>{#if lluvia.estaciones.length > 1}<th>Peso</th>{/if}</tr>
+            </thead>
+            <tbody>
+              {#each lluvia.estaciones as e (e.nombre)}
+                <tr>
+                  <td>{e.nombre}</td><td>{e.lat.toFixed(4)}</td><td>{e.lon.toFixed(4)}</td>
+                  <td>{Number.isFinite(e.distanciaKm) ? `${e.distanciaKm.toLocaleString('es-GT', { maximumFractionDigits: 1 })} km` : '—'}</td>
+                  <td>{e.anioInicio ? `${e.anioInicio}–${e.anioFin}` : '—'}</td><td>{e.anios}</td>
+                  {#if lluvia.estaciones.length > 1}<td>{Math.round(e.peso * 100)} %</td>{/if}
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+          <p class="nota informe">Fuente: {lluvia.fuente}.</p>
+          {#if lluvia.anios < 10}
+            <p class="nota informe">
+              El registro tiene {lluvia.anios} años, menos de los 10 recomendados para un promedio climático: los
+              resultados deben tomarse con precaución y conviene contrastarlos con el registro satelital.
+            </p>
+          {/if}
+        </div>
+      {:else}
       <p class="nota informe">
         Fuente: {lluvia.fuente}{#if lluvia.anios}, promedio de {lluvia.anios} años ({lluvia.anioInicio}–{lluvia.anioFin}){/if}.
         {#if lluvia.fuente.includes('Open-Meteo')}{ATRIBUCION_OPEN_METEO}.{/if}
         {#if lat && lon && lluvia.anios}Punto consultado: {redondearCoordenada(Number(lat))}, {redondearCoordenada(Number(lon))}.{/if}
       </p>
+      {/if}
       {#if lluvia.mesesSinDatos.length}
         <p class="alerta">Sin datos suficientes en: {lluvia.mesesSinDatos.map((m) => MESES_LARGOS[m]).join(', ')} (se tomaron como 0 mm).</p>
       {/if}

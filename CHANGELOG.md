@@ -2,6 +2,33 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.6.0] — 2026-11-10 — Lluvia de estaciones
+
+### Agregado
+- **Datos de estaciones como segunda opción** de lluvia (la principal sigue siendo el registro satelital):
+  - **Cargar archivo Excel (.xlsx) o CSV** con datos mensuales o diarios de una o varias estaciones, con plantillas descargables. El archivo se lee en el dispositivo.
+  - **Coordenadas obligatorias** de cada estación; distancia al proyecto con aviso si está a más de 25 o 50 km.
+  - Control de calidad por años de registro: 🟢 10 años o más, 🟡 5 a 9 (usar con cuidado), 🔴 menos de 5 (no recomendado); meses incompletos descartados.
+  - Varias estaciones: promedio ponderado por distancia (IDW, recomendado) o promedio simple.
+  - **Escribir promedios** a mano ahora pide nombre, coordenadas y años de registro de la estación.
+- En el informe: tabla de estaciones usadas (coordenadas, distancia, periodo, años, peso), fuente y advertencia si hay menos de 10 años; bibliografía con cada estación.
+- **Guardar el proyecto en un archivo** (`.captalluvia.json`) y **abrirlo** después desde el paso 1, en el mismo u otro dispositivo, con todo el cálculo.
+- **Informe en Word (.docx) editable**, generado en el dispositivo con el mismo contenido y la misma distribución del PDF: misma carátula, márgenes, saltos de hoja, tamaños de gráficas y dibujos, cifras y dibujos lado a lado, mapas (satelitales cuando hay clave). La cita APA va solo al pie de la carátula como "Fuente sugerida"; las demás hojas llevan el número de página.
+- **Enviar por correo** desde la cuenta de la propia persona: "Compartir" con el Word adjunto (celulares y equipos compatibles) o "Descargar el Word y abrir mi correo" con destinatarios, asunto y mensaje ya escritos. CaptaLluvia no envía correos.
+- El aviso de informe a la hoja de registros indica el formato (PDF o Word); nueva columna "Formato" en `Codigo.gs`.
+- **Nuevo cálculo** en el paso 8: ofrece guardar el proyecto y vuelve al paso 1 con todo en blanco (el registro se conserva).
+- **Acerca de** en el encabezado abre una ventana con la información de la herramienta; el logotipo del ICC enlaza a icc.org.gt.
+- Estado de la conexión con la hoja de registros y envíos pendientes en "Tus datos y tu registro", con "Reintentar ahora".
+- 16 pruebas nuevas (130 en total); prueba de punta a punta que genera el Word y lo abre en LibreOffice.
+
+### Corregido
+- Se reemplazó el término "first flush" por "dispositivo de primer descarte" (todo en español).
+- Carátula: "Lugar" muestra el nombre escrito; si no hay, "Vivienda familiar" para viviendas o el tipo de edificio. El nombre se puede escribir o corregir también en el paso 8.
+- Borrar los datos del dispositivo ya no volvía a guardar el proyecto anterior antes de recargar.
+
+### Cambiado
+- Paso 1: el proyecto siempre se ubica en el mapa; luego se elige la fuente de lluvia: "Registro satelital (recomendado)" o "Datos de estaciones".
+
 ## [0.5.1] — 2026-11-10
 
 ### Cambiado

@@ -1,13 +1,14 @@
 <script lang="ts">
   import acerca from '../config/acerca.json';
 
+  let { enDialogo = false }: { enDialogo?: boolean } = $props();
   const version = __APP_VERSION__;
   const cita = acerca.citaPlantilla
     .replace('{anio}', String(new Date().getFullYear()))
     .replace('{version}', version);
 </script>
 
-<section class="tarjeta salto-impresion" id="acerca">
+<section class="tarjeta" class:salto-impresion={!enDialogo} id={enDialogo ? undefined : 'acerca'}>
   <h2>Acerca de {acerca.nombre}</h2>
   <dl>
     <dt>Nombre</dt><dd>{acerca.nombre} — {acerca.subtitulo}</dd>

@@ -43,7 +43,7 @@ export function demandaAnualM3(
 
 /**
  * Lluvia aprovechable en mm al año: lluvia × coeficiente de escorrentía,
- * menos el primer descarte (first flush) de cada evento de lluvia.
+ * menos el primer descarte (agua de lavado del techo) de cada evento de lluvia.
  */
 export function lluviaAprovechableMm(
   lluviaAnualMm: number,
