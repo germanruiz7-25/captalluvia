@@ -12,14 +12,12 @@
     lon,
     oferta = null,
     tipoTecho,
-    descarteMm,
   }: {
     lluvia: ResumenLluvia | null;
     lat: string;
     lon: string;
     oferta?: ResumenOferta | null;
     tipoTecho: TipoTecho;
-    descarteMm: number;
   } = $props();
 
   const umbralMm = $derived(oferta?.umbralMm ?? 0);
@@ -62,8 +60,9 @@
         {/if}
       </p>
       <p class="nota informe">
-        PN = precipitación × Ce − primer descarte, con el techo del paso 3
-        ({NOMBRES_TECHO[tipoTecho].toLowerCase()}, Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}, descarte de {descarteMm} mm por lluvia).
+        PN = precipitación × Ce, con el techo del paso 3 ({NOMBRES_TECHO[tipoTecho].toLowerCase()},
+        Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}). Las primeras lluvias, antes del primer mes que llega al umbral, no se
+        captan: lavan el sistema (primer descarte por temporada).
       </p>
 </div>
       {#if umbralMm > 0}

@@ -2,6 +2,15 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.7.0] — 2026-11-11
+
+### Cambiado
+- **Primer descarte por temporada:** se quitó el descarte de 1 mm en cada lluvia. Ahora se dejan correr las primeras lluvias del año, antes del primer mes con 40 mm o más de precipitación neta: esas lluvias lavan el techo, las canaletas y el tanque y no se captan (más sencillo en sistemas artesanales, sin dispositivo de descarte). La captación empieza en ese mes. El paso 3 y el informe muestran los meses de lavado y los milímetros; un mes bajo el umbral a mitad de la temporada (canícula) no cuenta como lavado.
+
+### Agregado
+- **Tanques de polietileno de 15,000, 22,000 y 25,000 L** en la opción 1 del paso 7 (medidas según fabricante).
+- 4 pruebas nuevas (131 en total).
+
 ## [0.6.1] — 2026-11-10
 
 ### Corregido

@@ -96,7 +96,9 @@
     (g?.tipoTecho && g.tipoTecho in COEFICIENTES_ESCORRENTIA ? g.tipoTecho : 'lamina_metalica') as TipoTecho,
   );
   let aguas: NumeroAguas = $state(g?.aguas === 1 ? 1 : 2);
-  let descarteMm = $state(g?.descarteMm ?? 1);
+  // Primer descarte por temporada (v0.7.0): ya no se descartan mm en cada lluvia; las primeras lluvias,
+  // antes del mes en que empieza la captación, lavan el sistema (ver core/oferta.ts).
+  const descarteMm = 0;
   let umbralMm = $state(g?.umbralMm ?? UMBRAL_CAPTACION_MM);
   // Techo existente: ancho × largo en planta (m). El área sale del producto.
   let anchoTecho: number | null = $state(g?.anchoTecho ?? null);
@@ -311,7 +313,8 @@
       material: NOMBRES_TECHO[tipoTecho],
       ce: COEFICIENTES_ESCORRENTIA[tipoTecho],
       aguas,
-      descarteMm: Number(descarteMm) || 0,
+      descarteMm: 0,
+      lavado: oferta && oferta.mesesLavado.length ? { meses: oferta.mesesLavado, mm: oferta.lavadoMm } : null,
       umbralMm: Number(umbralMm) || 0,
       existente: techoExistente && areaDisponible ? { ...techoExistente, area: areaDisponible } : null,
     },
@@ -526,10 +529,10 @@
     <PasoUbicacion bind:lluvia bind:lat bind:lon bind:nombreProyecto bind:comunidad bind:municipio bind:departamento onListo={() => irAPaso(2)} />
   </div>
   <div class="pantalla" class:activa={paso === 2}>
-    <PasoLluvia {lluvia} {lat} {lon} {oferta} {tipoTecho} descarteMm={Number(descarteMm) || 0} />
+    <PasoLluvia {lluvia} {lat} {lon} {oferta} {tipoTecho} />
   </div>
   <div class="pantalla" class:activa={paso === 3}>
-    <PasoTecho {lluvia} {oferta} bind:tipoTecho bind:aguas bind:descarteMm bind:anchoTecho bind:largoTecho {areaDisponible} bind:umbralMm />
+    <PasoTecho {lluvia} {oferta} bind:tipoTecho bind:aguas bind:anchoTecho bind:largoTecho {areaDisponible} bind:umbralMm />
   </div>
   <div class="pantalla" class:activa={paso === 4}>
     <PasoUsuarios bind:edificio bind:usuarios bind:dotacionId bind:usos bind:diasUso {demanda} />

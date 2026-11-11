@@ -51,6 +51,25 @@ describe('oferta de agua', () => {
     expect(o.perdidaMesesSecosMm).toBe(0);
     expect(o.mesesCaptados[2]).toBe(true);
   });
+  it('primer descarte por temporada: las lluvias antes del inicio de la captación lavan el sistema', () => {
+    // Guatemala: Ene–Abr con poca lluvia, temporada de mayo a octubre, Nov–Dic secos
+    const l = resumirMensualManual([3, 3, 9, 36, 171, 270, 202, 211, 300, 233, 30, 9], 120);
+    const o = calcularOferta(l, 0.9, 0);
+    expect(o.inicioCaptacion).toBe(4);
+    expect(o.mesesLavado).toEqual([0, 1, 2, 3]);
+    expect(o.lavadoMm).toBe(51);
+    expect(o.perdidaDescarteMm).toBe(0);
+    expect(o.perdidaMesesSecosMm).toBe(51 + 39); // lavado + Nov–Dic
+    // canícula: un mes bajo el umbral a mitad de temporada no es lavado
+    const c = calcularOferta(resumirMensualManual([0, 0, 0, 0, 200, 200, 30, 200, 200, 200, 0, 0], 100), 0.9, 0);
+    expect(c.mesesLavado).toEqual([0, 1, 2, 3]);
+    // temporada que empieza en enero (hemisferio sur): el lavado son los meses secos de fin de año
+    const sur = calcularOferta(resumirMensualManual([200, 200, 200, 100, 0, 0, 0, 0, 0, 10, 30, 200], 100), 0.9, 0);
+    expect(sur.inicioCaptacion).toBe(11);
+    expect(sur.mesesLavado).toEqual([4, 5, 6, 7, 8, 9, 10]);
+    // todos los meses superan el umbral: no hay meses de lavado
+    expect(calcularOferta(resumirMensualManual(Array(12).fill(100), 100), 0.9, 0).mesesLavado).toEqual([]);
+  });
   it('un mes nunca queda negativo', () => {
     const seco = resumirMensualManual([2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 5);
     const o = calcularOferta(seco, 0.6, 1);

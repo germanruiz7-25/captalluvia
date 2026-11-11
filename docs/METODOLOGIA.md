@@ -8,7 +8,7 @@ Código: `src/core/` · Pruebas: `tests/core/`.
 - Se descargan los últimos 20 años completos de lluvia diaria de Open-Meteo (reanálisis ERA5) para las coordenadas redondeadas a 2 decimales (~1 km).
 - Para cada mes de cada año se suma la lluvia; un mes se acepta si tiene al menos 80 % de días con dato (los días faltantes se completan en proporción).
 - La lluvia mensual es el promedio de los años válidos; la anual, la suma de los 12 promedios.
-- Un día con 1 mm o más cuenta como día con lluvia (un evento de primer descarte).
+- Un día con 1 mm o más cuenta como día con lluvia.
 - En el modo manual, los días con lluvia del año se reparten entre los meses en proporción a la lluvia de cada mes.
 
 ### 0.0.1 Datos de estaciones aportados por el usuario (`estaciones.ts`) — segunda opción
@@ -34,8 +34,16 @@ estaciones, **con sus coordenadas obligatorias**:
 
 **Umbral de captación:** solo se capta en los meses con lluvia promedio igual o mayor a 40 mm (editable), criterio de la metodología SCALL del Colegio de Postgraduados, México, y su Centro Internacional de Demostración y Capacitación del Aprovechamiento del Agua de Lluvia (CIDECALLI) (Anaya Garduño, 2011). La lluvia de los meses más secos no se cuenta.
 
-Para cada mes captado: neta = máx(0, P_mes × Ce − días_con_lluvia_mes × d_ff); los meses bajo el umbral aportan 0. La neta anual es la suma de los meses.
-Resumen: lluvia bruta − lluvia de meses bajo el umbral − pérdida por Ce − primer descarte = lluvia neta.
+Para cada mes captado: neta = P_mes × Ce; los meses bajo el umbral aportan 0. La neta anual es la suma de los meses.
+
+**Primer descarte por temporada (desde v0.7.0):** en lugar de descartar milímetros en cada lluvia (d_ff, que exige un
+dispositivo de primer descarte), se dejan correr las primeras lluvias de la temporada: la lluvia de los meses sin
+captar que preceden al primer mes con PN ≥ umbral (p. ej. enero–abril si la captación empieza en mayo) lava el
+techo, las canaletas y el tanque y no se capta. Es lo más sencillo en sistemas artesanales. Si todos los meses
+superan el umbral, se recomienda dejar correr la primera lluvia después de cada periodo seco. Un mes bajo el umbral
+a mitad de la temporada (canícula) no cuenta como lavado.
+
+Resumen: lluvia bruta − primeras lluvias de la temporada (lavado) − otros meses bajo el umbral − pérdida por Ce = lluvia neta.
 
 **Equivalencia:** 1 mm de lluvia sobre 1 m² = 1 litro.
 Con un área de techo A: m³ netos = neta (mm) × A / 1000.
@@ -58,7 +66,7 @@ P_aprovechable = P_anual × Ce − n_eventos × d_ff  (desde v0.1.0 se calcula m
 
 - **Ce**, coeficiente de escorrentía: lámina metálica 0.90; teja de barro 0.80; losa de concreto 0.80; paja 0.60.
 - **n_eventos**: días con lluvia en el año (en la fase 1 se contarán los días con más de 1 mm en la serie diaria).
-- **d_ff**: primer descarte (agua que lava el techo al inicio de cada lluvia y no se almacena), 1 mm por evento (1 L por m² de techo).
+- **d_ff**: primer descarte por evento (hasta v0.6: 1 mm por lluvia). Desde v0.7.0 es 0 y el lavado se hace con las primeras lluvias de la temporada (ver 0.1).
 
 ## 3. Área mínima de techo
 

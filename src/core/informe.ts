@@ -61,6 +61,8 @@ export interface DatosInforme {
     ce: number;
     aguas: 1 | 2;
     descarteMm: number;
+    /** Primer descarte por temporada: meses (0–11) de las primeras lluvias que lavan el sistema. */
+    lavado?: { meses: number[]; mm: number } | null;
     umbralMm: number;
     existente: { ancho: number; largo: number; area: number } | null;
   };
@@ -117,7 +119,14 @@ export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
     filas: [
       ['Material y coeficiente de escorrentía', `${d.techo.material} (Ce ${d.techo.ce})`],
       ['Forma', d.techo.aguas === 2 ? 'Dos aguas' : 'Un agua'],
-      ['Primer descarte', `${n1(d.techo.descarteMm)} mm por lluvia`],
+      [
+        'Primer descarte',
+        d.techo.lavado && d.techo.lavado.meses.length
+          ? `primeras lluvias de la temporada (${listaMeses(d.techo.lavado.meses)}, ${n0(d.techo.lavado.mm)} mm): lavan el sistema y no se captan`
+          : d.techo.descarteMm > 0
+            ? `${n1(d.techo.descarteMm)} mm por lluvia`
+            : 'primera lluvia después de cada periodo seco (sin captar)',
+      ],
       ...(d.oferta
         ? ([['Lluvia neta aprovechable', `${n0(d.oferta.netaAnualMm)} L por m² al año (${pct(d.oferta.eficiencia)} de la lluvia)`]] as [
             string,
