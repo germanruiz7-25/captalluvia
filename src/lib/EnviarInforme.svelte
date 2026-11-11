@@ -41,14 +41,21 @@
   );
   const invalidos = $derived(lista.filter((x) => !CORREO.test(x)));
 
+  /**
+   * Compartir archivos de Word solo funciona en Safari (iPhone, iPad y Mac). Chrome, Edge y los demás
+   * navegadores basados en Chromium (Android, Windows) solo dejan compartir imágenes, audio, video, PDF y
+   * texto: rechazan el .docx aunque digan que sí. En ellos se usa "abrir mi correo".
+   */
+  const esChromium = typeof navigator !== 'undefined' && 'userAgentData' in navigator;
   const puedeCompartirArchivos = (() => {
     try {
       const f = new File(['x'], 'prueba.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-      return typeof navigator !== 'undefined' && !!navigator.canShare && navigator.canShare({ files: [f] });
+      return !esChromium && typeof navigator !== 'undefined' && !!navigator.canShare && navigator.canShare({ files: [f] });
     } catch {
       return false;
     }
   })();
+  let fallo = $state(false);
 
   const TIPO_DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
@@ -92,10 +99,8 @@
       })
       .catch((e) => {
         if (e instanceof DOMException && e.name === 'AbortError') return; // la persona cerró el menú
-        error =
-          e instanceof DOMException && e.name === 'NotAllowedError'
-            ? 'Tu navegador no permitió abrir el menú de compartir. Usa "Descargar el Word y abrir mi correo".'
-            : 'No se pudo compartir. Usa "Descargar el Word y abrir mi correo".';
+        fallo = true;
+        error = 'Este navegador no permite compartir archivos de Word. Usa el botón "Descargar el Word y abrir mi correo".';
       });
   }
 
@@ -140,12 +145,12 @@
     <label class="ancho">Mensaje<textarea rows="5" bind:value={mensaje}></textarea></label>
   </div>
   <div class="acciones">
-    {#if puedeCompartirArchivos}
+    {#if puedeCompartirArchivos && !fallo}
       <button class="principal" onclick={compartir} disabled={trabajando || !listo}>
         {listo ? '📤 Compartir con el informe adjunto (Word)' : 'Preparando el informe…'}
       </button>
     {/if}
-    <button class={puedeCompartirArchivos ? 'secundario' : 'principal'} onclick={abrirCorreo} disabled={trabajando || invalidos.length > 0}>
+    <button class={puedeCompartirArchivos && !fallo ? 'secundario' : 'principal'} onclick={abrirCorreo} disabled={trabajando || invalidos.length > 0}>
       ✉️ Descargar el Word y abrir mi correo
     </button>
   </div>

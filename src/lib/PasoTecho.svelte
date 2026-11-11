@@ -86,7 +86,7 @@
 
   <p class="solo-impresion">
     Techo de {NOMBRES_TECHO[tipoTecho].toLowerCase()} (Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}),
-    {aguas === 2 ? 'dos aguas' : 'un agua'}, captación en meses con {n0(umbralMm)} mm o más de precipitación neta{#if oferta?.mesesLavado.length}; primer descarte con las primeras lluvias de la temporada ({mesesLavadoTexto}){/if}{#if areaDisponible}, techo existente de {n1(Number(anchoTecho))} × {n1(Number(largoTecho))} m = {n1(areaDisponible)} m²{/if}.
+    {aguas === 2 ? 'dos aguas' : 'un agua'}, captación en la temporada de lluvia{#if oferta?.mesesLavado.length}; en la época seca ({mesesLavadoTexto}, menos de {n0(umbralMm)} mm de precipitación neta al mes) no se capta y sus lluvias lavan el sistema{/if}{#if areaDisponible}, techo existente de {n1(Number(anchoTecho))} × {n1(Number(largoTecho))} m = {n1(areaDisponible)} m²{/if}.
   </p>
 
   {#if !lluvia || !oferta}
@@ -104,7 +104,7 @@
       <tbody>
         <tr><td>Lluvia que cae al año</td><td>{n0(oferta.brutaAnualMm)} mm</td></tr>
         {#if oferta.mesesLavado.length}
-          <tr><td>− Primer descarte: primeras lluvias de la temporada ({mesesLavadoTexto}), lavan techo, canaletas y tanque</td><td>−{n0(oferta.lavadoMm)} mm</td></tr>
+          <tr><td>− Época seca ({mesesLavadoTexto}): no se capta; sus lluvias lavan techo, canaletas y tanque (primer descarte)</td><td>−{n0(oferta.lavadoMm)} mm</td></tr>
         {/if}
         {#if oferta.perdidaMesesSecosMm - oferta.lavadoMm > 0.5}
           <tr><td>− {oferta.mesesLavado.length ? 'Otros meses' : 'Meses'} con PN menor a {n0(oferta.umbralMm)} mm, no se captan{otrosSecos.length ? ` (${otrosSecos.join(', ')})` : ''}</td><td>−{n0(oferta.perdidaMesesSecosMm - oferta.lavadoMm)} mm</td></tr>
@@ -115,10 +115,11 @@
     </table>
     <p class="nota informe">
       {#if oferta.mesesLavado.length}
-        Primer descarte por temporada: la captación empieza en
-        {oferta.inicioCaptacion !== null ? MESES_LARGOS[oferta.inicioCaptacion].toLowerCase() : 'la temporada de lluvia'}, el primer mes con
-        {n0(oferta.umbralMm)} mm o más de precipitación neta. Las lluvias de los meses anteriores ({mesesLavadoTexto},
-        {n0(oferta.lavadoMm)} mm) se dejan correr para lavar el techo, las canaletas y el tanque, y no se captan.
+        Se capta de {oferta.inicioCaptacion !== null ? MESES_LARGOS[oferta.inicioCaptacion].toLowerCase() : ''} a
+        {MESES_LARGOS[(oferta.mesesLavado[0] + 11) % 12].toLowerCase()} (temporada de lluvia), incluidos los meses de
+        la temporada que bajen de {n0(oferta.umbralMm)} mm, como la canícula. En la época seca ({mesesLavadoTexto},
+        meses seguidos con menos de {n0(oferta.umbralMm)} mm de precipitación neta) no se capta: esas lluvias,
+        {n0(oferta.lavadoMm)} mm, se dejan correr para lavar el techo, las canaletas y el tanque (primer descarte).
       {:else}
         Todos los meses superan {n0(oferta.umbralMm)} mm de precipitación neta: para lavar el sistema, deja correr la
         primera lluvia después de cada periodo sin lluvia antes de conectar la bajante al tanque.

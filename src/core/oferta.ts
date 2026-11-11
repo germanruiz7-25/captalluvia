@@ -7,10 +7,11 @@
  * Solo se captan los meses con PN igual o mayor al umbral (40 mm por defecto),
  * según Anaya Garduño (2011), pp. 56–57, fig. 4.7.
  *
- * Primer descarte por temporada (desde v0.7.0): en lugar de descartar milímetros en cada lluvia,
- * se deja correr la lluvia de los meses previos al inicio de la temporada de captación (el primer
- * mes con PN ≥ umbral): esas primeras lluvias lavan el techo, las canaletas y el tanque y no se
- * captan. Es la forma más sencilla de hacerlo en sistemas artesanales, sin dispositivo de descarte.
+ * Temporada de captación y primer descarte (desde v0.7.0): la época seca es la racha más larga de
+ * meses seguidos con PN bajo el umbral (p. ej. diciembre–abril). Esos meses no se captan y su poca
+ * lluvia lava el techo, las canaletas y el tanque (primer descarte por temporada, sin dispositivo).
+ * Todos los demás meses se captan, aunque alguno de la temporada lluviosa quede bajo el umbral
+ * (canícula). Si ningún mes queda bajo el umbral, se captan los 12.
  */
 import type { ResumenLluvia } from './lluvia';
 
@@ -67,7 +68,9 @@ export function calcularOferta(
   const pnMensualMm = lluvia.mensualMm.map((p, m) =>
     Math.max(0, p * ce - lluvia.diasLluviaMes[m] * descarte),
   );
-  const mesesCaptados = pnMensualMm.map((pn) => pn > 0 && pn >= umbral);
+  const bajo = pnMensualMm.map((pn) => pn <= 0 || pn < umbral);
+  const seca = epocaSeca(bajo);
+  const mesesCaptados = pnMensualMm.map((pn, m) => pn > 0 && !seca.includes(m));
 
   let secos = 0;
   let escorrentia = 0;
@@ -82,17 +85,9 @@ export function calcularOferta(
     return pnMensualMm[m];
   });
 
-  // Primeras lluvias que lavan el sistema: los meses sin captar que preceden al inicio de la temporada
-  const inicio = mesesCaptados.findIndex((c, m) => c && !mesesCaptados[(m + 11) % 12]);
-  const mesesLavado: number[] = [];
-  if (inicio >= 0) {
-    for (let k = 1; k < 12; k++) {
-      const m = (inicio - k + 12) % 12;
-      if (mesesCaptados[m]) break;
-      if (inicio > 0 && m > inicio) break; // no pasar a los meses de fin de año
-      mesesLavado.unshift(m);
-    }
-  }
+  // Las lluvias de la época seca lavan el sistema; la captación empieza el mes siguiente
+  const mesesLavado = seca.length < 12 ? seca : [];
+  const inicio = mesesLavado.length ? (mesesLavado[mesesLavado.length - 1] + 1) % 12 : -1;
   const lavado = mesesLavado.reduce((t, m) => t + lluvia.mensualMm[m], 0);
 
   const bruta = lluvia.anualMm;
@@ -117,4 +112,21 @@ export function calcularOferta(
     m3NetosAnual: area === null ? null : (neta * area) / 1000,
     m3NetosMensual: area === null ? null : netaMensualMm.map((x) => (x * area) / 1000),
   };
+}
+
+/**
+ * Época seca: la racha más larga de meses seguidos (circular: dic → ene) bajo el umbral, en orden.
+ * Devuelve [] si ningún mes está bajo el umbral y los 12 meses si todos lo están.
+ */
+export function epocaSeca(bajo: boolean[]): number[] {
+  if (bajo.every(Boolean)) return bajo.map((_, m) => m);
+  if (!bajo.some(Boolean)) return [];
+  let mejor: number[] = [];
+  for (let m = 0; m < 12; m++) {
+    if (!bajo[m] || bajo[(m + 11) % 12]) continue; // solo donde empieza una racha
+    const racha: number[] = [];
+    for (let k = 0; k < 12 && bajo[(m + k) % 12]; k++) racha.push((m + k) % 12);
+    if (racha.length > mejor.length) mejor = racha;
+  }
+  return mejor;
 }

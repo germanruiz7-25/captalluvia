@@ -34,16 +34,16 @@ estaciones, **con sus coordenadas obligatorias**:
 
 **Umbral de captación:** solo se capta en los meses con lluvia promedio igual o mayor a 40 mm (editable), criterio de la metodología SCALL del Colegio de Postgraduados, México, y su Centro Internacional de Demostración y Capacitación del Aprovechamiento del Agua de Lluvia (CIDECALLI) (Anaya Garduño, 2011). La lluvia de los meses más secos no se cuenta.
 
-Para cada mes captado: neta = P_mes × Ce; los meses bajo el umbral aportan 0. La neta anual es la suma de los meses.
+Para cada mes captado: neta = P_mes × Ce; los meses de la época seca aportan 0. La neta anual es la suma de los meses.
 
-**Primer descarte por temporada (desde v0.7.0):** en lugar de descartar milímetros en cada lluvia (d_ff, que exige un
-dispositivo de primer descarte), se dejan correr las primeras lluvias de la temporada: la lluvia de los meses sin
-captar que preceden al primer mes con PN ≥ umbral (p. ej. enero–abril si la captación empieza en mayo) lava el
-techo, las canaletas y el tanque y no se capta. Es lo más sencillo en sistemas artesanales. Si todos los meses
-superan el umbral, se recomienda dejar correr la primera lluvia después de cada periodo seco. Un mes bajo el umbral
-a mitad de la temporada (canícula) no cuenta como lavado.
+**Temporada de captación y primer descarte (desde v0.7.0):** la época seca es la racha más larga de meses
+seguidos (circular, diciembre → enero) con PN bajo el umbral, p. ej. noviembre o diciembre a abril, y a veces mayo.
+En esos meses no se capta y su poca lluvia lava el techo, las canaletas y el tanque (primer descarte por temporada,
+sin dispositivo de descarte, más sencillo en sistemas artesanales). Todos los demás meses se captan, incluso si alguno
+de la temporada lluviosa queda bajo el umbral (canícula). Si ningún mes queda bajo el umbral, se captan los 12 y se
+recomienda dejar correr la primera lluvia después de cada periodo seco.
 
-Resumen: lluvia bruta − primeras lluvias de la temporada (lavado) − otros meses bajo el umbral − pérdida por Ce = lluvia neta.
+Resumen: lluvia bruta − lluvia de la época seca (lavado) − pérdida por Ce = lluvia neta.
 
 **Equivalencia:** 1 mm de lluvia sobre 1 m² = 1 litro.
 Con un área de techo A: m³ netos = neta (mm) × A / 1000.

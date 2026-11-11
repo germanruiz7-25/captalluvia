@@ -107,7 +107,7 @@ export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
           ] as [string, string][])
         : []),
       ...(d.oferta
-        ? ([['Meses de captación (PN ≥ ' + n0(d.techo.umbralMm) + ' mm)', listaMeses(indicesDonde(d.oferta.mesesCaptados, true)) || 'ninguno']] as [
+        ? ([['Meses de captación (temporada de lluvia)', listaMeses(indicesDonde(d.oferta.mesesCaptados, true)) || 'ninguno']] as [
             string,
             string,
           ][])
@@ -122,7 +122,7 @@ export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
       [
         'Primer descarte',
         d.techo.lavado && d.techo.lavado.meses.length
-          ? `primeras lluvias de la temporada (${listaMeses(d.techo.lavado.meses)}, ${n0(d.techo.lavado.mm)} mm): lavan el sistema y no se captan`
+          ? `lluvias de la época seca (${listaMeses(d.techo.lavado.meses)}, ${n0(d.techo.lavado.mm)} mm): no se captan y lavan el sistema`
           : d.techo.descarteMm > 0
             ? `${n1(d.techo.descarteMm)} mm por lluvia`
             : 'primera lluvia después de cada periodo seco (sin captar)',

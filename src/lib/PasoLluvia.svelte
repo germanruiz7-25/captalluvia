@@ -56,24 +56,25 @@
         <span class="item"><span class="muestra neta"></span> PN a cosechar</span>
         {#if umbralMm > 0}
           <span class="item"><span class="muestra gris"></span> PN de un mes que no se capta</span>
-          <span class="item"><span class="linea-umbral"></span> {umbralMm} mm de PN: inicio de captación</span>
+          <span class="item"><span class="linea-umbral"></span> {umbralMm} mm de PN: límite de la época seca</span>
         {/if}
       </p>
       <p class="nota informe">
         PN = precipitación × Ce, con el techo del paso 3 ({NOMBRES_TECHO[tipoTecho].toLowerCase()},
-        Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}). Las primeras lluvias, antes del primer mes que llega al umbral, no se
-        captan: lavan el sistema (primer descarte por temporada).
+        Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}). Las lluvias de la época seca (meses seguidos con PN menor a
+        {umbralMm} mm) no se captan: lavan el sistema (primer descarte por temporada).
       </p>
 </div>
       {#if umbralMm > 0}
         <p class="recomendacion">
-          Recomendación: captar la lluvia en los meses con {umbralMm} mm o más de precipitación neta (PN), sobre la línea roja punteada.
+          Recomendación: captar la lluvia durante la temporada de lluvia y no en la época seca (los meses seguidos con
+          menos de {umbralMm} mm de precipitación neta, bajo la línea roja punteada).
           {#if mesesCaptables.length}
-            En este lugar: {mesesCaptables.join(', ')} ({mesesCaptables.length} meses).
+            En este lugar se capta en: {mesesCaptables.join(', ')} ({mesesCaptables.length} meses).
           {:else}
             En este lugar ningún mes alcanza {umbralMm} mm de PN.
           {/if}
-          Los demás meses no se cuentan en la captación.
+          Las lluvias de la época seca no se cuentan: lavan el sistema.
         </p>
       {/if}
       <details class="detalle">
