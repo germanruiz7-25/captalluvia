@@ -2,6 +2,21 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.6.0] — 2026-11-10 — Lluvia de estaciones
+
+### Agregado
+- **Datos de estaciones como segunda opción** de lluvia (la principal sigue siendo el registro satelital):
+  - **Cargar archivo Excel (.xlsx) o CSV** con datos mensuales o diarios de una o varias estaciones, con plantillas descargables. El archivo se lee en el dispositivo.
+  - **Coordenadas obligatorias** de cada estación; distancia al proyecto con aviso si está a más de 25 o 50 km.
+  - Control de calidad por años de registro: 🟢 10 años o más, 🟡 5 a 9 (usar con cuidado), 🔴 menos de 5 (no recomendado); meses incompletos descartados.
+  - Varias estaciones: promedio ponderado por distancia (IDW, recomendado) o promedio simple.
+  - **Escribir promedios** a mano ahora pide nombre, coordenadas y años de registro de la estación.
+- En el informe: tabla de estaciones usadas (coordenadas, distancia, periodo, años, peso), fuente y advertencia si hay menos de 10 años; bibliografía con cada estación.
+- 13 pruebas nuevas (127 en total).
+
+### Cambiado
+- Paso 1: el proyecto siempre se ubica en el mapa; luego se elige la fuente de lluvia: "Registro satelital (recomendado)" o "Datos de estaciones".
+
 ## [0.5.1] — 2026-11-10
 
 ### Cambiado

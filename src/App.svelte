@@ -347,7 +347,11 @@
       Este informe presenta el análisis preliminar (prefactibilidad) de un sistema de captación de agua de lluvia
       (SCALL) para {nombreProyecto || 'el proyecto'}{ubicacionTexto ? `, ubicado en ${ubicacionTexto}` : ''}:
       {EDIFICIOS[edificio].nombre.toLowerCase()} con {demanda.usuarios} usuarios. Con base en
-      {lluvia && lluvia.anios > 0 ? `${lluvia.anios} años de registros diarios de lluvia (${lluvia.fuente})` : 'los datos de lluvia ingresados por el usuario'},
+      {lluvia && lluvia.estaciones?.length
+        ? `registros de lluvia de ${lluvia.estaciones.length === 1 ? `la estación meteorológica ${lluvia.estaciones[0].nombre}` : `las estaciones meteorológicas ${lluvia.estaciones.map((e) => e.nombre).join(', ').replace(/, ([^,]*)$/, ' y $1')}`}`
+        : lluvia && lluvia.anios > 0
+          ? `${lluvia.anios} años de registros diarios de lluvia (${lluvia.fuente})`
+          : 'los datos de lluvia ingresados por el usuario'},
       se estima la lluvia aprovechable del techo, se compara con la demanda de agua y se dimensionan el área de techo,
       las canaletas, las bajantes y el tanque de almacenamiento. Al final se presentan el cuadro resumen del diseño,
       las conclusiones y la bibliografía consultada.

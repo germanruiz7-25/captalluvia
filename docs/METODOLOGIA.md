@@ -11,6 +11,25 @@ Código: `src/core/` · Pruebas: `tests/core/`.
 - Un día con 1 mm o más cuenta como día con lluvia (un evento de primer descarte).
 - En el modo manual, los días con lluvia del año se reparten entre los meses en proporción a la lluvia de cada mes.
 
+### 0.0.1 Datos de estaciones aportados por el usuario (`estaciones.ts`) — segunda opción
+
+La opción principal es siempre el registro satelital. Como alternativa se aceptan registros de una o varias
+estaciones, **con sus coordenadas obligatorias**:
+
+- **Archivo** (Excel .xlsx o CSV, plantillas en `public/plantillas/`): una fila por dato, mensual
+  (Estación, Latitud, Longitud, Año, Mes, Lluvia) o diario (Estación, Latitud, Longitud, Fecha, Lluvia). Los
+  encabezados se reconocen por nombre; se aceptan coma o punto decimal, nombres de mes y fechas de Excel.
+- Datos diarios: un mes se usa si tiene datos en al menos el 80 % de sus días (se completa en proporción) y se
+  cuentan los días con lluvia ≥ 1 mm. Datos mensuales: se usa el total del mes; los días con lluvia del año los
+  indica el usuario.
+- Promedio de cada mes con los años que tienen ese mes. **Años con dato** = mínimo entre meses.
+  Calidad: 🟢 ≥ 10 años; 🟡 5 a 9 años (usar con cuidado); 🔴 < 5 años (no recomendado).
+- Distancia de cada estación al proyecto por haversine; aviso a partir de 25 km y de 50 km.
+- Varias estaciones: promedio ponderado por el inverso de la distancia al cuadrado (IDW, Shepard 1968;
+  distancia mínima 0.5 km) o promedio simple. El resumen toma como años de registro el menor de las estaciones
+  usadas; con menos de 10 años el informe agrega una advertencia.
+- **Escribir promedios**: 12 promedios mensuales más nombre, coordenadas y años de registro de la estación.
+
 ## 0.1 Lluvia neta y m³ (`oferta.ts`)
 
 **Umbral de captación:** solo se capta en los meses con lluvia promedio igual o mayor a 40 mm (editable), criterio de la metodología SCALL del Colegio de Postgraduados, México, y su Centro Internacional de Demostración y Capacitación del Aprovechamiento del Agua de Lluvia (CIDECALLI) (Anaya Garduño, 2011). La lluvia de los meses más secos no se cuenta.
