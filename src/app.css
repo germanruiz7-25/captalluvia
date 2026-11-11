@@ -134,6 +134,10 @@ details.detalle[open] { padding-bottom: 0.75rem; }
   .paso > h2::before { counter-increment: seccion; content: counter(seccion) '. '; }
   .numero-paso { display: none; }
   .salto-impresion { break-before: page; }
+  /* Resumen de 2 hojas: al imprimirlo se oculta todo lo demás */
+  body.imprimiendo-resumen #app > :not(.resumen-ejecutivo) { display: none !important; }
+  body.imprimiendo-resumen .resumen-ejecutivo { display: block !important; }
+  body:not(.imprimiendo-resumen) .resumen-ejecutivo { display: none !important; }
   /* <details> no se divide bien entre hojas en Chromium: al imprimir su contenido fluye como bloque normal */
   details.detalle:not(.no-imprimir) { display: contents !important; }
   #fuentes ul { display: block !important; }

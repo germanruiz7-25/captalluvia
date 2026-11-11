@@ -49,7 +49,7 @@ describe('dirección del punto (Nominatim reverse)', () => {
   it('toma aldea, municipio y departamento', () => {
     expect(
       leerDireccion({ address: { village: 'El Rodeo', county: 'Escuintla', state: 'Escuintla', country: 'Guatemala' } }),
-    ).toEqual({ comunidad: 'El Rodeo', municipio: 'Escuintla', departamento: 'Escuintla' });
+    ).toEqual({ comunidad: 'El Rodeo', municipio: 'Escuintla', departamento: 'Escuintla', pais: 'Guatemala' });
   });
 
   it('si la comunidad es la cabecera, busca un nivel más fino', () => {
@@ -57,6 +57,7 @@ describe('dirección del punto (Nominatim reverse)', () => {
       comunidad: 'Barrio El Centro',
       municipio: 'Masagua',
       departamento: 'Escuintla',
+      pais: '',
     });
   });
 

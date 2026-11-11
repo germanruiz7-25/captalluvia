@@ -1,8 +1,8 @@
 {
   "name": "captalluvia",
   "private": true,
-  "version": "0.7.0",
-  "description": "CaptaLluvia: diseño de sistemas de cosecha de agua de lluvia (SCALL) a nivel domiciliario",
+  "version": "0.8.0",
+  "description": "CaptaLluvia: dise\u00f1o de sistemas de cosecha de agua de lluvia (SCALL) a nivel domiciliario",
   "author": "Alfaro, G. <galfaro@icc.org.gt>",
   "license": "SEE LICENSE IN LICENSE",
   "homepage": "https://captalluvia.org",
@@ -36,6 +36,10 @@
   "dependencies": {
     "docx": "^9.15.3",
     "leaflet": "^1.9.4",
+    "pptxgenjs": "^4.0.1",
     "read-excel-file": "^9.3.14"
+  },
+  "overrides": {
+    "image-size": "^2.1.0"
   }
 }

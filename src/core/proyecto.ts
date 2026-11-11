@@ -34,6 +34,8 @@ export interface ProyectoGuardado {
   diasUso: number;
   /** Días de consumo a garantizar con el tanque en la época seca (desde v0.8.0). */
   diasCriticos?: number;
+  /** País del proyecto (desde v0.8.0). */
+  pais?: string;
 }
 
 type Almacen = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;

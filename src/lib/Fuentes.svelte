@@ -98,9 +98,10 @@
       intensidad de diseño indicada por el usuario (se recomienda la curva IDF local de INSIVUMEH).
     </li>
     <li>
-      Volumen del tanque: balance mensual con el método del pico secuente (diferencias acumuladas). Rippl, W. (1883).
-      The capacity of storage-reservoirs for water-supply. <em>Minutes of Proceedings of the Institution of Civil
-      Engineers</em>, 71, 270–278.
+      Volumen del tanque: demanda del periodo crítico de la época seca, con la demanda mensual Dj = usuarios × dotación
+      × 30.4 días ÷ 1000 (criterio de diseño SCALL). Balance mensual del nivel del tanque según el método de
+      diferencias acumuladas: Rippl, W. (1883). The capacity of storage-reservoirs for water-supply. <em>Minutes of
+      Proceedings of the Institution of Civil Engineers</em>, 71, 270–278.
     </li>
     <li>
       Capacidades y medidas de tanques de polietileno (450 a 2,500 L): Rotoplas Centroamérica. <em>Manual de

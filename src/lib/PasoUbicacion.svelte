@@ -13,6 +13,7 @@
     comunidad = $bindable(''),
     municipio = $bindable(''),
     departamento = $bindable(''),
+    pais = $bindable(''),
     onListo,
   }: {
     lluvia: ResumenLluvia | null;
@@ -22,6 +23,7 @@
     comunidad: string;
     municipio: string;
     departamento: string;
+    pais?: string;
     onListo: () => void;
   } = $props();
 
@@ -56,6 +58,7 @@
         if (d.comunidad) comunidad = d.comunidad;
         if (d.municipio) municipio = d.municipio;
         if (d.departamento) departamento = d.departamento;
+        if (d.pais) pais = d.pais;
         avisoDireccion = 'Revisa los datos: el mapa a veces da el nombre de la cabecera o de un barrio cercano.';
       }
     } catch (e) {
@@ -83,6 +86,9 @@
         </label>
         <label>Departamento
           <input bind:value={departamento} placeholder="Ej. Escuintla" />
+        </label>
+        <label>País
+          <input bind:value={pais} placeholder="Ej. Guatemala" />
         </label>
       </div>
       <button class="secundario" type="button" onclick={completarDireccion} disabled={completando || lat === '' || lon === ''}>

@@ -34,7 +34,26 @@ estaciones, **con sus coordenadas obligatorias**:
 
 **Umbral de captación:** solo se capta en los meses con lluvia promedio igual o mayor a 40 mm (editable), criterio de la metodología SCALL del Colegio de Postgraduados, México, y su Centro Internacional de Demostración y Capacitación del Aprovechamiento del Agua de Lluvia (CIDECALLI) (Anaya Garduño, 2011). La lluvia de los meses más secos no se cuenta.
 
-Para cada mes captado: neta = P_mes × Ce; los meses de la época seca aportan 0. La neta anual es la suma de los meses.
+**Precipitación neta (desde v0.8.0):** PN = P_mes × Cc, con el coeficiente de captación **Cc = Ce × Efc**.
+Ce es el coeficiente de escorrentía del material del techo (0 a 0.9 según su rugosidad y absorción) y Efc la
+eficiencia de captación de lluvia, 0.85 (salpicadura, rebalse de canaletas, fugas y evaporación). Ejemplo: mayo con
+478.1 mm y lámina metálica: 478.1 × 0.9 × 0.85 = 478.1 × 0.765 = 365.7 mm.
+
+| Material | Ce | Cc (× 0.85) |
+| --- | --- | --- |
+| Lámina metálica (zinc, galvanizada o troquelada) | 0.90 | 0.765 |
+| Lona, plástico o geomembrana | 0.90 | 0.765 |
+| Lámina de fibrocemento | 0.85 | 0.723 |
+| Losa de concreto | 0.80 | 0.680 |
+| Teja de barro | 0.80 | 0.680 |
+| Palma o paja | 0.60 | 0.510 |
+| Techo verde o césped | 0.30 | 0.255 |
+
+Valores de diseño dentro de los rangos de OPS/CEPIS (2004) y Anaya Garduño (2011); cubiertas vegetales 0.15–0.35.
+El coeficiente de escorrentía Ce (sin Efc) se sigue usando en el método racional de canaletas, porque allí interesa
+el caudal pico que llega al canal.
+
+Para cada mes captado: neta = PN del mes; los meses de la época seca aportan 0. La neta anual es la suma de los meses.
 
 **Temporada de captación y primer descarte (desde v0.7.0):** la época seca es la racha más larga de meses
 seguidos (circular, diciembre → enero) con PN bajo el umbral, p. ej. noviembre o diciembre a abril, y a veces mayo.
@@ -43,14 +62,17 @@ sin dispositivo de descarte, más sencillo en sistemas artesanales). Todos los d
 de la temporada lluviosa queda bajo el umbral (canícula). Si ningún mes queda bajo el umbral, se captan los 12 y se
 recomienda dejar correr la primera lluvia después de cada periodo seco.
 
-Resumen: lluvia bruta − lluvia de la época seca (lavado) − pérdida por Ce = lluvia neta.
+Resumen: lluvia bruta − lluvia de la época seca (lavado) − pérdida por Ce − pérdida por eficiencia de captación = lluvia neta.
 
 **Equivalencia:** 1 mm de lluvia sobre 1 m² = 1 litro.
 Con un área de techo A: m³ netos = neta (mm) × A / 1000.
 
 ## 0.2 Demanda (`demanda.ts`)
 
-V = usuarios × litros por usuario al día × días de uso al año / 1000.
+- **Demanda mensual (Dj)** = usuarios × litros por usuario al día × 30.4 días / 1000 (m³/mes; 30.4 = 365 ÷ 12).
+- **Demanda anual** = usuarios × litros por usuario al día × días de uso al año / 1000 (con 365 días ≈ Dj × 12).
+- **Periodo crítico (desde v0.8.0):** días de consumo que el tanque debe garantizar en la época seca (vivienda 60,
+  escuela 40, institución 44; editable). Volumen a almacenar = usuarios × litros × días críticos / 1000 = Dj × meses críticos.
 Días de uso: vivienda 365; escuela 180 (mínimo de días de clase en Guatemala; editable); institución 250 (editable).
 La dotación puede elegirse de opciones sugeridas o definirse por usos (por ejemplo escuela: 2 L para beber + 1 L para lavado de manos y boca o cocina).
 
@@ -112,10 +134,10 @@ Todas son **dimensiones mínimas**; el diseñador decide si las adopta o las aum
 ## 8. Tanque de almacenamiento (`tanque.ts`)
 
 1. **Oferta mensual (m³)** = PN del mes (mm) × área del techo (m²) / 1000. Se usa el techo existente si se escribieron sus medidas; si no, el área mínima necesaria del paso 5.
-2. **Demanda mensual (m³)** = demanda anual / 12.
-3. **Volumen (pico secuente, diferencias acumuladas de Rippl, 1883):** K_t = max(0, K_{t−1} + D_t − Q_t); el volumen es el mayor K en un año estable (se simulan dos años). Si la oferta anual es menor que la demanda, se dimensiona para guardar todo el excedente de la época de lluvias, S_t = max(0, S_{t−1} + Q_t − D_t), y se informa qué parte del año se cubre.
-4. **Simulación:** nivel al final de cada mes = min(V, max(0, nivel anterior + Q − D)); lo que no cabe se rebalsa y lo que falta es demanda no cubierta.
-5. **Tanques de polietileno:** número = ⌈V / capacidad⌉; se sugiere el más pequeño con el que bastan 4 unidades o menos. "Tanques que se llenan" en el mes = m³ captados / capacidad.
+2. **Volumen de almacenamiento (desde v0.8.0)** = demanda del periodo crítico = usuarios × dotación × días críticos / 1000. Se verifica que lo captado en la temporada alcance para llenarlo. (Hasta v0.7 se usaba el pico secuente de Rippl con la demanda de todo el año.)
+3. **Tanque comercial:** el más pequeño que guarda el volumen en una sola unidad (450 a 25,000 L); si ninguno alcanza, varias unidades del más grande.
+4. **Llenados del tanque:** N_j = V_captado,j / V_tanque para cada mes; N anual = Σ N_j. N_j ≥ 1: la lluvia del mes llena el tanque al menos una vez.
+5. **Simulación:** nivel al final de cada mes = min(V, max(0, nivel anterior + Q − D)) con D = demanda anual / 12; lo que no cabe se rebalsa y lo que falta es demanda no cubierta.
 6. **Cisterna de block:** base cuadrada de lado ⌈√(V / alto útil)⌉ (redondeado a 0.10 m), alto útil 1.50 m por defecto y 0.30 m de borde libre; o medidas del usuario, volumen = largo × ancho × alto útil (medidas interiores).
 
 ## Ejemplo de verificación

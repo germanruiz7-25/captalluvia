@@ -55,6 +55,8 @@ export interface DatosTanqueInforme {
   llenadosAnual?: number;
   /** Capacidad del tanque elegido (L). */
   capacidadTanqueL?: number;
+  /** Veces que se llena el tanque con la lluvia de cada mes. */
+  llenadosPorMes?: number[];
 }
 
 export interface DatosInforme {
@@ -196,7 +198,7 @@ export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
       filas: [
         ['Techo usado para el cálculo', `${n1(t.areaTechoM2)} m² (${t.origenArea === 'existente' ? 'techo existente' : 'área mínima necesaria'})`],
         ...(t.volumenNecesarioM3 !== undefined && Math.abs(t.volumenNecesarioM3 - t.volumenM3) > 0.05
-          ? ([['Volumen calculado por el balance', `${n1(t.volumenNecesarioM3)} m³`]] as [string, string][])
+          ? ([[t.diasCriticos ? 'Volumen calculado para el periodo crítico' : 'Volumen calculado por el balance', `${n1(t.volumenNecesarioM3)} m³`]] as [string, string][])
           : []),
         ...(t.diasCriticos
           ? ([['Criterio', `garantizar ${n0(t.diasCriticos)} días de consumo en la época seca`]] as [string, string][])

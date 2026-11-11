@@ -105,6 +105,7 @@
       mesesLlenos: llenos.map((x) => `${MESES_LARGOS[x.i].toLowerCase()} ${n1(x.n)}`).join(', '),
       diasCriticos: demanda.diasCriticos,
       llenadosAnual: llenados.anual,
+      llenadosPorMes: llenados.porMes,
       capacidadTanqueL: cantidad * tanque.capacidadL,
     };
   });

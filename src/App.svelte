@@ -30,6 +30,9 @@
   import { redondearCoordenada } from './core/openmeteo';
   import Registro from './lib/Registro.svelte';
   import EnviarInforme from './lib/EnviarInforme.svelte';
+  import ResumenEjecutivo from './lib/ResumenEjecutivo.svelte';
+  import type { DatosPresentacion } from './lib/presentacion';
+  import { DURACION_DISENO_MIN, PERIODOS_RETORNO, estacionMasCercana, intensidadEstacion } from './core/idf';
   import { contar } from './core/visitas';
   import {
     URL_REGISTRO,
@@ -43,7 +46,7 @@
     guardarRegistro,
     type DatosRegistro,
   } from './core/registro';
-  import type { DatosDrenajeInforme, DatosInforme, DatosTanqueInforme } from './core/informe';
+  import { conclusiones, type DatosDrenajeInforme, type DatosInforme, type DatosTanqueInforme } from './core/informe';
 
   const version = __APP_VERSION__;
   const privacidad = `${acerca.repositorio}/blob/main/docs/PRIVACIDAD.md`;
@@ -88,6 +91,7 @@
   let institucionTecnico = $state(g?.institucionTecnico ?? '');
   let municipio = $state(g?.municipio ?? '');
   let departamento = $state(g?.departamento ?? '');
+  let pais = $state(g?.pais ?? '');
   let lat = $state(g?.lat ?? '');
   let lon = $state(g?.lon ?? '');
   let lluvia: ResumenLluvia | null = $state(g?.lluvia ?? null);
@@ -205,7 +209,7 @@
 
   function proyectoActual(): ProyectoGuardado {
     return {
-      paso, nombreProyecto, elaboradoPor, volumenTanque, institucionTecnico, comunidad, municipio, departamento, lat, lon,
+      paso, nombreProyecto, elaboradoPor, volumenTanque, institucionTecnico, comunidad, municipio, departamento, pais, lat, lon,
       lluvia: $state.snapshot(lluvia), tipoTecho, aguas,
       descarteMm: Number(descarteMm) || 0, umbralMm: Number(umbralMm) || 0, areaDisponible, anchoTecho, largoTecho,
       edificio, usuarios, dotacionId, usos: $state.snapshot(usos), diasUso, diasCriticos,
@@ -336,7 +340,7 @@
     drenaje: datosDrenaje,
     tanque: datosTanque,
   });
-  const ubicacionTexto = $derived([comunidad, municipio, departamento].map((x) => x.trim()).filter(Boolean).join(', '));
+  const ubicacionTexto = $derived([comunidad, municipio, departamento, pais].map((x) => x.trim()).filter(Boolean).join(', '));
   const logos: { archivo: string; nombre: string }[] = (acerca as { logos?: { archivo: string; nombre: string }[] }).logos ?? [];
   const base = import.meta.env.BASE_URL;
 
@@ -394,6 +398,116 @@
   }
   let mostrarEnviar = $state(false);
 
+  // ---------- Resumen de 2 hojas (PDF y Word) ----------
+  function descargarResumen() {
+    const titulo = document.title;
+    document.title = nombreInforme.replace('Informe CaptaLluvia', 'Resumen CaptaLluvia');
+    document.body.classList.add('imprimiendo-resumen');
+    const quitar = () => {
+      document.body.classList.remove('imprimiendo-resumen');
+      document.title = titulo;
+    };
+    window.addEventListener('afterprint', quitar, { once: true });
+    avisarInforme('pdf');
+    contar('resumen-pdf', { titulo: 'Resumen PDF descargado', evento: true });
+    window.print();
+    setTimeout(quitar, 500);
+  }
+  // ---------- Presentación ejecutiva (PowerPoint) ----------
+  function datosPresentacion(): DatosPresentacion {
+    const la = Number(lat);
+    const lo = Number(lon);
+    const hay = lat !== '' && lon !== '' && Number.isFinite(la) && Number.isFinite(lo);
+    const cerca = hay ? estacionMasCercana(la, lo) : null;
+    return {
+      nombreArchivo: `${nombreInforme.replace('Informe CaptaLluvia', 'Presentación CaptaLluvia').replace(/[\\/:*?"<>|]/g, '-')}.pptx`,
+      lugar: lugarInforme,
+      tipo: EDIFICIOS[edificio].nombre,
+      comunidad,
+      municipio,
+      departamento,
+      pais,
+      lat: hay ? la : null,
+      lon: hay ? lo : null,
+      elaboradoPor,
+      institucion: institucionTecnico,
+      fecha,
+      version,
+      cita: citaApa,
+      logoUrl: logos[0] ? `${base}${logos[0].archivo}` : null,
+      lluvia: lluvia ? { mensualMm: lluvia.mensualMm, anualMm: lluvia.anualMm, fuente: lluvia.fuente, anios: lluvia.anios } : null,
+      oferta: oferta
+        ? {
+            pnMensualMm: oferta.pnMensualMm,
+            netaMensualMm: oferta.netaMensualMm,
+            mesesCaptados: oferta.mesesCaptados,
+            netaAnualMm: oferta.netaAnualMm,
+            ce: oferta.ce,
+            efc: oferta.efc,
+            cc: oferta.cc,
+            umbralMm: oferta.umbralMm,
+            mesesLavado: oferta.mesesLavado,
+            lavadoMm: oferta.lavadoMm,
+          }
+        : null,
+      material: NOMBRES_TECHO[tipoTecho],
+      demanda: $state.snapshot(demanda),
+      techo: {
+        existenteM2: areaDisponible ?? null,
+        necesariaM2: areaNecesaria,
+        usadaM2: areaDisponible ?? areaNecesaria,
+        captadoAnualM3: oferta && (areaDisponible ?? areaNecesaria) ? (oferta.netaAnualMm * (areaDisponible ?? areaNecesaria ?? 0)) / 1000 : null,
+      },
+      drenaje: datosDrenaje ? $state.snapshot(datosDrenaje) : null,
+      idf: cerca
+        ? {
+            estacion: cerca.estacion.nombre,
+            km: cerca.km,
+            filas: PERIODOS_RETORNO.map((tr) => ({ tr, i5: intensidadEstacion(cerca.estacion, tr, DURACION_DISENO_MIN) })),
+          }
+        : null,
+      tanque: datosTanque ? $state.snapshot(datosTanque) : null,
+      conclusiones: conclusiones(datosInforme),
+    };
+  }
+  let preparandoPpt = $state(false);
+  let errorPpt = $state('');
+  async function descargarPresentacion() {
+    preparandoPpt = true;
+    errorPpt = '';
+    try {
+      const { generarPresentacion } = await import('./lib/presentacion');
+      await generarPresentacion(datosPresentacion());
+      contar('presentacion', { titulo: 'Presentación generada', evento: true });
+    } catch (e) {
+      errorPpt = 'No se pudo generar la presentación: ' + (e instanceof Error ? e.message : String(e));
+    } finally {
+      preparandoPpt = false;
+    }
+  }
+  let preparandoResumenWord = $state(false);
+  async function descargarResumenWord() {
+    preparandoResumenWord = true;
+    errorWord = '';
+    try {
+      const { generarInformeWord } = await import('./lib/informeWord');
+      const blob = await generarInformeWord({ titulo: nombreInforme, cita: citaApa, autor: elaboradoPor || acerca.nombre, resumen: true });
+      avisarInforme('word');
+      contar('resumen-word', { titulo: 'Resumen Word generado', evento: true });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${nombreInforme.replace('Informe CaptaLluvia', 'Resumen CaptaLluvia').replace(/[\\/:*?"<>|]/g, '-')}.docx`;
+      document.body.append(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    } catch (e) {
+      errorWord = 'No se pudo generar el resumen en Word: ' + (e instanceof Error ? e.message : String(e));
+    } finally {
+      preparandoResumenWord = false;
+    }
+  }
+
   function descargarInforme() {
     const titulo = document.title;
     document.title = nombreInforme;
@@ -424,6 +538,26 @@
     {/each}
   </div>
 </header>
+
+<ResumenEjecutivo
+  datos={datosInforme}
+  lugar={lugarInforme}
+  tipo={EDIFICIOS[edificio].nombre}
+  {elaboradoPor}
+  institucion={institucionTecnico}
+  ubicacion={ubicacionTexto}
+  {lat}
+  {lon}
+  {fecha}
+  {lluvia}
+  {oferta}
+  {demanda}
+  cita={citaApa}
+  nombreApp={acerca.nombre}
+  subtitulo={acerca.subtitulo}
+  {logos}
+  {base}
+/>
 
 <dialog class="dialogo-acerca no-imprimir" bind:this={dialogoAcerca} onclick={(e) => { if (e.target === dialogoAcerca) dialogoAcerca?.close(); }}>
   <div class="dialogo-cuerpo">
@@ -531,7 +665,7 @@
       </label>
       {#if errorArchivo}<span class="alerta">{errorArchivo}</span>{/if}
     </div>
-    <PasoUbicacion bind:lluvia bind:lat bind:lon bind:nombreProyecto bind:comunidad bind:municipio bind:departamento onListo={() => irAPaso(2)} />
+    <PasoUbicacion bind:lluvia bind:lat bind:lon bind:nombreProyecto bind:comunidad bind:municipio bind:departamento bind:pais onListo={() => irAPaso(2)} />
   </div>
   <div class="pantalla" class:activa={paso === 2}>
     <PasoLluvia {lluvia} {lat} {lon} {oferta} {tipoTecho} />
@@ -604,6 +738,16 @@
         </button>
         <button class="secundario" onclick={() => (mostrarEnviar = !mostrarEnviar)} disabled={!oferta} aria-expanded={mostrarEnviar}>✉️ Enviar por correo</button>
       </div>
+      <div class="acciones">
+        <button class="secundario" onclick={descargarResumen} disabled={!oferta}>📊 Resumen de 2 hojas (PDF)</button>
+        <button class="secundario" onclick={descargarResumenWord} disabled={!oferta || preparandoResumenWord}>
+          {preparandoResumenWord ? 'Preparando el resumen…' : '📊 Resumen de 2 hojas (Word)'}
+        </button>
+        <button class="secundario" onclick={descargarPresentacion} disabled={!oferta || preparandoPpt}>
+          {preparandoPpt ? 'Preparando la presentación…' : '🎞️ Presentación ejecutiva (PowerPoint)'}
+        </button>
+      </div>
+      {#if errorPpt}<p class="alerta">{errorPpt}</p>{/if}
       {#if errorWord}<p class="alerta">{errorWord}</p>{/if}
       <p class="nota">
         El Word se puede modificar; si lo haces, conserva la referencia a CaptaLluvia que va al pie de cada hoja:
