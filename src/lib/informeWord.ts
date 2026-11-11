@@ -289,11 +289,7 @@ class Conversor {
       if (cap) this.parrafo(corridas(trozos(cap), { ...ctx, tamano: 20 }), { ...ctx, centrado: true });
       return;
     }
-    if (el.classList.contains('caratula')) {
-      await this.hijos(el, { ...ctx, centrado: true });
-      this.salto = true;
-      return;
-    }
+    if (el.classList.contains('caratula')) return this.caratula(el);
 
     switch (tag) {
       case 'H1':
@@ -449,16 +445,87 @@ class Conversor {
       );
   }
 
+  /**
+   * Carátula con la misma distribución del PDF: logotipos arriba, bloque central (tipo de informe,
+   * título, lugar y ubicación) con aire arriba y abajo, ficha de datos y el descargo corto al final.
+   */
+  private async caratula(el: Element) {
+    const logos = el.querySelector('.logos');
+    if (logos) await this.logos(logos, {});
+    const centro = el.querySelector('.caratula-centro');
+    const tipo = centro?.querySelector('.caratula-tipo');
+    const titulo = centro?.querySelector('h1');
+    if (tipo)
+      this.bloques.push(
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 2800, after: 360 },
+          children: [new TextRun({ text: (tipo.textContent ?? '').trim(), bold: true, size: 22, characterSpacing: 60 })],
+        }),
+      );
+    if (titulo)
+      this.bloques.push(
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 600, line: 264, lineRule: LineRuleType.AUTO },
+          children: [new TextRun({ text: (titulo.textContent ?? '').replace(/\s+/g, ' ').trim(), bold: true, size: 32 })],
+        }),
+      );
+    for (const p of centro?.querySelectorAll('.caratula-lugar') ?? []) {
+      this.bloques.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 200 }, children: corridas(trozos(p), {}) }));
+    }
+    // Aire antes de la ficha (como en el PDF)
+    this.bloques.push(new Paragraph({ children: [], spacing: { before: 2000 } }));
+    const ficha = el.querySelector('table.ficha-informe');
+    if (ficha) {
+      const filas: TableRow[] = [];
+      for (const tr of (ficha as HTMLTableElement).rows) {
+        const [a, b] = [...tr.cells];
+        if (!a || !b) continue;
+        filas.push(
+          new TableRow({
+            children: [
+              new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: corridas(trozos(a), { tamano: 22 }) })] }),
+              new TableCell({ width: { size: 70, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: corridas(trozos(b), { tamano: 22 }) })] }),
+            ],
+          }),
+        );
+      }
+      this.bloques.push(
+        new Table({
+          rows: filas,
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          borders: { top: SIN_BORDE, bottom: SIN_BORDE, left: SIN_BORDE, right: SIN_BORDE, insideHorizontal: SIN_BORDE, insideVertical: SIN_BORDE },
+        }),
+      );
+    }
+    const descargo = el.querySelector('.caratula-descargo');
+    if (descargo)
+      this.bloques.push(
+        new Paragraph({ spacing: { before: 360 }, children: [new TextRun({ text: (descargo.textContent ?? '').trim(), italics: true, size: 22 })] }),
+      );
+    this.salto = true;
+  }
+
   /** Fila de logotipos de la carátula: CaptaLluvia a la izquierda, organizaciones a la derecha. */
   private async logos(el: Element, ctx: Ctx) {
     const app = el.querySelector('.logo-app');
-    const izq: ParagraphChild[] = [];
     const gota = app?.querySelector('svg');
-    if (gota) {
-      const i = await imagenSvg(gota as SVGSVGElement, 40);
-      if (i) izq.push(i, new TextRun({ text: '  ' }));
-    }
-    if (app) izq.push(...corridas(trozos(app), { tamano: 18 }));
+    const imgGota = gota ? await imagenSvg(gota as SVGSVGElement, 34) : null;
+    const texto = app ? corridas(trozos(app), { tamano: 18 }) : [];
+    const sinBordes = { top: SIN_BORDE, bottom: SIN_BORDE, left: SIN_BORDE, right: SIN_BORDE, insideHorizontal: SIN_BORDE, insideVertical: SIN_BORDE };
+    // Gota a la izquierda del nombre, como en el PDF
+    const izq = new Table({
+      borders: sinBordes,
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({ width: { size: 700, type: WidthType.DXA }, children: [new Paragraph({ children: imgGota ? [imgGota] : [] })] }),
+            new TableCell({ width: { size: 5000, type: WidthType.DXA }, children: [new Paragraph({ children: texto })] }),
+          ],
+        }),
+      ],
+    });
     const der: ParagraphChild[] = [];
     for (const img of el.querySelectorAll<HTMLImageElement>(':scope > img')) {
       const i = await imagenImg(img, 160, 64);
@@ -472,7 +539,7 @@ class Conversor {
         rows: [
           new TableRow({
             children: [
-              new TableCell({ children: [new Paragraph({ children: izq })], borders: { ...nb, bottom: { style: BorderStyle.SINGLE, size: 12, color: '0B63B6' } } }),
+              new TableCell({ children: [izq, new Paragraph({ children: [] })], borders: { ...nb, bottom: { style: BorderStyle.SINGLE, size: 12, color: '0B63B6' } } }),
               new TableCell({
                 children: [new Paragraph({ children: der, alignment: AlignmentType.RIGHT })],
                 borders: { ...nb, bottom: { style: BorderStyle.SINGLE, size: 12, color: '0B63B6' } },
