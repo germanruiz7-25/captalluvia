@@ -2,6 +2,11 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.5.1] — 2026-11-10
+
+### Cambiado
+- Encabezado de todas las pantallas (incluido el registro): gota de CaptaLluvia a la izquierda y logotipo del ICC a la derecha, adaptado a celular.
+
 ## [0.5.0] — 2026-11-09 — Registro de uso
 
 ### Agregado

@@ -282,8 +282,8 @@
 
 <header class="no-imprimir">
   <div class="marca">
-    <svg viewBox="0 0 32 32" width="36" height="36" aria-hidden="true">
-      <path d="M16 3c5 7 9 12 9 17a9 9 0 0 1-18 0c0-5 4-10 9-17z" fill="var(--acento)" />
+    <svg class="gota" viewBox="0 0 32 32" width="48" height="48" aria-hidden="true">
+      <path d="M16 3c5 7 9 12 9 17a9 9 0 0 1-18 0c0-5 4-10 9-17z" fill="#0b63b6" />
       <path d="M11 21a5 5 0 0 0 5 5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" />
     </svg>
     <div>
@@ -291,7 +291,12 @@
       <p>{acerca.subtitulo}</p>
     </div>
   </div>
-  <button class="enlace" onclick={() => irAPaso(8)}>Acerca de</button>
+  <div class="lado-derecho">
+    {#if registro}<button class="enlace" onclick={() => irAPaso(8)}>Acerca de</button>{/if}
+    {#each logos as l (l.archivo)}
+      <img class="logo-org" src={`${base}${l.archivo}`} alt={l.nombre} title={l.nombre} />
+    {/each}
+  </div>
 </header>
 
 <!-- Encabezado del informe (solo en el PDF) -->
@@ -515,7 +520,19 @@
     display: flex; justify-content: space-between; align-items: center; gap: 1rem;
     padding: 1rem clamp(1rem, 4vw, 2rem); border-bottom: 1px solid var(--borde);
   }
-  .marca { display: flex; gap: 0.75rem; align-items: center; }
+  .marca { display: flex; gap: 0.75rem; align-items: center; min-width: 0; }
+  .gota { flex: none; }
+  .lado-derecho { display: flex; align-items: center; gap: 1rem; flex: none; }
+  .logo-org { height: 3rem; width: auto; max-width: 9rem; object-fit: contain; display: block; }
+  @media (max-width: 560px) {
+    header { padding: 0.6rem 0.9rem; gap: 0.6rem; }
+    .gota { width: 38px; height: 38px; }
+    h1 { font-size: 1.2rem !important; }
+    .marca p { font-size: 0.75rem !important; }
+    .lado-derecho { gap: 0.5rem; }
+    .lado-derecho .enlace { display: none; }
+    .logo-org { height: 2.3rem; max-width: 5.5rem; }
+  }
   h1 { margin: 0; font-size: 1.5rem; }
   .marca p { margin: 0; color: var(--texto-suave); font-size: 0.9rem; }
   .enlace { background: none; border: 0; color: var(--acento); text-decoration: underline; padding: 0; white-space: nowrap; }
