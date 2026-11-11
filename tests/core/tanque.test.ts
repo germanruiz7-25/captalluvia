@@ -3,13 +3,16 @@ import {
   LITROS_BARRIL,
   barrilesEquivalentes,
   calcularTanque,
+  llenadosDelTanque,
   simularTanque,
   sugerirCisterna,
+  tanqueComercial,
   tanqueSugerido,
   tanquesNecesarios,
   volumenCisternaM3,
   volumenNecesarioM3,
 } from '../../src/core/tanque';
+import { calcularDemanda } from '../../src/core/demanda';
 
 // Lluvia en 6 meses (mayo-octubre), demanda pareja
 const oferta = [0, 0, 0, 0, 15, 15, 15, 15, 15, 15, 0, 0]; // 90 m³
@@ -84,5 +87,30 @@ describe('barriles de 55 galones', () => {
     expect(r.volumenM3).toBeCloseTo(36, 9); // el necesario no cambia
     expect(Math.max(...r.meses.map((m) => m.nivelM3))).toBeCloseTo(10, 9);
     expect(r.cobertura).toBeLessThan(1);
+  });
+});
+
+describe('almacenamiento para el periodo crítico', () => {
+  it('demanda mensual Dj con 30.4 días y volumen de los días críticos', () => {
+    const d = calcularDemanda(5, 50, 365, 60);
+    expect(d.m3Mensual).toBeCloseTo(7.6, 9); // 5 × 50 × 30.4 / 1000
+    expect(d.m3Critico).toBeCloseTo(15, 9); // 5 × 50 × 60 / 1000
+    expect(d.mesesCriticos).toBeCloseTo(60 / 30.4, 9);
+  });
+  it('tanque comercial: uno solo si alcanza; si no, varios del más grande', () => {
+    expect(tanqueComercial(15)).toEqual({ tanque: expect.objectContaining({ capacidadL: 15000 }), cantidad: 1 });
+    expect(tanqueComercial(7.6).tanque.capacidadL).toBe(10000);
+    expect(tanqueComercial(1.2).tanque.capacidadL).toBe(2500);
+    expect(tanqueComercial(60)).toEqual({ tanque: expect.objectContaining({ capacidadL: 25000 }), cantidad: 3 });
+  });
+  it('llenados por mes y al año', () => {
+    const captado = [0, 0, 0, 0, 10, 20, 15, 15, 30, 45, 5, 0];
+    const meses = captado.map((q) => q > 0);
+    const l = llenadosDelTanque(captado, 15, meses);
+    expect(l.porMes[9]).toBeCloseTo(3, 9); // octubre: 45 m³ = 3 tanques de 15 m³
+    expect(l.porMes[4]).toBeCloseTo(2 / 3, 9);
+    expect(l.anual).toBeCloseTo(140 / 15, 9);
+    expect(l.alcanzaParaLlenar).toBe(true);
+    expect(l.ultimoMesCaptacion).toBe(10);
   });
 });

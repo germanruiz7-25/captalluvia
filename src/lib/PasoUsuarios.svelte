@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    DIAS_MES,
     DOTACIONES,
     EDIFICIOS,
     USOS_INICIALES,
@@ -15,6 +16,7 @@
     dotacionId = $bindable(),
     usos = $bindable(),
     diasUso = $bindable(),
+    diasCriticos = $bindable(),
     demanda,
   }: {
     edificio: TipoEdificio;
@@ -22,12 +24,14 @@
     dotacionId: string;
     usos: UsoAgua[];
     diasUso: number;
+    diasCriticos: number;
     demanda: ResumenDemanda;
   } = $props();
 
   function cambiarEdificio(t: TipoEdificio) {
     edificio = t;
     diasUso = EDIFICIOS[t].diasUso;
+    diasCriticos = EDIFICIOS[t].diasCriticos;
     dotacionId = DOTACIONES[t][0].id;
     usos = USOS_INICIALES[t].map((u) => ({ ...u }));
   }
@@ -37,6 +41,7 @@
 
   const n0 = (v: number) => Math.round(v).toLocaleString('es-GT');
   const n1 = (v: number) => v.toLocaleString('es-GT', { maximumFractionDigits: 1 });
+  const n2 = (v: number) => v.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const opciones = $derived(DOTACIONES[edificio]);
 </script>
 
@@ -90,12 +95,59 @@
     {/if}
   </div>
 
+  <div class="bloque">
+    <table class="rejilla demanda-tabla">
+      <thead>
+        <tr><th>Demanda</th><th>Fórmula</th><th>m³</th><th>Litros</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Diaria</td>
+          <td>{n0(demanda.usuarios)} usuarios × {n1(demanda.litrosPorUsuarioDia)} L</td>
+          <td>{n2(demanda.litrosDia / 1000)}</td><td>{n0(demanda.litrosDia)}</td>
+        </tr>
+        <tr>
+          <td><strong>Mensual (Dj)</strong></td>
+          <td>{n0(demanda.usuarios)} × {n1(demanda.litrosPorUsuarioDia)} L × {DIAS_MES} días ÷ 1000</td>
+          <td><strong>{n2(demanda.m3Mensual)}</strong></td><td>{n0(demanda.m3Mensual * 1000)}</td>
+        </tr>
+        <tr>
+          <td><strong>Anual</strong></td>
+          <td>
+            {#if demanda.diasUso >= 365}Dj × 12 meses{:else}{n0(demanda.usuarios)} × {n1(demanda.litrosPorUsuarioDia)} L × {n0(demanda.diasUso)} días de uso ÷ 1000{/if}
+          </td>
+          <td><strong>{n1(demanda.m3Anual)}</strong></td><td>{n0(demanda.m3Anual * 1000)}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Meses críticos que debe cubrir el tanque</h3>
+  <p class="nota informe">
+    En la época seca (casi siempre marzo y abril, según la región) es cuando menos agua hay. Como guardar el agua de
+    todo el año requiere volúmenes muy grandes, el tanque se dimensiona para garantizar el consumo de esos meses
+    críticos.
+  </p>
+  <div class="campos no-imprimir">
+    <label>Días de consumo a garantizar en la época seca
+      <input type="number" min="1" max="366" step="1" bind:value={diasCriticos} />
+    </label>
+    <div class="atajos" role="group" aria-label="Meses a garantizar">
+      {#each [1, 2, 3, 4, 6] as m (m)}
+        <button class="secundario" class:activo={Math.round(diasCriticos) === Math.round(m * DIAS_MES)} onclick={() => (diasCriticos = Math.round(m * DIAS_MES))}>
+          {m} {m === 1 ? 'mes' : 'meses'}
+        </button>
+      {/each}
+    </div>
+  </div>
+  <p class="nota">{EDIFICIOS[edificio].notaCriticos}</p>
   <div class="destacado">
-    <span class="cifra">{n1(demanda.m3Anual)} m³</span>
+    <span class="cifra">{n1(demanda.m3Critico)} m³</span>
     <span>
-      de agua al año para {n0(demanda.usuarios)} {EDIFICIOS[edificio].usuarios.toLowerCase()}
-      × {n1(demanda.litrosPorUsuarioDia)} L/día × {n0(demanda.diasUso)} días
-      ({n0(demanda.litrosDia)} L por día de uso).
+      a almacenar ({n0(demanda.m3Critico * 1000)} L) para {n0(demanda.diasCriticos)} días
+      ({n1(demanda.mesesCriticos)} {demanda.mesesCriticos >= 0.95 && demanda.mesesCriticos < 1.05 ? 'mes' : 'meses'}) de consumo:
+      {n0(demanda.usuarios)} × {n1(demanda.litrosPorUsuarioDia)} L × {n0(demanda.diasCriticos)} días ÷ 1000
+      = Dj × {n2(demanda.mesesCriticos)} meses. Con este volumen se dimensiona el tanque (paso 7).
     </span>
   </div>
   {#if dotacionId === 'personalizada' && usos.length}
@@ -106,6 +158,11 @@
 </section>
 
 <style>
+  .demanda-tabla td:nth-child(n + 3), .demanda-tabla th:nth-child(n + 3) { text-align: right; white-space: nowrap; }
+  .atajos { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: flex-end; }
+  .atajos button { padding: 0.4rem 0.75rem; font-size: 0.9rem; }
+  .atajos button.activo { background: var(--acento-suave); border-color: var(--acento); color: var(--acento); font-weight: 600; }
+  h3 { margin-top: 1.25rem; }
   .usos { display: grid; gap: 0.5rem; margin: 0.5rem 0 1rem; }
   .uso { display: grid; grid-template-columns: 1fr 5.5rem auto auto; gap: 0.5rem; align-items: center; }
   .quitar { background: none; border: 1px solid var(--borde); border-radius: 0.5rem; padding: 0.4rem 0.6rem; color: var(--texto-suave); cursor: pointer; }

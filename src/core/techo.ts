@@ -7,22 +7,45 @@
  * Unidades: lluvia en mm (= L/m²), áreas en m², volúmenes en m³.
  */
 
-/** Coeficientes de escorrentía por material de techo (editables por el usuario). */
+/**
+ * Coeficiente de escorrentía (Ce) por material de techo: fracción de la lluvia que escurre hacia la
+ * canaleta (el resto se queda mojando o se absorbe en el material). Va de 0 a 0.9 según la rugosidad
+ * y la absorción del material. Valores de diseño de CaptaLluvia dentro de los rangos de OPS/CEPIS
+ * (2004) y Anaya Garduño (2011); para cubiertas vegetales, rango típico 0.15–0.35.
+ */
 export const COEFICIENTES_ESCORRENTIA = {
-  lamina_metalica: 0.9,
-  teja_barro: 0.8,
-  losa_concreto: 0.8,
-  paja: 0.6,
+  lamina_metalica: 0.9, // zinc, galvanizada o troquelada: lisa e impermeable (0.80–0.95)
+  lona: 0.9, // lona, plástico o geomembrana (0.85–0.95)
+  fibrocemento: 0.85, // lámina de fibrocemento (0.80–0.90)
+  losa_concreto: 0.8, // losa de concreto con acabado (0.70–0.90)
+  teja_barro: 0.8, // teja de barro (0.75–0.90): porosa y con juntas
+  paja: 0.6, // palma o paja (0.60–0.90 según OPS/CEPIS; se adopta el valor bajo por la absorción)
+  cesped: 0.3, // techo verde o césped (0.15–0.35): el sustrato retiene la mayor parte
 } as const;
 
 export type TipoTecho = keyof typeof COEFICIENTES_ESCORRENTIA;
 
 export const NOMBRES_TECHO: Record<TipoTecho, string> = {
-  lamina_metalica: 'Lámina metálica',
-  teja_barro: 'Teja de barro',
+  lamina_metalica: 'Lámina metálica (zinc, galvanizada o troquelada)',
+  lona: 'Lona, plástico o geomembrana',
+  fibrocemento: 'Lámina de fibrocemento',
   losa_concreto: 'Losa de concreto',
-  paja: 'Paja',
+  teja_barro: 'Teja de barro',
+  paja: 'Palma o paja',
+  cesped: 'Techo verde o césped',
 };
+
+/**
+ * Eficiencia de captación de lluvia (Efc): fracción del agua que escurre que de verdad llega al tanque
+ * (pérdidas por salpicadura, rebalse de canaletas con aguaceros fuertes, fugas y evaporación).
+ * Valor de diseño: 85 %.
+ */
+export const EFICIENCIA_CAPTACION = 0.85;
+
+/** Coeficiente de captación = Ce × Efc. Ej.: lámina metálica 0.9 × 0.85 = 0.765. */
+export function coeficienteCaptacion(tipo: TipoTecho, efc = EFICIENCIA_CAPTACION): number {
+  return COEFICIENTES_ESCORRENTIA[tipo] * efc;
+}
 
 /** Dotaciones de referencia en litros por persona al día. */
 export const DOTACIONES = {

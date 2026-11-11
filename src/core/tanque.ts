@@ -117,6 +117,45 @@ export function tanquesNecesarios(volumenM3: number, capacidadL: number): number
   return volumenM3 > 0 && capacidadL > 0 ? Math.ceil((volumenM3 * 1000) / capacidadL - 1e-9) : 0;
 }
 
+/**
+ * Tanque comercial para un volumen: el más pequeño que lo guarda en una sola unidad; si ninguno alcanza,
+ * varias unidades del más grande. Ej.: 15 m³ → 1 tanque de 15,000 L.
+ */
+export function tanqueComercial(volumenM3: number, tanques = TANQUES_POLIETILENO): { tanque: TanqueComercial; cantidad: number } {
+  const uno = tanques.find((t) => t.capacidadL >= volumenM3 * 1000 - 1e-6);
+  if (uno) return { tanque: uno, cantidad: 1 };
+  const mayor = tanques[tanques.length - 1];
+  return { tanque: mayor, cantidad: tanquesNecesarios(volumenM3, mayor.capacidadL) };
+}
+
+export interface Llenados {
+  /** Veces que la lluvia de cada mes llena el tanque: agua captada del mes ÷ capacidad. */
+  porMes: number[];
+  /** Suma del año: el agua captable expresada en tanques llenos. */
+  anual: number;
+  /** Agua captada en la temporada de captación (m³). */
+  captadoTemporadaM3: number;
+  /** true si lo captado en la temporada alcanza para llenar el tanque al menos una vez. */
+  alcanzaParaLlenar: boolean;
+  /** Último mes de captación (0–11): al terminar, el tanque debe quedar lleno para la época seca. */
+  ultimoMesCaptacion: number | null;
+}
+
+/** Cuántas veces se llena un tanque de capacidad dada con la lluvia captada de cada mes. */
+export function llenadosDelTanque(captadoM3: number[], capacidadM3: number, mesesCaptados: boolean[]): Llenados {
+  const porMes = captadoM3.map((q) => (capacidadM3 > 0 ? Math.max(0, q) / capacidadM3 : 0));
+  const captadoTemporadaM3 = captadoM3.reduce((t, q, i) => t + (mesesCaptados[i] ? Math.max(0, q) : 0), 0);
+  let ultimo: number | null = null;
+  for (let i = 0; i < 12; i++) if (mesesCaptados[i] && !mesesCaptados[(i + 1) % 12]) ultimo = i;
+  return {
+    porMes,
+    anual: porMes.reduce((t, x) => t + x, 0),
+    captadoTemporadaM3,
+    alcanzaParaLlenar: captadoTemporadaM3 + 1e-9 >= capacidadM3,
+    ultimoMesCaptacion: ultimo,
+  };
+}
+
 /** Tanque sugerido: el más pequeño con el que bastan 4 unidades o menos (si no, el más grande). */
 export function tanqueSugerido(volumenM3: number, tanques = TANQUES_POLIETILENO): TanqueComercial {
   return tanques.find((t) => tanquesNecesarios(volumenM3, t.capacidadL) <= 4) ?? tanques[tanques.length - 1];

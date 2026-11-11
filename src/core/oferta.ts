@@ -2,7 +2,9 @@
  * Oferta de agua: de la lluvia bruta a la lluvia neta aprovechable y a m³ captados.
  *
  * Precipitación neta (PN) de cada mes (mm = L/m²):
- *   PN = max(0, P_mes × Ce − días_con_lluvia_mes × descarte)
+ *   PN = P_mes × Cc,  con Cc (coeficiente de captación) = Ce × Efc
+ * Ce: coeficiente de escorrentía del material del techo; Efc: eficiencia de captación (0.85).
+ * Ej.: mayo con 478.1 mm y lámina metálica: 478.1 × 0.9 × 0.85 = 365.7 mm.
  *
  * Solo se captan los meses con PN igual o mayor al umbral (40 mm por defecto),
  * según Anaya Garduño (2011), pp. 56–57, fig. 4.7.
@@ -38,8 +40,14 @@ export interface ResumenOferta {
   lavadoMm: number;
   /** Primer mes de captación (0–11) o null si ningún mes llega al umbral o todos lo superan. */
   inicioCaptacion: number | null;
-  /** En los meses captados: lo que no escurre por el material del techo (mm/año). */
+  /** En los meses captados: lo que no escurre por el material del techo, (1 − Ce) (mm/año). */
   perdidaEscorrentiaMm: number;
+  /** En los meses captados: lo que escurre pero no llega al tanque, Ce × (1 − Efc) (mm/año). */
+  perdidaEficienciaMm: number;
+  /** Coeficiente de escorrentía, eficiencia de captación y coeficiente de captación usados. */
+  ce: number;
+  efc: number;
+  cc: number;
   /** En los meses captados: lo que se desvía en el primer descarte (mm/año). */
   perdidaDescarteMm: number;
   /** Lluvia neta cosechada, mm/año (= L por m² de techo): suma de la PN de los meses captados. */
@@ -61,12 +69,15 @@ export function calcularOferta(
   descartePorEventoMm: number,
   areaM2: number | null = null,
   umbralMm: number = UMBRAL_CAPTACION_MM,
+  eficienciaCaptacion: number = 1,
 ): ResumenOferta {
   const ce = Math.min(1, Math.max(0, coeficienteEscorrentia));
+  const efc = Math.min(1, Math.max(0, eficienciaCaptacion));
+  const cc = ce * efc;
   const descarte = Math.max(0, descartePorEventoMm);
   const umbral = Math.max(0, Number(umbralMm) || 0);
   const pnMensualMm = lluvia.mensualMm.map((p, m) =>
-    Math.max(0, p * ce - lluvia.diasLluviaMes[m] * descarte),
+    Math.max(0, p * cc - lluvia.diasLluviaMes[m] * descarte),
   );
   const bajo = pnMensualMm.map((pn) => pn <= 0 || pn < umbral);
   const seca = epocaSeca(bajo);
@@ -74,6 +85,7 @@ export function calcularOferta(
 
   let secos = 0;
   let escorrentia = 0;
+  let eficiencia = 0;
   let descartado = 0;
   const netaMensualMm = lluvia.mensualMm.map((p, m) => {
     if (!mesesCaptados[m]) {
@@ -81,7 +93,8 @@ export function calcularOferta(
       return 0;
     }
     escorrentia += p - p * ce;
-    descartado += p * ce - pnMensualMm[m];
+    eficiencia += p * ce - p * cc;
+    descartado += p * cc - pnMensualMm[m];
     return pnMensualMm[m];
   });
 
@@ -103,6 +116,10 @@ export function calcularOferta(
     lavadoMm: lavado,
     inicioCaptacion: inicio >= 0 ? inicio : null,
     perdidaEscorrentiaMm: escorrentia,
+    perdidaEficienciaMm: eficiencia,
+    ce,
+    efc,
+    cc,
     perdidaDescarteMm: descartado,
     netaAnualMm: neta,
     netaMensualMm,

@@ -2,6 +2,23 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.8.0] — 2026-11-11 — Coeficiente de captación, periodo crítico, resumen y presentación
+
+### Cambiado
+- **Precipitación neta con coeficiente de captación:** PN = P × Cc, con Cc = Ce × Efc y eficiencia de captación Efc = 0.85 (p. ej. lámina metálica 0.9 × 0.85 = 0.765). La cascada del paso 3 muestra aparte la pérdida por eficiencia.
+- **Materiales de techo** revisados (Ce): lámina metálica (zinc, galvanizada o troquelada) 0.9, lona o geomembrana 0.9, fibrocemento 0.85, losa de concreto 0.8, teja de barro 0.8, palma o paja 0.6, techo verde o césped 0.3 (OPS/CEPIS 2004; Anaya Garduño 2011).
+- **Demanda:** tabla con demanda diaria, **mensual Dj = usuarios × L × 30.4 / 1000** y anual.
+- **Tanque para el periodo crítico:** se indican los días de consumo a garantizar en la época seca (vivienda 60, escuela 40, institución 44; atajos de 1 a 6 meses). Volumen = usuarios × L × días / 1000, y se sugiere el **tanque comercial** que lo guarda en una sola unidad (p. ej. 15 m³ → 1 tanque de 15,000 L), con su equivalencia en barriles.
+- **¿Cuántas veces se llena el tanque?:** tabla con cuadrícula (lluvia, PN, agua captada y llenados por mes, con barras) y explicación técnica; total del año en el informe.
+
+### Agregado
+- **Resumen de 2 hojas** (PDF y Word): hoja 1 tablero con lugar, tipo, quién calculó, usuarios, datos generales, coordenadas, mapa, cifras clave y gráfica; hoja 2 cuadro resumen; gota y logotipo del ICC arriba y la cita de la herramienta al pie.
+- **Presentación ejecutiva (PowerPoint, 10 diapositivas, editable):** portada, introducción, localización con imagen satelital, lluvia y PN (gráfica nativa y tabla), demanda, techo, canaletas y bajantes con la curva IDF y la probabilidad de cada periodo de retorno, tanque (tinaco, barriles y cisterna), llenados por mes y conclusiones con la fuente.
+- **País** del proyecto (se completa con el punto del mapa).
+
+### Corregido
+- Bardales (2025) con año en la bibliografía.
+
 ## [0.7.0] — 2026-11-11
 
 ### Cambiado

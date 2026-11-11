@@ -81,16 +81,27 @@
       <a href="https://doi.org/10.54767/ad.v1i1.3">doi:10.54767/ad.v1i1.3</a>
     </li>
     <li>Primer descarte por temporada: no se capta en la época seca (la racha más larga de meses seguidos con menos de {umbralMm} mm de precipitación neta) y esas lluvias lavan el sistema; se capta el resto del año, incluida la canícula (criterio de CaptaLluvia para sistemas artesanales).</li>
-    <li>Coeficientes de escorrentía por material del techo: valores de referencia usuales, editables en la app.</li>
+    <li>
+      Coeficientes de escorrentía (Ce) por material del techo: lámina metálica y lona 0.9, fibrocemento 0.85, losa de
+      concreto y teja de barro 0.8, palma o paja 0.6, techo verde 0.3; valores de diseño dentro de los rangos de la
+      Organización Panamericana de la Salud y Centro Panamericano de Ingeniería Sanitaria y Ciencias del Ambiente
+      (OPS/CEPIS). (2004). <em>Guía de diseño para captación del agua de lluvia</em>. Lima: OPS/CEPIS; y de Anaya
+      Garduño (2011).
+    </li>
+    <li>
+      Precipitación neta: PN = P × Cc, con coeficiente de captación Cc = Ce × Efc y eficiencia de captación de lluvia
+      Efc = 0.85 (85 %), que considera salpicadura, rebalse de canaletas, fugas y evaporación.
+    </li>
     <li>Equivalencia: 1 mm de lluvia sobre 1 m² de superficie = 1 litro de agua.</li>
     <li>
       Caudal de diseño de canaletas y bajantes: método racional, Q = C × i × A / 3600 (Kuichling, 1889), con la
       intensidad de diseño indicada por el usuario (se recomienda la curva IDF local de INSIVUMEH).
     </li>
     <li>
-      Volumen del tanque: balance mensual con el método del pico secuente (diferencias acumuladas). Rippl, W. (1883).
-      The capacity of storage-reservoirs for water-supply. <em>Minutes of Proceedings of the Institution of Civil
-      Engineers</em>, 71, 270–278.
+      Volumen del tanque: demanda del periodo crítico de la época seca, con la demanda mensual Dj = usuarios × dotación
+      × 30.4 días ÷ 1000 (criterio de diseño SCALL). Balance mensual del nivel del tanque según el método de
+      diferencias acumuladas: Rippl, W. (1883). The capacity of storage-reservoirs for water-supply. <em>Minutes of
+      Proceedings of the Institution of Civil Engineers</em>, 71, 270–278.
     </li>
     <li>
       Capacidades y medidas de tanques de polietileno (450 a 2,500 L): Rotoplas Centroamérica. <em>Manual de

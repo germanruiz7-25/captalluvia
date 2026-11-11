@@ -69,6 +69,8 @@ export interface DireccionLugar {
   comunidad: string;
   municipio: string;
   departamento: string;
+  /** País (desde v0.8.0). */
+  pais?: string;
 }
 
 export function urlDireccion(lat: number, lon: number, idioma = 'es'): string {
@@ -92,7 +94,8 @@ export function leerDireccion(json: unknown): DireccionLugar | null {
   let comunidad = primero('village', 'hamlet', 'suburb', 'neighbourhood', 'quarter', 'isolated_dwelling', 'town', 'city');
   if (comunidad === municipio) comunidad = primero('hamlet', 'suburb', 'neighbourhood', 'quarter') || comunidad;
   const departamento = primero('state', 'state_district', 'region', 'province');
-  return municipio || departamento || comunidad ? { comunidad, municipio, departamento } : null;
+  const pais = primero('country');
+  return municipio || departamento || comunidad ? { comunidad, municipio, departamento, pais } : null;
 }
 
 export async function buscarDireccion(lat: number, lon: number, f: typeof fetch = fetch): Promise<DireccionLugar | null> {

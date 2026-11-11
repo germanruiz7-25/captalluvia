@@ -29,6 +29,8 @@ import {
   type ParagraphChild,
 } from 'docx';
 
+import { cargarImagen, lienzoAPng, mapaALienzo, medidasSvg, svgALienzo, tamanoVisible } from './rasterizar';
+
 type Bloque = Paragraph | Table;
 interface Ctx {
   /** Ancho disponible para imágenes (px); dentro de una fila de dibujos es el de su columna. */
@@ -58,9 +60,13 @@ const BLOQUE = new Set([
 ]);
 const OMITIR = new Set(['SCRIPT', 'STYLE', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'SUMMARY', 'DIALOG', 'HEADER', 'NAV', 'FOOTER', 'NOSCRIPT', 'TEMPLATE']);
 
+/** Clases que se omiten según el documento (el informe completo omite el resumen, y al revés). */
+let OMITIR_CLASES: string[] = [];
+
 function oculto(el: Element): boolean {
   if (OMITIR.has(el.tagName)) return true;
   const c = el.classList;
+  if (OMITIR_CLASES.some((x) => c.contains(x))) return true;
   if (c.contains('no-imprimir') || c.contains('numero-paso') || c.contains('leaflet-container')) return true;
   if (el.tagName === 'P' && c.contains('nota') && !c.contains('informe')) return true;
   return false;
@@ -76,74 +82,6 @@ const esBloque = (n: Node) => {
 };
 
 // ---------- Imágenes ----------
-
-const PROPIEDADES_SVG = [
-  'fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-opacity', 'stroke-dasharray', 'stroke-linecap', 'stroke-linejoin',
-  'opacity', 'font-size', 'font-family', 'font-weight', 'font-style', 'text-anchor', 'dominant-baseline', 'letter-spacing',
-  'visibility', 'display',
-];
-
-function cargarImagen(src: string, cors = false): Promise<HTMLImageElement> {
-  return new Promise((ok, mal) => {
-    const i = new Image();
-    if (cors) i.crossOrigin = 'anonymous';
-    i.onload = () => ok(i);
-    i.onerror = () => mal(new Error('imagen'));
-    i.src = src;
-  });
-}
-
-async function lienzoAPng(c: HTMLCanvasElement): Promise<Uint8Array> {
-  const blob = await new Promise<Blob | null>((ok) => c.toBlob(ok, 'image/png'));
-  if (!blob) throw new Error('png');
-  return new Uint8Array(await blob.arrayBuffer());
-}
-
-function medidasSvg(svg: SVGSVGElement): { w: number; h: number } {
-  const vb = svg.viewBox?.baseVal;
-  const aw = parseFloat(svg.getAttribute('width') ?? '');
-  const ah = parseFloat(svg.getAttribute('height') ?? '');
-  const w = vb && vb.width ? vb.width : aw || 300;
-  const h = vb && vb.height ? vb.height : ah || 150;
-  return { w, h };
-}
-
-/** Tamaño con que se ve el dibujo en el PDF: el ancho del atributo (si es en px) o el de su viewBox. */
-function tamanoVisible(svg: SVGSVGElement): { w: number; h: number } {
-  const { w, h } = medidasSvg(svg);
-  const attr = svg.getAttribute('width') ?? '';
-  const aw = /^\d+(\.\d+)?(px)?$/.test(attr) ? parseFloat(attr) : NaN;
-  const maxCss = parseFloat(getComputedStyle(svg).maxWidth);
-  let ancho = Number.isFinite(aw) ? aw : w;
-  if (Number.isFinite(maxCss) && maxCss > 0) ancho = Math.min(ancho, maxCss);
-  return { w: ancho, h: (ancho * h) / w };
-}
-
-/** Dibuja un SVG de la página (con sus estilos calculados) en un lienzo. */
-async function svgALienzo(svg: SVGSVGElement, escala = 2): Promise<HTMLCanvasElement> {
-  const { w, h } = medidasSvg(svg);
-  const copia = svg.cloneNode(true) as SVGSVGElement;
-  const orig = [svg, ...svg.querySelectorAll('*')];
-  const dest = [copia, ...copia.querySelectorAll('*')];
-  orig.forEach((o, i) => {
-    const cs = getComputedStyle(o);
-    const d = dest[i] as SVGElement;
-    const estilo = PROPIEDADES_SVG.map((p) => `${p}:${cs.getPropertyValue(p)}`).join(';');
-    d.setAttribute('style', estilo + (i === 0 ? ';display:inline' : ''));
-  });
-  copia.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  copia.setAttribute('width', String(w));
-  copia.setAttribute('height', String(h));
-  const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(copia));
-  const img = await cargarImagen(url);
-  const c = document.createElement('canvas');
-  c.width = Math.round(w * escala);
-  c.height = Math.round(h * escala);
-  const g = c.getContext('2d')!;
-  g.scale(escala, escala);
-  g.drawImage(img, 0, 0, w, h);
-  return c;
-}
 
 function imagen(data: Uint8Array, w: number, h: number, maxAncho = ANCHO_UTIL_PX): ImageRun {
   const f = Math.min(1, maxAncho / w);
@@ -176,31 +114,9 @@ async function imagenImg(el: HTMLImageElement, maxAncho: number, maxAlto = 9999)
 
 /** Mapa estático: teselas (con permiso CORS del proveedor) + capa SVG de marcador, norte y escala. */
 async function imagenMapa(fig: Element, maxAncho = ANCHO_UTIL_PX): Promise<ImageRun | null> {
-  const lienzo = fig.querySelector<HTMLElement>('.lienzo');
-  if (!lienzo) return null;
-  const w = parseFloat(lienzo.style.width);
-  const h = parseFloat(lienzo.style.height);
-  const esc = 2;
-  const c = document.createElement('canvas');
-  c.width = w * esc;
-  c.height = h * esc;
-  const g = c.getContext('2d')!;
-  g.scale(esc, esc);
-  g.fillStyle = '#dde6ee';
-  g.fillRect(0, 0, w, h);
-  try {
-    for (const t of lienzo.querySelectorAll<HTMLImageElement>('img')) {
-      const img = await cargarImagen(t.src, true);
-      g.drawImage(img, parseFloat(t.style.left), parseFloat(t.style.top), parseFloat(t.style.width), parseFloat(t.style.height));
-    }
-    const capa = lienzo.querySelector<SVGSVGElement>('svg');
-    if (capa) g.drawImage(await svgALienzo(capa, 1), 0, 0, w, h);
-    g.strokeStyle = '#000';
-    g.strokeRect(0.5, 0.5, w - 1, h - 1);
-    return imagen(await lienzoAPng(c), w, h, maxAncho);
-  } catch {
-    return null; // el proveedor de mapas no permite copiar la imagen
-  }
+  const c = await mapaALienzo(fig);
+  if (!c) return null;
+  return imagen(await lienzoAPng(c), c.width / 2, c.height / 2, maxAncho);
 }
 
 // ---------- Texto ----------
@@ -313,6 +229,7 @@ class Conversor {
     }
     if (el.classList.contains('caratula')) return this.caratula(el);
 
+    if (el.classList.contains('columnas')) return this.columnas(el, ctx);
     if (await this.fila(el, ctx)) return;
 
     switch (tag) {
@@ -393,7 +310,7 @@ class Conversor {
     if (!enFila) return false;
     const hijos = [...el.children].filter((h) => !oculto(h));
     if (hijos.length < 2 || hijos.length > 4) return false;
-    if (el.querySelector('table, h2, h3, ol, .pantalla')) return false;
+    if (el.querySelector(el.classList.contains('lado-a-lado') ? 'h2, h3, .pantalla' : 'table, h2, h3, ol, .pantalla')) return false;
     if (cs.display === 'grid') {
       const cols = cs.gridTemplateColumns.split(' ').filter((x) => /\d/.test(x) && !x.startsWith('repeat')).length;
       if (cols === 1) return false;
@@ -408,11 +325,21 @@ class Conversor {
         this.bloques.push(new Paragraph({ alignment: AlignmentType.CENTER, children: corridas(trozos(h), ctx) }));
       const contenido = this.bloques;
       this.bloques = previo;
+      const tarjeta = h.classList.contains('kpi');
       celdas.push(
         new TableCell({
           width: { size: Math.round(100 / hijos.length), type: WidthType.PERCENTAGE },
           children: contenido.length ? contenido : [new Paragraph('')],
-          margins: { left: 60, right: 60 },
+          margins: { left: 60, right: 60, top: tarjeta ? 60 : 0, bottom: tarjeta ? 60 : 0 },
+          shading: tarjeta ? { type: ShadingType.CLEAR, color: 'auto', fill: 'F3F8FC' } : undefined,
+          borders: tarjeta
+            ? {
+                top: { style: BorderStyle.SINGLE, size: 4, color: 'B9CFE4' },
+                bottom: { style: BorderStyle.SINGLE, size: 4, color: 'B9CFE4' },
+                right: { style: BorderStyle.SINGLE, size: 4, color: 'B9CFE4' },
+                left: { style: BorderStyle.SINGLE, size: 24, color: '0B63B6' },
+              }
+            : undefined,
         }),
       );
     }
@@ -426,6 +353,36 @@ class Conversor {
     );
     this.bloques.push(new Paragraph({ children: [], spacing: { after: 60 } }));
     return true;
+  }
+
+  /** Bloques en dos columnas (cuadro resumen de la hoja 2): se reparten por número de filas. */
+  private async columnas(el: Element, ctx: Ctx) {
+    const hijos = [...el.children].filter((h) => !oculto(h));
+    const filas = hijos.map((h) => h.querySelectorAll('tr').length || 1);
+    const total = filas.reduce((t, x) => t + x, 0);
+    let acumulado = 0;
+    const izq: Element[] = [];
+    const der: Element[] = [];
+    hijos.forEach((h, i) => {
+      (acumulado + filas[i] / 2 <= total / 2 ? izq : der).push(h);
+      acumulado += filas[i];
+    });
+    const celda = async (grupo: Element[]) => {
+      const previo = this.bloques;
+      this.bloques = [];
+      for (const h of grupo) await this.nodo(h, { ...ctx, ancho: ANCHO_UTIL_PX / 2, tamano: 16 });
+      const r = this.bloques;
+      this.bloques = previo;
+      return new TableCell({ width: { size: 50, type: WidthType.PERCENTAGE }, margins: { left: 60, right: 60 }, children: r.length ? r : [new Paragraph('')] });
+    };
+    this.agregar(
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: { top: SIN_BORDE, bottom: SIN_BORDE, left: SIN_BORDE, right: SIN_BORDE, insideHorizontal: SIN_BORDE, insideVertical: SIN_BORDE },
+        rows: [new TableRow({ children: [await celda(izq), await celda(der)] })],
+      }),
+      ctx,
+    );
   }
 
   /** Contenedor: agrupa el texto suelto en párrafos y procesa los bloques. */
@@ -460,7 +417,7 @@ class Conversor {
       const celdas: TableCell[] = [];
       for (const td of tr.cells) {
         if (oculto(td)) continue;
-        const hijosCelda = await this.contenido(td, { ...ctx, enTabla: true, tamano: 20, centrado: false });
+        const hijosCelda = await this.contenido(td, { ...ctx, enTabla: true, tamano: Math.min(20, ctx.tamano ?? 20), centrado: false });
         const esTh = td.tagName === 'TH';
         celdas.push(
           new TableCell({
@@ -624,9 +581,11 @@ class Conversor {
 }
 
 /** Genera el informe en Word a partir de lo que está en la página. */
-export async function generarInformeWord(opciones: { titulo: string; cita: string; autor: string }): Promise<Blob> {
+export async function generarInformeWord(opciones: { titulo: string; cita: string; autor: string; resumen?: boolean }): Promise<Blob> {
   const c = new Conversor();
-  const raiz = document.querySelector('#app') ?? document.body;
+  const raiz = opciones.resumen ? document.querySelector('.resumen-ejecutivo') : (document.querySelector('#app') ?? document.body);
+  if (!raiz) throw new Error('No se encontró el contenido del documento.');
+  OMITIR_CLASES = opciones.resumen ? ['pie-hoja'] : ['resumen-ejecutivo'];
   await c.hijos(raiz, {});
 
   // La cita va solo al pie de la carátula, como fuente sugerida; las demás hojas llevan el número de página.
@@ -652,7 +611,7 @@ export async function generarInformeWord(opciones: { titulo: string; cita: strin
   const doc = new Document({
     creator: opciones.autor,
     title: opciones.titulo,
-    description: 'Informe técnico generado con CaptaLluvia',
+    description: opciones.resumen ? 'Resumen del diseño generado con CaptaLluvia' : 'Informe técnico generado con CaptaLluvia',
     styles: {
       default: { document: { run: { font: FUENTE, size: 24, color: '000000' }, paragraph: { spacing: { line: 264, lineRule: LineRuleType.AUTO } } } },
       paragraphStyles: [
@@ -660,10 +619,32 @@ export async function generarInformeWord(opciones: { titulo: string; cita: strin
         { id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { font: FUENTE, size: 28, bold: true, color: '000000' } },
       ],
     },
-    sections: [
-      ...(caratula.length ? [{ properties: { page: pagina }, footers: { default: pieCaratula }, children: caratula }] : []),
-      { properties: { page: pagina }, footers: { default: pie }, children: cuerpo },
-    ],
+    sections: opciones.resumen
+      ? [
+          {
+            properties: { page: pagina },
+            footers: {
+              default: new Footer({
+                children: [
+                  new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    border: { top: { style: BorderStyle.SINGLE, size: 4, color: '999999', space: 4 } },
+                    children: [
+                      new TextRun({ text: 'Fuente: ', bold: true, size: 16 }),
+                      new TextRun({ text: opciones.cita, size: 16 }),
+                      new TextRun({ children: [' · Hoja ', PageNumber.CURRENT, ' de ', PageNumber.TOTAL_PAGES], size: 16 }),
+                    ],
+                  }),
+                ],
+              }),
+            },
+            children: c.bloques,
+          },
+        ]
+      : [
+          ...(caratula.length ? [{ properties: { page: pagina }, footers: { default: pieCaratula }, children: caratula }] : []),
+          { properties: { page: pagina }, footers: { default: pie }, children: cuerpo },
+        ],
   });
   return Packer.toBlob(doc);
 }
