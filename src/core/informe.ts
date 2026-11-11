@@ -3,8 +3,26 @@
  * Solo arma textos a partir de resultados ya calculados (no hace cálculos nuevos).
  */
 import { MESES_LARGOS } from './lluvia';
+import type { EvaluacionTecho } from './techoTanque';
+
+export interface ModuloDrenajeInforme {
+  nombre: string;
+  ancho: number;
+  largo: number;
+  tipoCanal: string;
+  bajantes: number;
+  bajantesPorCanaleta: number;
+  bajanteNombre: string;
+  canaletaM: number;
+}
 
 export interface DatosDrenajeInforme {
+  /** Techo por módulos (desde v0.9.0): canaletas y bajantes de cada uno. */
+  modulos?: ModuloDrenajeInforme[];
+  /** Largo de canaleta que atiende cada bajante (m) y qué decide el número de bajantes. */
+  tramoM?: number;
+  motivoBajantes?: 'caudal' | 'largo';
+  tramoMaximoM?: number;
   techoAncho: number;
   techoLargo: number;
   techoNombre: string;
@@ -74,7 +92,7 @@ export interface DatosInforme {
     /** Primer descarte por temporada: meses (0–11) de las primeras lluvias que lavan el sistema. */
     lavado?: { meses: number[]; mm: number } | null;
     umbralMm: number;
-    existente: { ancho: number; largo: number; area: number } | null;
+    existente: { ancho: number; largo: number; area: number; modulos?: { nombre: string; ancho: number; largo: number; area: number }[] } | null;
   };
   oferta: { netaAnualMm: number; eficiencia: number; mesesCaptados: boolean[]; m3NetosAnual: number | null } | null;
   demanda: {
@@ -87,7 +105,10 @@ export interface DatosInforme {
     diasCriticos?: number;
     m3Critico?: number;
   };
+  /** Techo ideal (consumo de la temporada + tanque lleno) o, sin periodo crítico, el del balance anual. */
   areaNecesariaM2: number | null;
+  /** Techo ideal, mínimo para llenar el tanque y evaluación del existente (desde v0.9.0). */
+  criterioTecho?: EvaluacionTecho | null;
   drenaje: DatosDrenajeInforme | null;
   tanque?: DatosTanqueInforme | null;
 }
@@ -109,7 +130,57 @@ export function listaMeses(indices: number[]): string {
   return `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`;
 }
 
+/** "6 × 10 m = 60 m²" o, por módulos, "2 módulos: 6 × 10 m + 4 × 5 m = 80 m²". */
+export function textoTechoExistente(e: DatosInforme['techo']['existente']): string {
+  if (!e) return 'No indicado';
+  if (e.modulos && e.modulos.length > 1) {
+    return `${e.modulos.length} módulos: ${e.modulos.map((m) => `${n1(m.ancho)} × ${n1(m.largo)} m`).join(' + ')} = ${n1(e.area)} m²`;
+  }
+  return `${n1(e.ancho)} × ${n1(e.largo)} m = ${n1(e.area)} m²`;
+}
+
+/** Temporada de lluvia en texto: "de mayo a octubre". */
+function textoTemporada(meses: number[]): string {
+  if (!meses.length) return '';
+  if (meses.length === 12) return 'todo el año';
+  return `de ${MESES_LARGOS[meses[0]].toLowerCase()} a ${MESES_LARGOS[meses[meses.length - 1]].toLowerCase()}`;
+}
+
 const indicesDonde = (v: boolean[], valor: boolean) => v.flatMap((x, i) => (x === valor ? [i] : []));
+
+const ESTADO_TECHO = {
+  ideal: 'alcanza: cubre el consumo de la temporada y llena el tanque',
+  soloLlenar: 'solo alcanza para llenar el tanque: no usar el agua mientras llueve',
+  insuficiente: 'no alcanza para llenar el tanque',
+} as const;
+
+function filasTecho(d: DatosInforme): [string, string][] {
+  const e = d.criterioTecho;
+  if (e && e.idealM2 !== null && e.soloLlenarM2 !== null) {
+    const f: [string, string][] = [
+      ['Techo ideal (consumo de la temporada de lluvia + tanque lleno)', `${n0(e.idealM2)} m² en planta`],
+      ['Techo mínimo para solo llenar el tanque', `${n0(e.soloLlenarM2)} m² (sin usar el agua mientras llueve)`],
+    ];
+    if (e.estado) {
+      f.push(['Evaluación del techo existente', ESTADO_TECHO[e.estado]]);
+      if (e.faltaIdealM2 > 0) {
+        f.push([
+          'Techo que falta',
+          e.estado === 'insuficiente'
+            ? `${n0(e.faltaLlenarM2)} m² para llenar el tanque; ${n0(e.faltaIdealM2)} m² para el ideal`
+            : `${n0(e.faltaIdealM2)} m² para el ideal`,
+        ]);
+      }
+    }
+    return f;
+  }
+  const f: [string, string][] = [];
+  if (d.areaNecesariaM2 !== null) f.push(['Área de techo necesaria (mínima, en planta)', `${n0(d.areaNecesariaM2)} m²`]);
+  if (d.oferta?.m3NetosAnual != null && d.demanda.m3Anual > 0) {
+    f.push(['Cobertura de la demanda con el techo existente', pct(d.oferta.m3NetosAnual / d.demanda.m3Anual)]);
+  }
+  return f;
+}
 
 export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
   const s: SeccionResumen[] = [];
@@ -158,12 +229,7 @@ export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
             string,
           ][])
         : []),
-      [
-        'Techo existente',
-        d.techo.existente
-          ? `${n1(d.techo.existente.ancho)} × ${n1(d.techo.existente.largo)} m = ${n1(d.techo.existente.area)} m²`
-          : 'No indicado',
-      ],
+      ['Techo existente', textoTechoExistente(d.techo.existente)],
       ...(d.oferta?.m3NetosAnual != null
         ? ([['Agua captable con el techo existente', `${n1(d.oferta.m3NetosAnual)} m³ al año`]] as [string, string][])
         : []),
@@ -185,10 +251,7 @@ export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
             `${n0(d.demanda.diasCriticos)} días (${n1(d.demanda.diasCriticos / 30.4)} meses): ${n1(d.demanda.m3Critico)} m³`,
           ]] as [string, string][])
         : []),
-      ...(d.areaNecesariaM2 !== null ? ([['Área de techo necesaria (mínima, en planta)', `${n0(d.areaNecesariaM2)} m²`]] as [string, string][]) : []),
-      ...(d.oferta?.m3NetosAnual != null && d.demanda.m3Anual > 0
-        ? ([['Cobertura de la demanda con el techo existente', pct(d.oferta.m3NetosAnual / d.demanda.m3Anual)]] as [string, string][])
-        : []),
+      ...filasTecho(d),
     ],
   });
   if (d.tanque) {
@@ -196,7 +259,7 @@ export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
     s.push({
       titulo: 'Tanque de almacenamiento',
       filas: [
-        ['Techo usado para el cálculo', `${n1(t.areaTechoM2)} m² (${t.origenArea === 'existente' ? 'techo existente' : 'área mínima necesaria'})`],
+        ['Techo usado para el cálculo', `${n1(t.areaTechoM2)} m² (${t.origenArea === 'existente' ? 'techo existente' : d.criterioTecho ? 'techo ideal' : 'área mínima necesaria'})`],
         ...(t.volumenNecesarioM3 !== undefined && Math.abs(t.volumenNecesarioM3 - t.volumenM3) > 0.05
           ? ([[t.diasCriticos ? 'Volumen calculado para el periodo crítico' : 'Volumen calculado por el balance', `${n1(t.volumenNecesarioM3)} m³`]] as [string, string][])
           : []),
@@ -222,11 +285,27 @@ export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
     s.push({
       titulo: 'Canaletas y bajantes',
       filas: [
-        ['Techo drenado', `${r.techoNombre}: ${n1(r.techoAncho)} × ${n1(r.techoLargo)} m`],
+        ...(r.modulos && r.modulos.length > 1
+          ? r.modulos.map(
+              (m) =>
+                [
+                  m.nombre,
+                  `${n1(m.ancho)} × ${n1(m.largo)} m: ${n1(m.canaletaM)} m de canaleta, ${m.bajantes} bajante${m.bajantes === 1 ? '' : 's'} de ${m.bajanteNombre} (${m.tipoCanal.toLowerCase()})`,
+                ] as [string, string],
+            )
+          : ([['Techo drenado', `${r.techoNombre}: ${n1(r.techoAncho)} × ${n1(r.techoLargo)} m`]] as [string, string][])),
         ['Intensidad de diseño', `${n0(r.intensidadMmH)} mm/h (${r.fuenteIntensidad})`],
         ['Canal sugerido', `${r.tipoCanal}: ${r.lineasCanal}`],
-        ['Canaletas', `${r.numeroCanaletas} × ${n1(r.longitudCanaletaM / r.numeroCanaletas)} m de ${r.material}, pendiente ${n1(r.pendientePct)} %`],
-        ['Bajantes', `${r.bajantesTotal} de ${r.bajanteNombre} (${r.bajantesPorCanaleta} por canaleta)`],
+        r.modulos && r.modulos.length > 1
+          ? ['Canaletas', `${n1(r.longitudCanaletaM)} m en total de ${r.material}, pendiente ${n1(r.pendientePct)} %`]
+          : ['Canaletas', `${r.numeroCanaletas} × ${n1(r.longitudCanaletaM / r.numeroCanaletas)} m de ${r.material}, pendiente ${n1(r.pendientePct)} %`],
+        [
+          'Bajantes',
+          r.modulos && r.modulos.length > 1
+            ? `${r.bajantesTotal} en total, conectadas a la entrada del tanque`
+            : `${r.bajantesTotal} de ${r.bajanteNombre} (${r.bajantesPorCanaleta} por canaleta${r.tramoM ? `, una cada ${n1(r.tramoM)} m` : ''})` +
+              (r.motivoBajantes === 'largo' ? `: las pide el largo del techo (máximo ${n0(r.tramoMaximoM ?? 12)} m de canal por bajante)` : ''),
+        ],
         ['Caudal por tramo / capacidad del canal', `${n2(r.caudalTramoLs)} / ${n2(r.capacidadCanalLs)} L/s (${r.canalRevisado}) — ${r.cumpleCanal ? 'cumple' : 'no cumple'}`],
         ...(r.canaletaEquivalente ? ([['Sección mínima equivalente', `Canaleta semicircular de ${r.canaletaEquivalente}`]] as [string, string][]) : []),
         ...(r.capacidadSistemaLs
@@ -250,25 +329,52 @@ export function cuadroResumen(d: DatosInforme): SeccionResumen[] {
   return s;
 }
 
-export function conclusiones(d: DatosInforme): string[] {
+/** Conclusión sobre el techo: ideal, mínimo para llenar el tanque y evaluación del existente. */
+export function recomendacionTecho(d: DatosInforme): string | null {
   const c: string[] = [];
-  if (d.lluvia && d.oferta) {
-    const captados = indicesDonde(d.oferta.mesesCaptados, true);
-    const secos = indicesDonde(d.oferta.mesesCaptados, false);
-    c.push(
-      `El sitio recibe en promedio ${n0(d.lluvia.anualMm)} mm de lluvia al año. Con el techo indicado se aprovechan ` +
-        `${n0(d.oferta.netaAnualMm)} litros por m² al año (${pct(d.oferta.eficiencia)}), captando en ${captados.length} ` +
-        `mes${captados.length === 1 ? '' : 'es'}${captados.length ? ` (${listaMeses(captados)})` : ''}.`,
-    );
-    if (secos.length > 0 && captados.length > 0) {
+  const e = d.criterioTecho;
+  if (d.demanda.m3Anual > 0 && e && e.idealM2 !== null && e.soloLlenarM2 !== null) {
+    const temporada = textoTemporada(e.mesesTemporada);
+    const v = d.demanda.m3Critico ?? 0;
+    const dias = d.demanda.diasCriticos ?? 0;
+    const proteger =
+      e.mesesProteger?.length && e.estado !== 'insuficiente'
+        ? ` Ya con el tanque lleno, en ${listaMeses(e.mesesProteger)} la lluvia no cubre todo el consumo: en esos meses ` +
+          'conviene usar solo el agua que llueve y no sacar del tanque, para conservar la reserva de los días críticos.'
+        : '';
+    const existente = e.existenteM2 !== null ? `${n1(e.existenteM2)} m²${d.techo.existente?.modulos && d.techo.existente.modulos.length > 1 ? ` (${d.techo.existente.modulos.length} módulos)` : ''}` : '';
+    if (e.estado === 'ideal') {
       c.push(
-        `Durante ${secos.length} mes${secos.length === 1 ? '' : 'es'} (${listaMeses(secos)}) no se capta lluvia: el agua de la época ` +
-          'lluviosa debe guardarse en un tanque para cubrir la época seca' +
-          (d.tanque ? ' (ver la sección del tanque de almacenamiento).' : '.'),
+        `El techo existente de ${existente} alcanza: cubre el consumo durante la temporada de lluvia (${temporada}) y llena ` +
+          `al 100 % el tanque de ${n1(v)} m³ para los ${n0(dias)} días críticos (el techo ideal es de ${n0(e.idealM2)} m²).` +
+          proteger,
+      );
+    } else if (e.estado === 'soloLlenar') {
+      const limite =
+        e.litrosDiaPosibles && e.litrosDiaPosibles >= 1 ? `, o limitarla a unos ${n0(e.litrosDiaPosibles)} litros por día,` : '';
+      c.push(
+        `El techo existente de ${existente} alcanza para llenar el tanque de ${n1(v)} m³, pero no para cubrir también el ` +
+          `consumo de la temporada de lluvia: el techo ideal es de ${n0(e.idealM2)} m² (faltan ${n0(e.faltaIdealM2)} m²). ` +
+          `Se recomienda no usar el agua del tanque durante la época lluviosa${limite} para garantizar que se llene, a menos ` +
+          `que se agreguen ${n0(e.faltaIdealM2)} m² de techo de captación.`,
+      );
+    } else if (e.estado === 'insuficiente') {
+      c.push(
+        `El techo existente de ${existente} no alcanza para llenar el tanque de ${n1(v)} m³ ni sin usar el agua mientras ` +
+          `llueve: llega al ${pct(e.fraccionLlenado)} de su volumen. Faltan ${n0(e.faltaLlenarM2)} m² para llenarlo ` +
+          `(techo mínimo de ${n0(e.soloLlenarM2)} m²) y ${n0(e.faltaIdealM2)} m² para el techo ideal de ${n0(e.idealM2)} m², ` +
+          'que además cubre el consumo de la temporada. Otra opción es reducir los días críticos o la dotación.',
+      );
+    } else {
+      c.push(
+        `Se sugiere un techo ideal de ${n0(e.idealM2)} m² medidos en planta: cubre el consumo de ${n0(d.demanda.usuarios)} ` +
+          `usuarios durante la temporada de lluvia (${temporada}) y llena al 100 % el tanque de ${n1(v)} m³ para ` +
+          `los ${n0(dias)} días críticos${e.mesLleno != null ? ` (se llena en ${MESES_LARGOS[e.mesLleno].toLowerCase()})` : ''}. ` +
+          `Con ${n0(e.soloLlenarM2)} m² solo se llenaría el tanque, sin usar el agua mientras llueve.` +
+          proteger,
       );
     }
-  }
-  if (d.demanda.m3Anual > 0 && d.areaNecesariaM2 !== null) {
+  } else if (d.demanda.m3Anual > 0 && d.areaNecesariaM2 !== null) {
     if (d.techo.existente && d.oferta?.m3NetosAnual != null) {
       const cob = d.oferta.m3NetosAnual / d.demanda.m3Anual;
       if (cob >= 1) {
@@ -292,6 +398,30 @@ export function conclusiones(d: DatosInforme): string[] {
       );
     }
   }
+  return c[0] ?? null;
+}
+
+export function conclusiones(d: DatosInforme): string[] {
+  const c: string[] = [];
+  if (d.lluvia && d.oferta) {
+    const captados = indicesDonde(d.oferta.mesesCaptados, true);
+    const secos = indicesDonde(d.oferta.mesesCaptados, false);
+    c.push(
+      `El sitio recibe en promedio ${n0(d.lluvia.anualMm)} mm de lluvia al año. Con el techo indicado se aprovechan ` +
+        `${n0(d.oferta.netaAnualMm)} litros por m² al año (${pct(d.oferta.eficiencia)}), captando en ${captados.length} ` +
+        `mes${captados.length === 1 ? '' : 'es'}${captados.length ? ` (${listaMeses(captados)})` : ''}.`,
+    );
+    if (secos.length > 0 && captados.length > 0) {
+      c.push(
+        `Durante ${secos.length} mes${secos.length === 1 ? '' : 'es'} (${listaMeses(secos)}) no se capta lluvia: el agua de la época ` +
+          'lluviosa debe guardarse en un tanque para cubrir la época seca' +
+          (d.tanque ? ' (ver la sección del tanque de almacenamiento).' : '.'),
+      );
+    }
+  }
+  const e = d.criterioTecho;
+  const rt = recomendacionTecho(d);
+  if (rt) c.push(rt);
   if (d.tanque) {
     const t = d.tanque;
     c.push(
@@ -307,18 +437,33 @@ export function conclusiones(d: DatosInforme): string[] {
     if (t.llenadosAnual !== undefined && t.capacidadTanqueL) {
       c.push(
         `Con la lluvia promedio y ${n1(t.areaTechoM2)} m² de techo, el agua captada en el año equivale a llenar ` +
-          `${n1(t.llenadosAnual)} veces el tanque de ${n0(t.capacidadTanqueL)} L. Durante la temporada de lluvia el agua ` +
-          `puede usarse a diario; lo importante es que el tanque quede lleno al terminar la temporada para cubrir la época seca.`,
+          `${n1(t.llenadosAnual)} veces el tanque de ${n0(t.capacidadTanqueL)} L. ` +
+          (e?.estado === 'soloLlenar' || e?.estado === 'insuficiente'
+            ? 'Lo importante es que el tanque quede lleno al terminar la temporada para cubrir la época seca.'
+            : 'Durante la temporada de lluvia el agua puede usarse a diario; lo importante es que el tanque quede lleno al ' +
+              'terminar la temporada para cubrir la época seca.'),
       );
     }
   }
   if (d.drenaje) {
     const r = d.drenaje;
-    c.push(
-      `Para una lluvia de diseño de ${n0(r.intensidadMmH)} mm/h se sugiere ${r.tipoCanal.toLowerCase()} con ` +
-        `${r.bajantesTotal} bajante${r.bajantesTotal === 1 ? '' : 's'} de ${r.bajanteNombre} ` +
-        `(${r.bajantesPorCanaleta} por canaleta) y pendiente de ${n1(r.pendientePct)} %.`,
-    );
+    if (r.modulos && r.modulos.length > 1) {
+      c.push(
+        `Para una lluvia de diseño de ${n0(r.intensidadMmH)} mm/h, el techo de ${r.modulos.length} módulos lleva ` +
+          `${n1(r.longitudCanaletaM)} m de canaleta y ${r.bajantesTotal} bajantes en total (` +
+          r.modulos.map((m) => `${m.nombre.toLowerCase()}: ${m.bajantes} de ${m.bajanteNombre}`).join('; ') +
+          `), con pendiente de ${n1(r.pendientePct)} %. Todas las bajantes se conectan a la tubería de entrada al tanque.`,
+      );
+    } else {
+      c.push(
+        `Para una lluvia de diseño de ${n0(r.intensidadMmH)} mm/h se sugiere ${r.tipoCanal.toLowerCase()} con ` +
+          `${r.bajantesTotal} bajante${r.bajantesTotal === 1 ? '' : 's'} de ${r.bajanteNombre} ` +
+          `(${r.bajantesPorCanaleta} por canaleta${r.tramoM ? `, una cada ${n1(r.tramoM)} m` : ''}) y pendiente de ${n1(r.pendientePct)} %.` +
+          (r.motivoBajantes === 'largo'
+            ? ` El número de bajantes lo decide el largo de la canaleta: se coloca como máximo una cada ${n0(r.tramoMaximoM ?? 12)} m de canal.`
+            : ''),
+      );
+    }
     const limite = Math.min(r.rebalsaMmH, r.bajanteSaturaMmH);
     if (r.cumpleCanal && limite > r.intensidadMmH) {
       const cap = r.capacidadSistemaLs ? ` (${n0(r.capacidadSistemaLs * 60)} L/min por tramo)` : '';

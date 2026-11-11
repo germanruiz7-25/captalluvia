@@ -196,3 +196,35 @@ export function calcularTecho(e: EntradaTecho): ResultadoTecho {
     opciones: redondeada === null ? [] : opcionesDeTecho(redondeada),
   };
 }
+
+/** Módulo de techo tal como lo escribe el usuario (medidas en planta, m). */
+export interface ModuloTecho {
+  ancho: number | null;
+  largo: number | null;
+}
+
+/** Módulo con medidas válidas: ancho = lado corto, largo = lado largo (donde va la canaleta). */
+export interface ModuloMedido {
+  nombre: string;
+  ancho: number;
+  largo: number;
+  area: number;
+}
+
+/** Módulos con ancho y largo mayores que cero; conservan su número en la lista ("Módulo 2"). */
+export function modulosMedidos(modulos: ModuloTecho[]): ModuloMedido[] {
+  return modulos.flatMap((m, i) => {
+    const a = Number(m.ancho);
+    const l = Number(m.largo);
+    if (!(a > 0) || !(l > 0)) return [];
+    const ancho = Math.min(a, l);
+    const largo = Math.max(a, l);
+    return [{ nombre: `Módulo ${i + 1}`, ancho, largo, area: Math.round(ancho * largo * 100) / 100 }];
+  });
+}
+
+/** Área total de los módulos (m²), o null si ninguno tiene medidas. */
+export function areaDeModulos(modulos: ModuloMedido[]): number | null {
+  if (!modulos.length) return null;
+  return Math.round(modulos.reduce((t, m) => t + m.area, 0) * 100) / 100;
+}

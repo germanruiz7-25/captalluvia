@@ -1,7 +1,7 @@
 {
   "name": "captalluvia",
   "private": true,
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "CaptaLluvia: dise\u00f1o de sistemas de cosecha de agua de lluvia (SCALL) a nivel domiciliario",
   "author": "Alfaro, G. <galfaro@icc.org.gt>",
   "license": "SEE LICENSE IN LICENSE",

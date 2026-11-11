@@ -90,9 +90,20 @@ P_aprovechable = P_anual × Ce − n_eventos × d_ff  (desde v0.1.0 se calcula m
 - **n_eventos**: días con lluvia en el año (en la fase 1 se contarán los días con más de 1 mm en la serie diaria).
 - **d_ff**: primer descarte por evento (hasta v0.6: 1 mm por lluvia). Desde v0.7.0 es 0 y el lavado se hace con las primeras lluvias de la temporada (ver 0.1).
 
-## 3. Área mínima de techo
+## 3. Área de techo ideal (`techoTanque.ts`, desde v0.9.0)
 
-A_min = 1000 × V / P_aprovechable
+El tanque guarda el agua de los días críticos de la época seca (V = usuarios × L × días ÷ 1000) y debe **llenarse al 100 % durante la temporada de lluvia**. Mientras llueve, el agua del techo cubre primero el consumo del mes (D = demanda anual ÷ 12) y el excedente entra al tanque. Se simula la temporada mes a mes, desde el mes que sigue a la época seca y con el tanque vacío:
+
+S_j = mín(V, máx(0, S_(j−1) + PN_j × A ÷ 1000 − D))
+
+- **Techo mínimo para solo llenar el tanque** (sin usar el agua mientras llueve, D = 0): A_llenar = 1000 × V ÷ ΣPN_temporada.
+- **Techo ideal:** la menor A con la que, consumiendo D cada mes de la temporada, S llega a V (el tanque se llena). Se busca por bisección. No es exactamente 1000 × (V + D × n) ÷ ΣPN: depende de cómo se reparte la lluvia (rebalses en los meses más lluviosos, meses que no cubren el consumo). Una vez lleno, en los meses del final de la temporada en que PN × A ÷ 1000 < D se recomienda usar solo el agua que llueve y no sacar del tanque, para conservar la reserva; exigir que esos meses flojos cubran todo el consumo dispararía el área (p. ej. un noviembre con 46 mm de PN pediría 165 m² para una familia de 5).
+- **Techo existente** (uno o varios módulos; el área es la suma de ancho × largo de cada módulo):
+  - A ≥ A_ideal: alcanza.
+  - A_llenar ≤ A < A_ideal: solo alcanza para llenar el tanque. Se recomienda no usar el agua del tanque en la época lluviosa, o limitar el consumo al máximo que todavía deja el tanque lleno (se calcula por bisección), a menos que se agreguen A_ideal − A m² de techo.
+  - A < A_llenar: no llena el tanque ni sin usarlo; se indica el porcentaje que se llena y los m² que faltan para llenarlo y para el ideal.
+
+Si los días críticos son 0, se usa el balance anual: A_min = 1000 × V_anual / P_aprovechable.
 
 El área es la **proyección horizontal** del techo (vista en planta), no la superficie inclinada. Se redondea al m² entero superior.
 
@@ -120,6 +131,9 @@ El área total en planta es la misma en ambos casos; lo que cambia es cuántas c
    - Canal Colonial: fondo 100 mm, lados de 90 y 130 mm → unos 4.1 L/s con PVC al 0.5 %. La curva decorativa da algo más de área; el cálculo como rectángulo queda del lado seguro.
    - Canal Alto Caudal: fondo 151.2 mm, lados de 90.72 y 136.08 mm → unos 7.2 L/s con PVC al 0.5 %.
    Para Durman se usan las mismas secciones de referencia; el diseñador debe verificar que la del producto sea igual o mayor.
+
+8. **Bajantes según el largo (desde v0.9.0):** además del caudal, cada canaleta lleva como mínimo ⌈largo ÷ 12 m⌉ bajantes: una bajante como máximo cada 12 m de canal (práctica constructiva común de 10 a 12 m). Con tramos más largos el desnivel por pendiente se acumula (0.5 % × 12 m = 6 cm) y el canal se carga y se tapa al final del tramo. El tipo de canal (colonial o alto caudal) lo decide el caudal; si el largo pide más bajantes, el canal colonial sigue valiendo.
+9. **Techo por módulos (desde v0.9.0):** cada módulo se diseña por separado (sus canaletas y bajantes) y todas las bajantes llegan a la tubería de entrada al tanque. Se detalla el módulo con más caudal por tramo.
 
 Todas son **dimensiones mínimas**; el diseñador decide si las adopta o las aumenta y verifica existencias y medidas con el distribuidor.
 

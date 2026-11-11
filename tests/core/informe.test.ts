@@ -123,3 +123,59 @@ describe('informe con tanque', () => {
     expect(conclusiones(d).join(' ')).toContain('4 tanques de 10,000 L');
   });
 });
+
+describe('informe: techo ideal y techo por módulos (v0.9.0)', () => {
+  const criterio = {
+    existenteM2: 30,
+    idealM2: 64,
+    soloLlenarM2: 16,
+    estado: 'soloLlenar' as const,
+    faltaIdealM2: 34,
+    faltaLlenarM2: 0,
+    fraccionLlenado: 1,
+    litrosDiaPosibles: 120,
+    litrosDiaDemanda: 250,
+    mesesTemporada: [4, 5, 6, 7, 8, 9],
+    mesLleno: 7,
+    mesesProteger: [9],
+  };
+  const d: DatosInforme = {
+    ...base,
+    techo: {
+      ...base.techo,
+      existente: {
+        ancho: 4,
+        largo: 5,
+        area: 30,
+        modulos: [
+          { nombre: 'Módulo 1', ancho: 4, largo: 5, area: 20 },
+          { nombre: 'Módulo 2', ancho: 2, largo: 5, area: 10 },
+        ],
+      },
+    },
+    demanda: { ...base.demanda, diasCriticos: 60, m3Critico: 15 },
+    areaNecesariaM2: 64,
+    criterioTecho: criterio,
+  };
+
+  it('techo que solo llena el tanque: recomienda no usar el agua mientras llueve', () => {
+    const c = conclusiones(d).join(' ');
+    expect(c).toContain('alcanza para llenar el tanque de 15 m³');
+    expect(c).toContain('faltan 34 m²');
+    expect(c).toContain('no usar el agua del tanque durante la época lluviosa');
+    expect(c).toContain('120 litros por día');
+    const filas = cuadroResumen(d).flatMap((s) => s.filas);
+    expect(filas).toContainEqual(['Techo existente', '2 módulos: 4 × 5 m + 2 × 5 m = 30 m²']);
+    expect(filas).toContainEqual(['Techo ideal (consumo de la temporada de lluvia + tanque lleno)', '64 m² en planta']);
+    expect(filas).toContainEqual(['Techo que falta', '34 m² para el ideal']);
+  });
+
+  it('sin techo existente: sugiere el techo ideal', () => {
+    const c = conclusiones({ ...d, techo: { ...d.techo, existente: null }, criterioTecho: { ...criterio, existenteM2: null, estado: null, faltaIdealM2: 0 } }).join(' ');
+    expect(c).toContain('Se sugiere un techo ideal de 64 m²');
+    expect(c).toContain('de mayo a octubre');
+    expect(c).toContain('Con 16 m² solo se llenaría el tanque');
+    expect(c).toContain('se llena en agosto');
+    expect(c).toContain('en octubre la lluvia no cubre todo el consumo');
+  });
+});
