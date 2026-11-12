@@ -189,3 +189,22 @@ describe('simulador de intensidad', () => {
     expect(llenadoCanalRectangular(0.1, 0.09, 0.005, 0.011, 0)).toBe(0);
   });
 });
+
+describe('bajantes según el largo de la canaleta', () => {
+  const base = { aguas: 2 as const, c: 0.9, intensidadMmH: 150, pendientePct: 0.5, material: 'pvc' as const };
+  it('un techo corto lleva las bajantes que pide el caudal', () => {
+    const r = disenarDrenaje({ ...base, areaM2: 60, largoM: 10 });
+    expect(r.bajantesPorLargo).toBe(1);
+    expect(r.motivoBajantes).toBe('caudal');
+  });
+  it('un techo largo lleva una bajante cada 12 m como máximo', () => {
+    const r = disenarDrenaje({ ...base, areaM2: 120, largoM: 40 });
+    expect(r.bajantesPorLargo).toBe(4);
+    const b = r.bajantes[r.bajanteSugerida];
+    expect(b.porCanaleta).toBeGreaterThanOrEqual(4);
+    expect(r.tramoM).toBeLessThanOrEqual(12);
+    expect(r.motivoBajantes).toBe('largo');
+    // El caudal es chico: sigue siendo canal colonial
+    expect(r.tipoCanal).toBe('colonial');
+  });
+});

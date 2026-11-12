@@ -94,6 +94,12 @@
     </li>
     <li>Equivalencia: 1 mm de lluvia sobre 1 m² de superficie = 1 litro de agua.</li>
     <li>
+      Techo ideal: el área con la que, simulando la temporada de lluvia mes a mes con el tanque vacío al inicio, la
+      lluvia neta cubre el consumo de cada mes y llena al 100 % el tanque del periodo crítico; techo mínimo
+      para solo llenar el tanque = 1000 × V ÷ ΣPN de la temporada (criterio de CaptaLluvia). Un techo puede tener
+      varios módulos: el área es la suma.
+    </li>
+    <li>
       Caudal de diseño de canaletas y bajantes: método racional, Q = C × i × A / 3600 (Kuichling, 1889), con la
       intensidad de diseño indicada por el usuario (se recomienda la curva IDF local de INSIVUMEH).
     </li>
@@ -126,6 +132,10 @@
       Canales de PVC del mercado de Guatemala y m² de techo por bajante (2" = 20 m², 3" = 60 m², 4" = 120 m²):
       Durman (Aliaxis). <em>Canales para techo. Catálogo 2024</em>; Amanco Wavin. <em>Canales de PVC: Canal
       Colonial y Canal Alto Caudal. Ficha técnica</em>. Consultados el 7/11/2026.
+    </li>
+    <li>
+      Número de bajantes: el mayor entre el que pide el caudal y una bajante como máximo cada 12 m de canal
+      (práctica constructiva común).
     </li>
     <li>
       Capacidad de bajantes: Wyly, R. S. y Eaton, H. N. (1961). <em>Capacities of plumbing stacks in buildings</em>

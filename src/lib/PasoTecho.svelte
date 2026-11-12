@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { COEFICIENTES_ESCORRENTIA, NOMBRES_TECHO, type NumeroAguas, type TipoTecho } from '../core/techo';
+  import { COEFICIENTES_ESCORRENTIA, NOMBRES_TECHO, type ModuloMedido, type ModuloTecho, type NumeroAguas, type TipoTecho } from '../core/techo';
   import type { ResumenOferta } from '../core/oferta';
   import GraficoMensual from './GraficoMensual.svelte';
   import { MESES, MESES_LARGOS, type ResumenLluvia } from '../core/lluvia';
@@ -9,8 +9,8 @@
     oferta,
     tipoTecho = $bindable(),
     aguas = $bindable(),
-    anchoTecho = $bindable(),
-    largoTecho = $bindable(),
+    modulos = $bindable(),
+    modulosExistentes = [],
     areaDisponible = null,
     umbralMm = $bindable(),
   }: {
@@ -18,8 +18,8 @@
     oferta: ResumenOferta | null;
     tipoTecho: TipoTecho;
     aguas: NumeroAguas;
-    anchoTecho: number | null;
-    largoTecho: number | null;
+    modulos: ModuloTecho[];
+    modulosExistentes?: ModuloMedido[];
     areaDisponible?: number | null;
     umbralMm: number;
   } = $props();
@@ -37,9 +37,25 @@
       : [],
   );
 
-  const tipos = Object.keys(COEFICIENTES_ESCORRENTIA) as TipoTecho[];
   const n0 = (v: number) => Math.round(v).toLocaleString('es-GT');
   const n1 = (v: number) => v.toLocaleString('es-GT', { maximumFractionDigits: 1 });
+  const areaModulo = (m: ModuloTecho) => (Number(m.ancho) > 0 && Number(m.largo) > 0 ? Number(m.ancho) * Number(m.largo) : null);
+  function agregarModulo() {
+    modulos.push({ ancho: null, largo: null });
+  }
+  function quitarModulo(i: number) {
+    if (modulos.length > 1) modulos.splice(i, 1);
+    else modulos[0] = { ancho: null, largo: null };
+  }
+  const textoModulos = $derived(
+    modulosExistentes.length > 1
+      ? `${modulosExistentes.length} módulos (${modulosExistentes.map((m) => `${n1(m.ancho)} × ${n1(m.largo)} m`).join(' + ')}) = ${n1(areaDisponible ?? 0)} m²`
+      : modulosExistentes.length === 1
+        ? `${n1(modulosExistentes[0].ancho)} × ${n1(modulosExistentes[0].largo)} m = ${n1(modulosExistentes[0].area)} m²`
+        : '',
+  );
+
+  const tipos = Object.keys(COEFICIENTES_ESCORRENTIA) as TipoTecho[];
 </script>
 
 <section class="tarjeta paso salto-impresion">
@@ -67,26 +83,41 @@
 
   <fieldset class="existente no-imprimir">
     <legend>¿Ya hay un techo? Escribe sus medidas (opcional)</legend>
-    <div class="medidas">
-      <label>Ancho (m)
-        <input type="number" min="0" step="0.1" placeholder="Ej. 6" bind:value={anchoTecho} />
-      </label>
-      <span class="por" aria-hidden="true">×</span>
-      <label>Largo (m)
-        <input type="number" min="0" step="0.1" placeholder="Ej. 10" bind:value={largoTecho} />
-      </label>
-      <span class="por" aria-hidden="true">=</span>
-      <output class="area-resultado" aria-live="polite">{areaDisponible ? `${n1(areaDisponible)} m²` : '— m²'}</output>
+    {#each modulos as m, i (i)}
+      {@const a = areaModulo(m)}
+      <div class="medidas">
+        {#if modulos.length > 1}<span class="nombre-modulo">Módulo {i + 1}</span>{/if}
+        <label>Ancho (m)
+          <input type="number" min="0" step="0.1" placeholder="Ej. 6" bind:value={m.ancho} />
+        </label>
+        <span class="por" aria-hidden="true">×</span>
+        <label>Largo (m)
+          <input type="number" min="0" step="0.1" placeholder="Ej. 10" bind:value={m.largo} />
+        </label>
+        <span class="por" aria-hidden="true">=</span>
+        <output class="area-resultado" class:chica={modulos.length > 1} aria-live="polite">{a ? `${n1(a)} m²` : '— m²'}</output>
+        {#if modulos.length > 1 || m.ancho || m.largo}
+          <button type="button" class="quitar" onclick={() => quitarModulo(i)} aria-label="Quitar el módulo {i + 1}" title="Quitar">✕</button>
+        {/if}
+      </div>
+    {/each}
+    <div class="acciones-modulos">
+      <button type="button" class="secundario" onclick={agregarModulo}>➕ Agregar otro módulo de techo</button>
+      {#if modulos.length > 1}
+        <span class="total-modulos">Techo disponible: <strong>{areaDisponible ? `${n1(areaDisponible)} m²` : '— m²'}</strong>
+          {#if modulosExistentes.length}({modulosExistentes.length} módulo{modulosExistentes.length === 1 ? '' : 's'}){/if}</span>
+      {/if}
     </div>
     <p class="nota">
-      Mide el techo en planta (visto desde arriba), sin contar la inclinación. Si es de dos aguas, el largo es el
-      lado donde van las canaletas. Si no hay techo todavía, deja esto vacío: la app sugiere los m² que hacen falta.
+      Mide cada techo en planta (visto desde arriba), sin contar la inclinación. Si es de dos aguas, el largo es el
+      lado donde van las canaletas. Si el agua se capta de varios techos (módulos) que llegan al mismo tanque, agrega
+      uno por uno: la app suma los m². Si no hay techo todavía, deja esto vacío: la app sugiere los m² ideales.
     </p>
   </fieldset>
 
   <p class="solo-impresion">
     Techo de {NOMBRES_TECHO[tipoTecho].toLowerCase()} (Ce {COEFICIENTES_ESCORRENTIA[tipoTecho]}, coeficiente de captación Ce × 0.85),
-    {aguas === 2 ? 'dos aguas' : 'un agua'}, captación en la temporada de lluvia{#if oferta?.mesesLavado.length}; en la época seca ({mesesLavadoTexto}, menos de {n0(umbralMm)} mm de precipitación neta al mes) no se capta y sus lluvias lavan el sistema{/if}{#if areaDisponible}, techo existente de {n1(Number(anchoTecho))} × {n1(Number(largoTecho))} m = {n1(areaDisponible)} m²{/if}.
+    {aguas === 2 ? 'dos aguas' : 'un agua'}, captación en la temporada de lluvia{#if oferta?.mesesLavado.length}; en la época seca ({mesesLavadoTexto}, menos de {n0(umbralMm)} mm de precipitación neta al mes) no se capta y sus lluvias lavan el sistema{/if}{#if areaDisponible}, techo existente de {textoModulos}{/if}.
   </p>
 
   {#if !lluvia || !oferta}
@@ -138,7 +169,7 @@
       <div class="destacado">
         <span class="cifra">{n1(oferta.m3NetosAnual)} m³</span>
         <span>
-          netos al año con el techo existente de {n0(oferta.areaM2 ?? 0)} m²
+          netos al año con el techo existente de {n1(oferta.areaM2 ?? 0)} m²{modulosExistentes.length > 1 ? ` (${modulosExistentes.length} módulos)` : ''}
           (de {n1(oferta.m3BrutosAnual)} m³ de lluvia que caen sobre él).
           {#if aguas === 2}Cada agua aporta {n1(oferta.m3NetosAnual / 2)} m³.{/if}
         </span>
@@ -182,5 +213,12 @@
   .medidas { display: flex; align-items: flex-end; gap: 0.5rem; flex-wrap: wrap; }
   .medidas label { flex: 1 1 6rem; max-width: 9rem; }
   .por { font-size: 1.3rem; padding-bottom: 0.45rem; color: var(--texto-suave); }
+  .area-resultado.chica { font-size: 1.15rem; }
+  .nombre-modulo { flex: 0 0 100%; font-weight: 600; font-size: 0.9rem; color: var(--texto-suave); margin-top: 0.4rem; }
+  .quitar { background: none; border: 1px solid var(--borde); border-radius: 50%; width: 2rem; height: 2rem; padding: 0; color: var(--texto-suave); cursor: pointer; margin-bottom: 0.3rem; }
+  .quitar:hover { color: #b42318; border-color: #b42318; }
+  .acciones-modulos { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: 0.75rem 0 0.25rem; }
+  .total-modulos { font-size: 1rem; }
+  .total-modulos strong { color: var(--acento); font-size: 1.2rem; }
   .area-resultado { font-size: 1.5rem; font-weight: 700; color: var(--acento); padding-bottom: 0.2rem; white-space: nowrap; }
 </style>

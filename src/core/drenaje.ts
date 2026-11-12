@@ -189,6 +189,13 @@ export const SECCIONES_COMERCIALES: Record<TipoCanal, SeccionRectangular> = {
   alto: CANAL_ALTO_CAUDAL_WAVIN,
 };
 
+/**
+ * Largo máximo de canaleta que drena a una bajante (m). Práctica constructiva común: una bajante como
+ * máximo cada 10 a 12 m de canal. Más largo, el desnivel por pendiente se acumula (0.5 % × 12 m = 6 cm),
+ * el canal se carga al final del tramo y se tapa con más facilidad.
+ */
+export const TRAMO_MAXIMO_M = 12;
+
 /** Diámetro de bajante más pequeño que se sugiere en la práctica (menos riesgo de taparse). */
 export const BAJANTE_MINIMA_PRACTICA = '3"';
 
@@ -219,6 +226,8 @@ export interface EntradaDrenaje {
   /** Pendiente de la canaleta en %. */
   pendientePct: number;
   material: MaterialCanaleta;
+  /** Largo máximo de canaleta por bajante (m); por defecto TRAMO_MAXIMO_M. */
+  tramoMaximoM?: number;
 }
 
 export interface OpcionBajante {
@@ -230,8 +239,10 @@ export interface OpcionBajante {
   areaQueEvacuaM2: number;
   /** m² por bajante según el fabricante (null si no hay dato). */
   areaFabricanteM2: number | null;
-  /** Bajantes por canaleta: el valor más exigente entre el cálculo y la tabla del fabricante. */
+  /** Bajantes por canaleta: el valor más exigente entre el cálculo, la tabla del fabricante y el largo. */
   porCanaleta: number;
+  /** Bajantes por canaleta que pide solo el caudal (cálculo o fabricante). */
+  porCaudal: number;
   total: number;
   /** Cumple el diámetro mínimo práctico. */
   practica: boolean;
@@ -248,6 +259,11 @@ export interface OpcionCanaleta {
 
 export interface ResultadoDrenaje {
   numeroCanaletas: number;
+  /** Bajantes por canaleta que pide el largo: una cada TRAMO_MAXIMO_M como máximo. */
+  bajantesPorLargo: number;
+  tramoMaximoM: number;
+  /** Qué decide el número de bajantes de la sugerida. */
+  motivoBajantes: 'caudal' | 'largo';
   areaPorCanaletaM2: number;
   caudalTotalLs: number;
   caudalPorCanaletaLs: number;
@@ -276,12 +292,15 @@ export function disenarDrenaje(e: EntradaDrenaje): ResultadoDrenaje {
   const areaPorCanaletaM2 = e.areaM2 / numeroCanaletas;
   const caudalTotalLs = caudalRacionalLs(e.c, e.intensidadMmH, e.areaM2);
   const caudalPorCanaletaLs = caudalTotalLs / numeroCanaletas;
+  const tramoMaximoM = e.tramoMaximoM && e.tramoMaximoM > 0 ? e.tramoMaximoM : TRAMO_MAXIMO_M;
+  const bajantesPorLargo = Math.max(1, Math.ceil(e.largoM / tramoMaximoM - 1e-9));
 
   const bajantes: OpcionBajante[] = BAJANTES.map((d) => {
     const capacidadLs = capacidadBajanteLs(d.interiorMm);
     const porCalculo = caudalPorCanaletaLs > 0 ? Math.ceil(caudalPorCanaletaLs / capacidadLs - 1e-9) : 1;
     const porFabricante = d.m2Fabricante ? Math.ceil(areaPorCanaletaM2 / d.m2Fabricante - 1e-9) : 1;
-    const porCanaleta = Math.max(1, porCalculo, porFabricante);
+    const porCaudal = Math.max(1, porCalculo, porFabricante);
+    const porCanaleta = Math.max(porCaudal, bajantesPorLargo);
     return {
       nombre: d.nombre,
       interiorMm: d.interiorMm,
@@ -290,6 +309,7 @@ export function disenarDrenaje(e: EntradaDrenaje): ResultadoDrenaje {
       areaQueEvacuaM2: areaParaCaudalM2(capacidadLs, e.c, e.intensidadMmH),
       areaFabricanteM2: d.m2Fabricante,
       porCanaleta,
+      porCaudal,
       total: porCanaleta * numeroCanaletas,
       practica: d.interiorMm >= (BAJANTES.find((b) => b.nombre === BAJANTE_MINIMA_PRACTICA)?.interiorMm ?? 0),
     };
@@ -312,12 +332,14 @@ export function disenarDrenaje(e: EntradaDrenaje): ResultadoDrenaje {
   // 2) Si no: canal de alto caudal con bajantes de 4"; se agregan bajantes si el canal no alcanza.
   const i3 = bajantes.findIndex((b) => b.nombre === '3"');
   const i4 = bajantes.findIndex((b) => b.nombre === '4"');
+  // El caudal decide el tipo de canal; si el largo pide más bajantes, el canal colonial sigue valiendo.
   const colonial =
-    bajantes[i3].porCanaleta <= 2 && capacidadDe('colonial') >= caudalPorCanaletaLs / bajantes[i3].porCanaleta - 1e-9;
+    bajantes[i3].porCaudal <= 2 && capacidadDe('colonial') >= caudalPorCanaletaLs / bajantes[i3].porCanaleta - 1e-9;
   const tipoCanal: TipoCanal = colonial ? 'colonial' : 'alto';
   if (!colonial) {
     const capAlto = capacidadDe('alto');
     const minimo = capAlto > 0 ? Math.ceil(caudalPorCanaletaLs / capAlto - 1e-9) : 1;
+    bajantes[i4].porCaudal = Math.max(bajantes[i4].porCaudal, minimo);
     if (minimo > bajantes[i4].porCanaleta) {
       bajantes[i4].porCanaleta = minimo;
       bajantes[i4].total = minimo * numeroCanaletas;
@@ -339,6 +361,9 @@ export function disenarDrenaje(e: EntradaDrenaje): ResultadoDrenaje {
 
   return {
     numeroCanaletas,
+    bajantesPorLargo,
+    tramoMaximoM,
+    motivoBajantes: elegida.porCanaleta === bajantesPorLargo && bajantesPorLargo > elegida.porCaudal ? 'largo' : 'caudal',
     areaPorCanaletaM2,
     caudalTotalLs,
     caudalPorCanaletaLs,

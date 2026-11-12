@@ -26,13 +26,13 @@
     disenarDrenaje,
     type MaterialCanaleta,
   } from '../core/drenaje';
-  import { COEFICIENTES_ESCORRENTIA, type NumeroAguas, type OpcionTecho, type TipoTecho } from '../core/techo';
+  import { COEFICIENTES_ESCORRENTIA, type ModuloMedido, type NumeroAguas, type OpcionTecho, type TipoTecho } from '../core/techo';
 
   let {
     opciones,
     aguas,
     tipoTecho,
-    techoExistente = null,
+    modulosExistentes = [],
     lat = '',
     lon = '',
     resumen = $bindable(''),
@@ -42,7 +42,7 @@
     opciones: OpcionTecho[];
     aguas: NumeroAguas;
     tipoTecho: TipoTecho;
-    techoExistente?: { ancho: number; largo: number } | null;
+    modulosExistentes?: ModuloMedido[];
     lat?: string;
     lon?: string;
     resumen?: string;
@@ -78,33 +78,44 @@
   let altoBajoPropio: number | null = $state(null);
   let altoAltoPropio: number | null = $state(null);
 
-  const techo = $derived.by(() => {
-    if ((techoElegido === 'auto' || techoElegido === 'existente') && techoExistente) {
-      return { largo: techoExistente.largo, ancho: techoExistente.ancho, nombre: 'Techo existente' };
+  const varios = $derived(modulosExistentes.length > 1);
+  const areaExistente = $derived(modulosExistentes.reduce((t, m) => t + m.area, 0));
+  /** Techos a drenar: los módulos existentes, o un solo techo (sugerido o con medidas propias). */
+  const techos = $derived.by((): { largo: number; ancho: number; nombre: string }[] => {
+    if ((techoElegido === 'auto' || techoElegido === 'existente') && modulosExistentes.length) {
+      return modulosExistentes.map((m) => ({ largo: m.largo, ancho: m.ancho, nombre: varios ? m.nombre : 'Techo existente' }));
     }
     if (techoElegido === 'propio') {
       const l = Number(largoPropio) || 0;
       const a = Number(anchoPropio) || 0;
-      return l > 0 && a > 0 ? { largo: Math.max(l, a), ancho: Math.min(l, a), nombre: 'Medidas propias' } : null;
+      return l > 0 && a > 0 ? [{ largo: Math.max(l, a), ancho: Math.min(l, a), nombre: 'Medidas propias' }] : [];
     }
     const o = opciones.find((x) => x.forma === techoElegido) ?? opciones[1] ?? opciones[0];
-    return o ? { largo: o.largo, ancho: o.ancho, nombre: o.nombre } : null;
+    return o ? [{ largo: o.largo, ancho: o.ancho, nombre: o.nombre }] : [];
   });
 
   const ce = $derived(COEFICIENTES_ESCORRENTIA[tipoTecho]);
-  const r = $derived(
-    techo
-      ? disenarDrenaje({
-          areaM2: techo.largo * techo.ancho,
-          largoM: techo.largo,
-          aguas,
-          c: ce,
-          intensidadMmH: Number(intensidad) || 0,
-          pendientePct: Number(pendientePct) || 0,
-          material,
-        })
-      : null,
+  const resultados = $derived(
+    techos.map((t) =>
+      disenarDrenaje({
+        areaM2: t.largo * t.ancho,
+        largoM: t.largo,
+        aguas,
+        c: ce,
+        intensidadMmH: Number(intensidad) || 0,
+        pendientePct: Number(pendientePct) || 0,
+        material,
+      }),
+    ),
   );
+  /** Módulo que se detalla: el de más caudal por tramo (el más exigente para el canal). */
+  const iDetalle = $derived(
+    resultados.reduce((m, x, i) => (x.caudalPorTramoLs > resultados[m].caudalPorTramoLs ? i : m), 0),
+  );
+  const techo = $derived(techos[iDetalle] ?? null);
+  const r = $derived(resultados[iDetalle] ?? null);
+  const totalBajantes = $derived(resultados.reduce((t, x) => t + x.bajantes[x.bajanteSugerida].total, 0));
+  const totalCanaletaM = $derived(resultados.reduce((t, x) => t + x.longitudTotalCanaletaM, 0));
   const b = $derived(r ? r.bajantes[r.bajanteSugerida] : null);
   const c = $derived(r && r.canaletaSugerida >= 0 ? r.canaletas[r.canaletaSugerida] : null);
   const seccion = $derived.by(() => {
@@ -149,6 +160,25 @@
     }
     const lim = limitesSimulacion(entradaSim);
     datos = {
+      modulos: techos.length > 1
+        ? techos.map((t, i) => {
+            const x = resultados[i];
+            const bx = x.bajantes[x.bajanteSugerida];
+            return {
+              nombre: t.nombre,
+              ancho: t.ancho,
+              largo: t.largo,
+              tipoCanal: NOMBRES_TIPO_CANAL[x.tipoCanal],
+              bajantes: bx.total,
+              bajantesPorCanaleta: bx.porCanaleta,
+              bajanteNombre: bx.nombre,
+              canaletaM: x.longitudTotalCanaletaM,
+            };
+          })
+        : undefined,
+      tramoM: r.tramoM,
+      motivoBajantes: r.motivoBajantes,
+      tramoMaximoM: r.tramoMaximoM,
       techoAncho: techo.ancho,
       techoLargo: techo.largo,
       techoNombre: techo.nombre,
@@ -162,9 +192,9 @@
       cumpleCanal: rect.cumple,
       bajanteNombre: b.nombre,
       bajantesPorCanaleta: b.porCanaleta,
-      bajantesTotal: b.total,
+      bajantesTotal: techos.length > 1 ? totalBajantes : b.total,
       numeroCanaletas: r.numeroCanaletas,
-      longitudCanaletaM: r.longitudTotalCanaletaM,
+      longitudCanaletaM: techos.length > 1 ? totalCanaletaM : r.longitudTotalCanaletaM,
       pendientePct: Number(pendientePct) || 0,
       material: MATERIALES_CANALETA[material].nombre,
       canaletaEquivalente: c ? c.nombre : null,
@@ -181,7 +211,8 @@
   });
 
   $effect(() => {
-    resumen = r && b ? `${NOMBRES_TIPO_CANAL[r.tipoCanal]} · ${b.total} bajante${b.total > 1 ? 's' : ''} de ${b.nombre}` : '';
+    const total = techos.length > 1 ? totalBajantes : (b?.total ?? 0);
+    resumen = r && b ? `${NOMBRES_TIPO_CANAL[r.tipoCanal]} · ${total} bajante${total > 1 ? 's' : ''} de ${b.nombre}` : '';
   });
 
   const n0 = (v: number) => Math.round(v).toLocaleString('es-GT');
@@ -193,14 +224,16 @@
   <p class="numero-paso">Paso 6 de 8</p>
   <h2>Canaletas y bajantes</h2>
 
-  {#if opciones.length === 0 && !techoExistente}
+  {#if opciones.length === 0 && !modulosExistentes.length}
     <p class="nota">Completa los pasos anteriores para dimensionar canaletas y bajantes.</p>
   {:else}
     <div class="campos no-imprimir">
       <label>Techo a drenar
         <select bind:value={techoElegido}>
-          {#if techoExistente}
-            <option value="auto">Techo existente: {n1(techoExistente.ancho)} × {n1(techoExistente.largo)} m</option>
+          {#if varios}
+            <option value="auto">Techo existente: {modulosExistentes.length} módulos, {n1(areaExistente)} m²</option>
+          {:else if modulosExistentes.length}
+            <option value="auto">Techo existente: {n1(modulosExistentes[0].ancho)} × {n1(modulosExistentes[0].largo)} m</option>
           {:else}
             <option value="auto">Sugerido (rectangular)</option>
           {/if}
@@ -295,15 +328,52 @@
       <p class="nota">Escribe el largo y el ancho del techo.</p>
     {:else}
       <p class="solo-impresion">
-        Parámetros: {techo.nombre === 'Techo existente' ? 'techo existente' : `techo ${techo.nombre.toLowerCase()}`} de {n1(techo.ancho)} × {n1(techo.largo)} m, intensidad de diseño
+        Parámetros: {techos.length > 1 ? `techo existente de ${techos.length} módulos; se detalla el ${techo.nombre.toLowerCase()},` : techo.nombre === 'Techo existente' ? 'techo existente' : `techo ${techo.nombre.toLowerCase()}`} de {n1(techo.ancho)} × {n1(techo.largo)} m, intensidad de diseño
         {n0(Number(intensidad))} mm/h, C = {ce}, canaleta de {MATERIALES_CANALETA[material].nombre} con
         pendiente de {n1(Number(pendientePct))} %.
       </p>
 
+      {#if techos.length > 1}
+<div class="bloque">
+        <h3>Canaletas y bajantes por módulo</h3>
+        <div class="tabla-desplazable">
+          <table class="rejilla modulos">
+            <thead>
+              <tr><th>Módulo</th><th>Medidas</th><th>Canaletas</th><th>Bajantes</th><th class="extra">Canal sugerido</th></tr>
+            </thead>
+            <tbody>
+              {#each techos as t, i (t.nombre)}
+                {@const x = resultados[i]}
+                {@const bx = x.bajantes[x.bajanteSugerida]}
+                <tr class:detallado={i === iDetalle}>
+                  <td>{t.nombre}{i === iDetalle ? ' *' : ''}</td>
+                  <td>{n1(t.ancho)} × {n1(t.largo)} m = {n1(t.ancho * t.largo)} m²</td>
+                  <td>{x.numeroCanaletas} × {n1(t.largo)} m</td>
+                  <td>{bx.total} de {bx.nombre} ({bx.porCanaleta} por canaleta, una cada {n1(x.tramoM)} m{x.motivoBajantes === 'largo' ? '; por el largo' : ''})</td>
+                  <td class="extra">{NOMBRES_TIPO_CANAL[x.tipoCanal]}</td>
+                </tr>
+              {/each}
+              <tr class="total">
+                <td>Total</td>
+                <td>{n1(areaExistente)} m²</td>
+                <td>{n1(totalCanaletaM)} m</td>
+                <td>{totalBajantes} bajantes</td>
+                <td class="extra"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="nota informe">
+          Cada módulo lleva sus propias canaletas y bajantes, y todas las bajantes se conectan a la tubería de entrada al
+          tanque. Ninguna bajante recibe más de {n0(r.tramoMaximoM)} m de canal. * Abajo se detalla el {techo.nombre.toLowerCase()}, el de más caudal por tramo (el más exigente).
+        </p>
+</div>
+      {/if}
+
       <table class="cascada">
         <tbody>
           <tr><td>Techo a drenar ({techo.nombre.toLowerCase()})</td><td>{n1(techo.ancho)} × {n1(techo.largo)} m = {n1(techo.ancho * techo.largo)} m²</td></tr>
-          <tr><td>Canaletas ({aguas === 2 ? 'una por cada agua' : 'un agua'})</td><td>{r.numeroCanaletas} × {n1(techo.largo)} m = {n1(r.longitudTotalCanaletaM)} m</td></tr>
+          <tr><td>Canaletas{techos.length > 1 ? ` del ${techo.nombre.toLowerCase()}` : ''} ({aguas === 2 ? 'una por cada agua' : 'un agua'})</td><td>{r.numeroCanaletas} × {n1(techo.largo)} m = {n1(r.longitudTotalCanaletaM)} m</td></tr>
           <tr><td>Caudal de diseño total, Q = C × i × A / 3600</td><td>{n2(r.caudalTotalLs)} L/s</td></tr>
           <tr class="total"><td>Caudal por canaleta ({n1(r.areaPorCanaletaM2)} m² de techo cada una)</td><td>{n2(r.caudalPorCanaletaLs)} L/s</td></tr>
         </tbody>
@@ -322,6 +392,21 @@
           {/if}
         </span>
       </div>
+      <p class="nota informe bajantes-motivo">
+        <strong>¿Cuántas bajantes?</strong>
+        {#if r.motivoBajantes === 'largo'}
+          La canaleta mide {n1(techo.largo)} m: por el largo, no por el caudal, lleva {b.porCanaleta} bajantes, una cada
+          {n1(r.tramoM)} m (como máximo una cada {n0(r.tramoMaximoM)} m de canal). Con tramos más largos el desnivel por la
+          pendiente se acumula y el canal se carga y se tapa al final del tramo.
+        {:else if b.porCanaleta > 1}
+          El caudal de cada canaleta ({n2(r.caudalPorCanaletaLs)} L/s) pide {b.porCanaleta} bajantes de {b.nombre}, una cada
+          {n1(r.tramoM)} m; el largo pediría {r.bajantesPorLargo} (una cada {n0(r.tramoMaximoM)} m como máximo).
+        {:else}
+          Con {n1(techo.largo)} m de canaleta basta una bajante por canaleta: el caudal lo permite y el tramo no pasa de
+          {n0(r.tramoMaximoM)} m.
+        {/if}
+        Reparte las bajantes para que cada una reciba un tramo igual de canal.
+      </p>
       <p class="nota informe">
         Son dimensiones mínimas: el diseñador decide si las toma como base o las aumenta (por ejemplo, por hojas,
         granizo o mantenimiento). Verifica existencias y medidas con el distribuidor.
@@ -498,6 +583,9 @@
   .cascada td:last-child { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .cascada .total td { font-weight: 700; border-bottom: 2px solid var(--texto); }
   .tabla-desplazable { overflow-x: auto; }
+  .rejilla.modulos .total td { font-weight: 700; }
+  .rejilla.modulos .detallado td { background: var(--acento-suave); }
+  .bajantes-motivo { border-left: 3px solid var(--acento); padding-left: 0.6rem; }
   .tabla { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
   .tabla th, .tabla td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--borde); text-align: right; }
   .tabla td { white-space: nowrap; }

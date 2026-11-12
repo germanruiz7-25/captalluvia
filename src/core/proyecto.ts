@@ -27,6 +27,8 @@ export interface ProyectoGuardado {
   /** Medidas en planta del techo existente (m). */
   anchoTecho?: number | null;
   largoTecho?: number | null;
+  /** Módulos del techo existente, medidas en planta (m) (desde v0.9.0). */
+  modulos?: { ancho: number | null; largo: number | null }[];
   edificio: string;
   usuarios: number;
   dotacionId: string;
@@ -65,6 +67,9 @@ function validarProyecto(texto: string): Partial<ProyectoGuardado> | null {
     const p = JSON.parse(texto) as Partial<ProyectoGuardado>;
     if (typeof p !== 'object' || p === null || Array.isArray(p)) return null;
     if (p.lluvia !== null && p.lluvia !== undefined && !lluviaValida(p.lluvia)) p.lluvia = null;
+    if (p.modulos !== undefined) {
+      p.modulos = Array.isArray(p.modulos) ? p.modulos.filter((m) => !!m && typeof m === 'object') : undefined;
+    }
     return p;
   } catch {
     return null;

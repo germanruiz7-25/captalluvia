@@ -39,7 +39,16 @@ export interface DatosPresentacion {
   } | null;
   material: string;
   demanda: ResumenDemanda;
-  techo: { existenteM2: number | null; necesariaM2: number | null; usadaM2: number | null; captadoAnualM3: number | null };
+  techo: {
+    existenteM2: number | null;
+    necesariaM2: number | null;
+    usadaM2: number | null;
+    captadoAnualM3: number | null;
+    /** Techo mínimo para solo llenar el tanque y recomendación (desde v0.9.0). */
+    soloLlenarM2?: number | null;
+    modulos?: number;
+    recomendacion?: string | null;
+  };
   drenaje: DatosDrenajeInforme | null;
   idf: { estacion: string; km: number; filas: { tr: number; i5: number }[] } | null;
   tanque: (DatosTanqueInforme & { llenadosPorMes?: number[] }) | null;
@@ -332,11 +341,13 @@ export async function generarPresentacion(d: DatosPresentacion): Promise<void> {
   {
     const t = d.techo;
     const s = diapositiva('Techo de captación', `${d.material} · Ce ${d.oferta?.ce ?? '—'} · coeficiente de captación ${d.oferta ? d.oferta.cc.toFixed(3) : '—'}`);
-    tarjeta(s, 0.6, 1.65, 3.9, t.necesariaM2 !== null ? `${n0(t.necesariaM2)} m²` : '—', 'techo necesario para la demanda anual');
-    tarjeta(s, 4.7, 1.65, 3.9, t.existenteM2 !== null ? `${n1(t.existenteM2)} m²` : 'no indicado', 'techo existente');
+    const ideal = t.soloLlenarM2 != null;
+    tarjeta(s, 0.6, 1.65, 3.9, t.necesariaM2 !== null ? `${n0(t.necesariaM2)} m²` : '—', ideal ? 'techo ideal: consumo de la temporada + tanque lleno' : 'techo necesario para la demanda anual');
+    tarjeta(s, 4.7, 1.65, 3.9, t.existenteM2 !== null ? `${n1(t.existenteM2)} m²` : 'no indicado', t.modulos && t.modulos > 1 ? `techo existente (${t.modulos} módulos)` : 'techo existente');
     tarjeta(s, 8.8, 1.65, 4.0, t.captadoAnualM3 !== null ? `${n1(t.captadoAnualM3)} m³` : '—', 'agua captable al año', C.acento);
     let rec: string;
-    if (t.existenteM2 !== null && t.necesariaM2 !== null) {
+    if (t.recomendacion) rec = t.recomendacion;
+    else if (t.existenteM2 !== null && t.necesariaM2 !== null) {
       rec =
         t.existenteM2 + 1e-9 >= t.necesariaM2
           ? `El techo existente (${n1(t.existenteM2)} m²) es suficiente: supera los ${n0(t.necesariaM2)} m² necesarios para cubrir la demanda anual.`
@@ -348,7 +359,8 @@ export async function generarPresentacion(d: DatosPresentacion): Promise<void> {
       s,
       [
         rec,
-        `Lluvia neta aprovechable: ${d.oferta ? n0(d.oferta.netaAnualMm) : '—'} litros por cada m² de techo al año.`,
+        `Lluvia neta aprovechable: ${d.oferta ? n0(d.oferta.netaAnualMm) : '—'} litros por cada m² de techo al año.` +
+          (t.soloLlenarM2 != null ? ` Techo mínimo para solo llenar el tanque: ${n0(t.soloLlenarM2)} m².` : ''),
         'Material: superficies lisas e impermeables (lámina, lona) escurren más que las porosas (teja, palma) o las cubiertas vegetales.',
         'Mantenimiento: limpiar techo y canaletas antes de la temporada de lluvia; las primeras lluvias se dejan correr para lavar el sistema.',
       ],
@@ -364,8 +376,12 @@ export async function generarPresentacion(d: DatosPresentacion): Promise<void> {
     if (r) {
       const filas: [string, string][] = [
         ['Canal recomendado', `${r.tipoCanal}: ${r.lineasCanal}`],
-        ['Canaletas', `${r.numeroCanaletas} × ${n1(r.longitudCanaletaM / r.numeroCanaletas)} m, pendiente ${n1(r.pendientePct)} %`],
-        ['Bajantes', `${r.bajantesTotal} de ${r.bajanteNombre} (${r.bajantesPorCanaleta} por canaleta)`],
+        r.modulos && r.modulos.length > 1
+          ? ['Canaletas', `${n1(r.longitudCanaletaM)} m en ${r.modulos.length} módulos, pendiente ${n1(r.pendientePct)} %`]
+          : ['Canaletas', `${r.numeroCanaletas} × ${n1(r.longitudCanaletaM / r.numeroCanaletas)} m, pendiente ${n1(r.pendientePct)} %`],
+        r.modulos && r.modulos.length > 1
+          ? ['Bajantes', `${r.bajantesTotal} en total (${r.modulos.map((m) => `${m.nombre.toLowerCase()}: ${m.bajantes}`).join('; ')})`]
+          : ['Bajantes', `${r.bajantesTotal} de ${r.bajanteNombre} (${r.bajantesPorCanaleta} por canaleta${r.tramoM ? `, una cada ${n1(r.tramoM)} m` : ''})`],
         ['Lluvia de diseño', `${n0(r.intensidadMmH)} mm/h (aguacero de 5 min)`],
         ['Capacidad por tramo', r.capacidadSistemaLs ? `${n2(r.capacidadSistemaLs)} L/s = ${n0(r.capacidadSistemaLs * 60)} L/min` : `${n2(r.capacidadCanalLs)} L/s`],
         ['Soporta sin rebalsar', `hasta ${n0(Math.min(r.rebalsaMmH, r.bajanteSaturaMmH))} mm/h`],

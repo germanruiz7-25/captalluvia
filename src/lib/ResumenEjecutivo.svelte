@@ -110,7 +110,7 @@
     <div class="kpis">
       <div class="kpi"><span class="v cifra">{lluvia ? n0(lluvia.anualMm) : '—'} mm</span><span class="e">lluvia promedio al año</span></div>
       <div class="kpi"><span class="v cifra">{oferta ? n0(oferta.netaAnualMm) : '—'} mm</span><span class="e">precipitación neta (PN = P × {oferta ? oferta.cc.toFixed(3) : 'Cc'})</span></div>
-      <div class="kpi"><span class="v cifra">{area ? n0(area) : '—'} m²</span><span class="e">techo {t?.origenArea === 'existente' ? 'existente' : 'necesario'}</span></div>
+      <div class="kpi"><span class="v cifra">{area ? n0(area) : '—'} m²</span><span class="e">{t?.origenArea === 'existente' ? `techo existente${datos.criterioTecho?.idealM2 ? `; ideal ${n0(datos.criterioTecho.idealM2)} m²` : ''}` : datos.criterioTecho ? 'techo ideal (consumo + tanque lleno)' : 'techo necesario'}</span></div>
     </div>
     <div class="kpis">
       <div class="kpi"><span class="v cifra">{captadoM3 !== null ? n1(captadoM3) : '—'} m³</span><span class="e">agua captable al año</span></div>

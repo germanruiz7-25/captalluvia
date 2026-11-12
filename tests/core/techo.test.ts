@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  areaDeModulos,
   areaMinimaM2,
+  modulosMedidos,
   calcularTecho,
   demandaAnualM3,
   lluviaAprovechableMm,
@@ -110,5 +112,21 @@ describe('cálculo completo', () => {
       tipoTecho: 'lamina_metalica',
     });
     expect(r.areaMinimaM2).toBe(38);
+  });
+});
+
+describe('techo por módulos', () => {
+  it('suma los módulos con medidas y conserva su número', () => {
+    const m = modulosMedidos([
+      { ancho: 10, largo: 6 },
+      { ancho: null, largo: 4 },
+      { ancho: 4, largo: 5.5 },
+    ]);
+    expect(m).toEqual([
+      { nombre: 'Módulo 1', ancho: 6, largo: 10, area: 60 },
+      { nombre: 'Módulo 3', ancho: 4, largo: 5.5, area: 22 },
+    ]);
+    expect(areaDeModulos(m)).toBe(82);
+    expect(areaDeModulos([])).toBeNull();
   });
 });

@@ -2,6 +2,17 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.9.0] — 2026-11-11 — Techo ideal, techo por módulos y bajantes por largo
+
+### Agregado
+- **Techo ideal (paso 5):** la app calcula los m² de techo que cubren el consumo durante la temporada de lluvia y **llenan al 100 % el tanque** del periodo crítico (simulación mes a mes); si al final de la temporada hay meses flojos que no cubren el consumo, la app recomienda usar solo lo que llueve y no sacar del tanque, y el **techo mínimo para solo llenar el tanque** sin usar el agua mientras llueve.
+- **Evaluación del techo existente:** si alcanza; si solo llena el tanque (se recomienda no usar el agua en la época lluviosa o limitarla a los litros por día que indica la app, a menos que se agreguen los m² que faltan); o si no llena el tanque (porcentaje que se llena y m² que faltan para llenarlo y para el ideal). Medidas sugeridas del módulo que falta.
+- **Techo por módulos (paso 3):** botón para agregar uno o más techos (ancho × largo) que llegan al mismo tanque; la app suma los m². En el paso 6 cada módulo lleva sus propias canaletas y bajantes, con tabla por módulo y totales.
+- **Bajantes según el largo (paso 6):** una bajante como máximo cada 12 m de canaleta; la app indica el número de bajantes por canaleta y si lo decide el caudal o el largo.
+
+### Cambiado
+- El informe, el resumen de 2 hojas y la presentación usan el techo ideal y muestran la evaluación del techo existente y los módulos.
+
 ## [0.8.0] — 2026-11-11 — Coeficiente de captación, periodo crítico, resumen y presentación
 
 ### Cambiado

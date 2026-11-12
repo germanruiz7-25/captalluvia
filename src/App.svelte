@@ -3,7 +3,8 @@
   import type { ResumenLluvia } from './core/lluvia';
   import { calcularOferta, UMBRAL_CAPTACION_MM } from './core/oferta';
   import { calcularDemanda, DOTACIONES, EDIFICIOS, USOS_INICIALES, litrosDeUsos, type TipoEdificio, type UsoAgua } from './core/demanda';
-  import { COEFICIENTES_ESCORRENTIA, EFICIENCIA_CAPTACION, NOMBRES_TECHO, areaMinimaM2, opcionesDeTecho, type NumeroAguas, type TipoTecho } from './core/techo';
+  import { COEFICIENTES_ESCORRENTIA, EFICIENCIA_CAPTACION, NOMBRES_TECHO, areaDeModulos, areaMinimaM2, modulosMedidos, opcionesDeTecho, type ModuloTecho, type NumeroAguas, type TipoTecho } from './core/techo';
+  import { evaluarTecho } from './core/techoTanque';
   import { onMount } from 'svelte';
   import {
     EXTENSION_ARCHIVO,
@@ -46,7 +47,7 @@
     guardarRegistro,
     type DatosRegistro,
   } from './core/registro';
-  import { conclusiones, type DatosDrenajeInforme, type DatosInforme, type DatosTanqueInforme } from './core/informe';
+  import { conclusiones, recomendacionTecho, type DatosDrenajeInforme, type DatosInforme, type DatosTanqueInforme } from './core/informe';
 
   const version = __APP_VERSION__;
   const privacidad = `${acerca.repositorio}/blob/main/docs/PRIVACIDAD.md`;
@@ -104,18 +105,19 @@
   // antes del mes en que empieza la captación, lavan el sistema (ver core/oferta.ts).
   const descarteMm = 0;
   let umbralMm = $state(g?.umbralMm ?? UMBRAL_CAPTACION_MM);
-  // Techo existente: ancho × largo en planta (m). El área sale del producto.
-  let anchoTecho: number | null = $state(g?.anchoTecho ?? null);
-  let largoTecho: number | null = $state(g?.largoTecho ?? null);
-  const techoExistente = $derived(
-    Number(anchoTecho) > 0 && Number(largoTecho) > 0
-      ? {
-          ancho: Math.min(Number(anchoTecho), Number(largoTecho)),
-          largo: Math.max(Number(anchoTecho), Number(largoTecho)),
-        }
-      : null,
+  // Techo existente por módulos: ancho × largo en planta (m) de cada módulo; el área es la suma.
+  // Proyectos de antes de v0.9.0 traen un solo techo (anchoTecho × largoTecho).
+  let modulos: ModuloTecho[] = $state(
+    g?.modulos?.length
+      ? g.modulos.map((m) => ({ ancho: m.ancho ?? null, largo: m.largo ?? null }))
+      : [{ ancho: g?.anchoTecho ?? null, largo: g?.largoTecho ?? null }],
   );
-  const areaDisponible = $derived(techoExistente ? Math.round(techoExistente.ancho * techoExistente.largo * 100) / 100 : null);
+  const modulosExistentes = $derived(modulosMedidos(modulos));
+  const areaDisponible = $derived(areaDeModulos(modulosExistentes));
+  /** El módulo más grande (para textos que piden un solo techo). */
+  const techoExistente = $derived(
+    modulosExistentes.length ? modulosExistentes.reduce((a, b) => (b.area > a.area ? b : a)) : null,
+  );
 
   let edificio: TipoEdificio = $state(edificioInicial);
   let usuarios = $state(g?.usuarios ?? 5);
@@ -183,7 +185,21 @@
       : (DOTACIONES[edificio].find((d) => d.id === dotacionId)?.litros ?? 0),
   );
   const demanda = $derived(calcularDemanda(usuarios, litrosPorUsuario, diasUso, diasCriticos));
+  // Techo ideal: cubre el consumo de la temporada de lluvia y llena al 100 % el tanque del periodo crítico.
+  // Si no hay periodo crítico (0 días), se usa el balance anual.
+  const evaluacionTecho = $derived(
+    oferta && demanda.m3Critico > 0
+      ? evaluarTecho({
+          pnMensualMm: oferta.netaMensualMm,
+          mesesCaptados: oferta.mesesCaptados,
+          volumenM3: demanda.m3Critico,
+          consumoMensualM3: demanda.m3Anual / 12,
+          existenteM2: areaDisponible,
+        })
+      : null,
+  );
   const areaNecesaria = $derived.by(() => {
+    if (evaluacionTecho) return evaluacionTecho.idealM2;
     const exacta = oferta ? areaMinimaM2(demanda.m3Anual, oferta.netaAnualMm) : null;
     return exacta === null || demanda.m3Anual <= 0 ? null : Math.ceil(exacta - 1e-9);
   });
@@ -211,7 +227,7 @@
     return {
       paso, nombreProyecto, elaboradoPor, volumenTanque, institucionTecnico, comunidad, municipio, departamento, pais, lat, lon,
       lluvia: $state.snapshot(lluvia), tipoTecho, aguas,
-      descarteMm: Number(descarteMm) || 0, umbralMm: Number(umbralMm) || 0, areaDisponible, anchoTecho, largoTecho,
+      descarteMm: Number(descarteMm) || 0, umbralMm: Number(umbralMm) || 0, areaDisponible, modulos: $state.snapshot(modulos),
       edificio, usuarios, dotacionId, usos: $state.snapshot(usos), diasUso, diasCriticos,
     };
   }
@@ -322,7 +338,9 @@
       descarteMm: 0,
       lavado: oferta && oferta.mesesLavado.length ? { meses: oferta.mesesLavado, mm: oferta.lavadoMm } : null,
       umbralMm: Number(umbralMm) || 0,
-      existente: techoExistente && areaDisponible ? { ...techoExistente, area: areaDisponible } : null,
+      existente: techoExistente && areaDisponible
+        ? { ancho: techoExistente.ancho, largo: techoExistente.largo, area: areaDisponible, modulos: modulosExistentes }
+        : null,
     },
     oferta: oferta
       ? { netaAnualMm: oferta.netaAnualMm, eficiencia: oferta.eficiencia, mesesCaptados: oferta.mesesCaptados, m3NetosAnual: oferta.m3NetosAnual }
@@ -337,6 +355,7 @@
       m3Critico: demanda.m3Critico,
     },
     areaNecesariaM2: areaNecesaria,
+    criterioTecho: evaluacionTecho,
     drenaje: datosDrenaje,
     tanque: datosTanque,
   });
@@ -457,6 +476,9 @@
         necesariaM2: areaNecesaria,
         usadaM2: areaDisponible ?? areaNecesaria,
         captadoAnualM3: oferta && (areaDisponible ?? areaNecesaria) ? (oferta.netaAnualMm * (areaDisponible ?? areaNecesaria ?? 0)) / 1000 : null,
+        soloLlenarM2: evaluacionTecho?.soloLlenarM2 ?? null,
+        modulos: modulosExistentes.length,
+        recomendacion: recomendacionTecho(datosInforme),
       },
       drenaje: datosDrenaje ? $state.snapshot(datosDrenaje) : null,
       idf: cerca
@@ -671,16 +693,16 @@
     <PasoLluvia {lluvia} {lat} {lon} {oferta} {tipoTecho} />
   </div>
   <div class="pantalla" class:activa={paso === 3}>
-    <PasoTecho {lluvia} {oferta} bind:tipoTecho bind:aguas bind:anchoTecho bind:largoTecho {areaDisponible} bind:umbralMm />
+    <PasoTecho {lluvia} {oferta} bind:tipoTecho bind:aguas bind:modulos {modulosExistentes} {areaDisponible} bind:umbralMm />
   </div>
   <div class="pantalla" class:activa={paso === 4}>
     <PasoUsuarios bind:edificio bind:usuarios bind:dotacionId bind:usos bind:diasUso bind:diasCriticos {demanda} />
   </div>
   <div class="pantalla" class:activa={paso === 5}>
-    <PasoResultados {oferta} {demanda} {aguas} {techoExistente} />
+    <PasoResultados {oferta} {demanda} {aguas} {modulosExistentes} evaluacion={evaluacionTecho} {areaNecesaria} />
   </div>
   <div class="pantalla" class:activa={paso === 6}>
-    <PasoDrenaje opciones={opcionesTecho} {techoExistente} {aguas} {tipoTecho} {lat} {lon} bind:resumen={resumenDrenaje} bind:fuenteIntensidad bind:datos={datosDrenaje} />
+    <PasoDrenaje opciones={opcionesTecho} {modulosExistentes} {aguas} {tipoTecho} {lat} {lon} bind:resumen={resumenDrenaje} bind:fuenteIntensidad bind:datos={datosDrenaje} />
   </div>
   <div class="pantalla" class:activa={paso === 7}>
     <PasoTanque
