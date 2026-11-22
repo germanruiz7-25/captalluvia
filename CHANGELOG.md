@@ -2,6 +2,18 @@
 
 Todas las versiones de CaptaLluvia se registran aquí. Numeración: [versionado semántico](https://semver.org/lang/es/).
 
+## [0.10.0] — 2026-11-22 — App instalable y uso sin internet
+
+### Agregado
+- **App instalable (PWA)** en Android, iPhone/iPad, Windows, Mac, Linux y Chromebook: ícono de gota, ventana propia, botón **📲 Instalar app** con instalación directa (Chrome/Edge) o pasos para cada dispositivo. Guía en `docs/INSTALAR.md`.
+- **Uso sin internet:** toda la app queda guardada en el dispositivo, incluidos el informe Word, el resumen y la presentación. Aviso de sin conexión.
+- **Lluvia guardada para trabajo de campo:** cada consulta satelital se guarda (hasta 40 lugares); sin señal se usa la más cercana a menos de 15 km, y la fuente del informe lo indica. Lista de lugares guardados en el paso 1.
+- **Actualizaciones:** aviso "Hay una versión nueva" con botón Actualizar; el proyecto guardado se conserva.
+- Evento "app instalada" en el conteo de visitas (GoatCounter).
+
+### Cambiado
+- Política de privacidad 1.1: lluvia guardada y caché de la app instalada (solo en el dispositivo). "Borrar mis datos" borra también la lluvia guardada.
+
 ## [0.9.0] — 2026-11-11 — Techo ideal, techo por módulos y bajantes por largo
 
 ### Agregado

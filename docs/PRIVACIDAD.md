@@ -1,6 +1,6 @@
 # Política de privacidad de CaptaLluvia
 
-**Versión:** 1.0 — 9 de noviembre de 2026
+**Versión:** 1.1 — 22 de noviembre de 2026
 **Responsable:** G. Alfaro, Programa de Gestión de Riesgo de Desastres, Instituto Privado de Investigación sobre Cambio Climático (ICC) — galfaro@icc.org.gt
 **Aplica a:** https://germanruiz7-25.github.io/captalluvia/ (y captalluvia.org cuando se active) y a la app instalada (PWA)
 
@@ -24,11 +24,13 @@
 | Informe en Word y envío por correo | El Word se genera en tu dispositivo. El correo lo envías tú desde tu propia cuenta y app de correo; CaptaLluvia y sus autores no envían correos ni reciben el informe ni las direcciones que escribas | Compartir el informe |
 | Archivo de lluvia de estaciones (Excel o CSV) que cargues | Se lee solo en tu dispositivo; no se envía ni se guarda el archivo (sí el resultado: promedios y estaciones usadas) | Calcular la lluvia del lugar con tus datos |
 | Proyecto en curso: punto marcado en el mapa, lluvia, techo, usuarios y consumo | Solo en tu dispositivo (almacenamiento del navegador, `localStorage`) | Continuar el proyecto después y hacer el informe PDF |
+| Lluvia de los lugares que consultaste (resumen mensual, punto redondeado y nombre del lugar; hasta 40 lugares) | Solo en tu dispositivo (`localStorage`) | Usar la app sin internet: sin conexión se usa la lluvia guardada más cercana (a menos de 15 km) |
+| App instalada (PWA): archivos de la app y teselas de OpenStreetMap ya vistas (hasta 400, 30 días) | Solo en tu dispositivo (caché del navegador) | Abrir la app sin internet. Las imágenes satelitales comerciales no se guardan |
 | Mapa de ubicación del informe (punto exacto marcado y coordenadas) | Se dibuja en tu dispositivo con teselas del proveedor de mapas; queda dentro del PDF que generas | Ubicar el proyecto en el informe. Si compartes el PDF, compartes esa ubicación |
 | Archivos Excel/CSV de lluvia que importes y claves de APIs de estaciones | Solo en tu dispositivo | Usar tus propios datos de lluvia |
 | Registro: nombre y apellido, correo, institución u organización, uso que le darás (rol), país, departamento y municipio (estos dos opcionales), fecha, versión de la app y de esta política | Tu dispositivo y la hoja de registros de los autores (Google Sheets) | Saber quién usa la app y desde dónde, contactarte por temas de la app y reportar su impacto |
 | Identificador aleatorio de instalación | Tu dispositivo y la hoja de registros | Relacionar tu registro con los informes descargados y poder borrarlos a tu pedido |
-| Conteo de visitas: paso de la app que se abre (por ejemplo "paso 3"), los eventos "registro nuevo" e "informe descargado", navegador, sistema operativo y país aproximado de la conexión | GoatCounter (sin cookies; según el servicio, no guarda la IP) | Saber cuántas personas abren la app y hasta qué paso llegan. Si activas "No rastrear" en tu navegador, no se cuenta |
+| Conteo de visitas: paso de la app que se abre (por ejemplo "paso 3"), los eventos "registro nuevo", "informe descargado" y "app instalada", navegador, sistema operativo y país aproximado de la conexión | GoatCounter (sin cookies; según el servicio, no guarda la IP) | Saber cuántas personas abren la app y hasta qué paso llegan. Si activas "No rastrear" en tu navegador, no se cuenta |
 | Aviso de informe descargado (PDF o Word): fecha, formato, departamento, municipio, tipo de infraestructura, número de usuarios, volumen del tanque, versión | Hoja de registros de los autores (Google Sheets) | Medir cuántos diseños se hacen, de qué tipo y dónde |
 
 **No se envía:** coordenadas ni mapas del proyecto, nombre del lugar o de la escuela, datos del techo o de la familia, datos de pago. Tu dirección IP la ve Google al recibir el envío (como en cualquier conexión), pero no se guarda en la hoja.
@@ -56,7 +58,7 @@ No se usan cookies, Google Analytics, fuentes tipográficas externas (como Googl
 
 ## 5. Tus derechos
 
-- **Borrar tu proyecto:** paso 8 → "Tus datos y tu registro" → "Borrar mis datos de este dispositivo".
+- **Borrar tu proyecto:** paso 8 → "Tus datos y tu registro" → "Borrar mis datos de este dispositivo" (borra también la lluvia guardada). Para quitar la app instalada y su caché, desinstálala como cualquier app o borra los datos del sitio en el navegador.
 - **Borrar tu registro:** paso 8 → "Borrar mi registro". Se eliminan tu registro y tus avisos de informes de la hoja de los autores (si no hay conexión, la solicitud se envía al recuperarla). También puedes pedirlo por correo.
 - **Consultar o corregir:** escribe a galfaro@icc.org.gt.
 
@@ -67,3 +69,6 @@ El registro y los avisos de informes se conservan hasta 3 años después del úl
 ## 7. Cambios
 
 Cada cambio de esta política se publica en este archivo con su fecha y se registra en el historial de GitHub.
+
+- **1.1 (22 de noviembre de 2026):** app instalable y uso sin internet. Se agregan la lluvia guardada en el dispositivo, la caché de la app instalada y el evento "app instalada" del conteo de visitas. No se envía ningún dato personal nuevo.
+- **1.0 (9 de noviembre de 2026):** primera versión.
