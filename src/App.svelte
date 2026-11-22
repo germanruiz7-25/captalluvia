@@ -35,6 +35,8 @@
   import type { DatosPresentacion } from './lib/presentacion';
   import { DURACION_DISENO_MIN, PERIODOS_RETORNO, estacionMasCercana, intensidadEstacion } from './core/idf';
   import { contar } from './core/visitas';
+  import InstalarApp from './lib/InstalarApp.svelte';
+  import { borrarLluvias } from './core/lluviaGuardada';
   import {
     URL_REGISTRO,
     borrarRegistroLocal,
@@ -170,6 +172,7 @@
   function borrarTodo() {
     guardadoActivo = false;
     borrarProyecto();
+    borrarLluvias();
     location.hash = '';
     location.reload();
   }
@@ -276,6 +279,7 @@
   function nuevoCalculo() {
     guardadoActivo = false;
     borrarProyecto();
+    borrarLluvias();
     location.hash = '#paso-1';
     location.reload();
   }
@@ -552,6 +556,7 @@
     </div>
   </div>
   <div class="lado-derecho">
+    <InstalarApp />
     <button class="enlace" onclick={() => dialogoAcerca?.showModal()}>Acerca de</button>
     {#each logos as l (l.archivo)}
       <a href={sitioIcc} target="_blank" rel="noopener" title="{l.nombre} (abre su sitio web)">
@@ -811,13 +816,13 @@
       <details class="detalle">
         <summary>Tus datos y tu registro</summary>
         <p class="nota">
-          El proyecto (ubicación, techo, usuarios, tanque) se guarda solo en este navegador para que puedas continuar
-          después; no se envía a ningún servidor. <a href={privacidad}>Política de privacidad</a>.
+          El proyecto (ubicación, techo, usuarios, tanque) y la lluvia de los lugares que consultaste se guardan solo
+          en este navegador para que puedas continuar después y trabajar sin internet; no se envían a ningún servidor. <a href={privacidad}>Política de privacidad</a>.
         </p>
         {#if !confirmarBorrado}
           <button class="secundario peligro" onclick={() => (confirmarBorrado = true)}>Borrar mis datos de este dispositivo</button>
         {:else}
-          <p class="alerta">¿Seguro? Se borra el proyecto guardado y la app vuelve a empezar.</p>
+          <p class="alerta">¿Seguro? Se borran el proyecto y la lluvia guardados, y la app vuelve a empezar.</p>
           <div class="acciones">
             <button class="principal peligro-lleno" onclick={borrarTodo}>Sí, borrar todo</button>
             <button class="secundario" onclick={() => (confirmarBorrado = false)}>Cancelar</button>

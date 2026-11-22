@@ -12,7 +12,7 @@
 export const CLAVE_REGISTRO = 'captalluvia.registro.v1';
 export const CLAVE_COLA = 'captalluvia.envios.v1';
 /** Versión de la política que acepta la persona al registrarse. */
-export const VERSION_POLITICA = '1.0';
+export const VERSION_POLITICA = '1.1';
 
 export const ROLES = [
   'Técnico o técnica de campo',
